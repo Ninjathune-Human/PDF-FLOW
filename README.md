@@ -19,13 +19,16 @@ Application : https://ninjathune-human.github.io/atelier-pdf/
 | Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot |
 | Pivoter | ±90°, par page ou par lot |
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
-| Annoter | Stylo, surligneur, rectangle, ellipse, flèche, texte, correction par masquage. Vectoriel à l'export |
+| Annoter | Stylo, surligneur, rectangle, ellipse, flèche, texte, correction par masquage. Vectoriel à l'export. Zoom, pincement et déplacement de la vue |
 | Rédiger | Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
 | OCR | Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant une rédaction |
+| Apparence | Mode clair par défaut, bascule vers le mode nuit, choix mémorisé |
 
 Le modèle est non destructif : recadrage, rotation, annotations, rédaction et OCR sont conservés en état et appliqués uniquement à l'export.
+
+L'orientation du document d'origine est respectée partout, vignettes comme éditeur d'annotation. Un texte saisi sur une page pivotée s'écrit droit à l'écran et reste solidaire du papier si la page est pivotée ensuite.
 
 ## Usage
 
@@ -47,6 +50,8 @@ Une connexion est donc nécessaire au premier chargement. Une version entièreme
 - Le déverrouillage suppose un mot de passe connu. Aucune tentative par force brute n'est possible ni prévue.
 - La compression transforme le texte natif en image : il n'est plus sélectionnable dans le fichier compressé.
 - Les images ne peuvent pas encore ouvrir une session vide, un PDF de départ est requis.
+- La modale de recadrage affiche la page non tournée, contrairement à la grille et à l'annotation.
+- Les vignettes sont toutes calculées à l'ouverture. Sur un document de plusieurs dizaines de pages, prévoir un temps de chargement.
 
 ## Licence
 
