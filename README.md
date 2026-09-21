@@ -12,19 +12,20 @@ Application : https://ninjathune-human.github.io/atelier-pdf/
 
 | Fonction | Détail |
 |---|---|
-| Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm) |
-| Organiser | Sélection, suppression, réorganisation des pages par glisser-déposer, fusion multi-fichiers |
-| Ajouter | Pages d'un autre PDF, page blanche, images (JPEG, PNG, HEIC, WebP) converties en pages |
+| Organiser | Sélection, réorganisation par glisser-déposer, suppression au clavier ou au bouton, toujours annulable |
+| Ajouter | Pages d'autres PDF ou images (JPEG, PNG, HEIC, WebP), prévisualisées avant insertion : on coche les pages voulues |
 | Extraire | Sort la sélection courante dans un fichier séparé, sans altérer le document de travail |
+| Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm). S'ouvre d'elle-même sur un PDF protégé |
+| Rechercher | Plein texte dans la couche de texte du PDF et dans les mots reconnus par OCR, surlignage en grille et en annotation |
 | Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot |
-| Pivoter | ±90°, par page ou par lot |
+| Pivoter | ±90°, par page ou par lot, depuis la barre de sélection |
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
-| Annoter | Stylo, surligneur, rectangle, ellipse, flèche, texte, correction par masquage. Vectoriel à l'export. Zoom, pincement et déplacement de la vue |
+| Annoter | Stylo, surligneur, rectangle, ellipse, flèche, texte, image, correction par masquage. Vectoriel à l'export. Zoom, pincement et déplacement de la vue. Double-clic sur une vignette pour y entrer |
 | Rédiger | Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
 | OCR | Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant une rédaction |
-| Apparence | Mode clair par défaut, bascule vers le mode nuit, choix mémorisé |
+| Apparence | Mode clair par défaut, bascule vers le mode nuit, choix mémorisé. Respecte les réglages système de transparence réduite, de contraste renforcé et de mouvement réduit |
 
 Le modèle est non destructif : recadrage, rotation, annotations, rédaction et OCR sont conservés en état et appliqués uniquement à l'export.
 
@@ -33,6 +34,17 @@ L'orientation du document d'origine est respectée partout, vignettes comme édi
 ## Usage
 
 Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
+
+La barre d'outils regroupe trois menus, Pages, Ajuster et Annoter, un champ de recherche, puis Compresser et Exporter. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies.
+
+| Raccourci | Effet |
+|---|---|
+| Double-clic sur une vignette | Ouvre l'éditeur d'annotation sur cette page |
+| Suppr, ou Retour arrière | Supprime les pages sélectionnées, annulable |
+| Échap | Ferme la fenêtre ouverte, ou vide le champ de recherche |
+| Espace maintenu, ou bouton central | Déplace la vue dans l'éditeur d'annotation |
+| Ctrl ou Cmd + molette, pincement | Zoome dans l'éditeur d'annotation |
+| Maj + molette | Défilement latéral dans l'éditeur d'annotation |
 
 ## Dépendances
 
@@ -51,6 +63,7 @@ Une connexion est donc nécessaire au premier chargement. Une version entièreme
 - La compression transforme le texte natif en image : il n'est plus sélectionnable dans le fichier compressé.
 - Les images ne peuvent pas encore ouvrir une session vide, un PDF de départ est requis.
 - La modale de recadrage affiche la page non tournée, contrairement à la grille et à l'annotation.
+- La recherche positionne le surlignage au prorata des caractères : sur une police à chasse variable, il peut déborder d'un caractère. Les textes pivotés à l'intérieur du PDF, cartouches verticaux notamment, sont mal encadrés.
 - Les vignettes sont toutes calculées à l'ouverture. Sur un document de plusieurs dizaines de pages, prévoir un temps de chargement.
 
 ## Licence

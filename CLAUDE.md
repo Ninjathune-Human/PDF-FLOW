@@ -60,6 +60,44 @@ Le mode clair est l'état par défaut. Le mode sombre s'active par l'attribut `d
 
 Les éléments posés sur le papier — poignées de recadrage, cadre de rognage, sélection d'annotation — utilisent `--paper-accent`, volontairement non redéfini en apparence sombre : une page PDF reste blanche.
 
+## Interface : règles de conduite
+
+**Pas de mode.** L'outil est un éditeur. Déverrouiller n'est pas un onglet mais une modale du menu Pages, comme Reconnaissance de texte et Compresser. Ne pas réintroduire de sélecteur de mode.
+
+**Jamais de boîte système.** `alert()` et `confirm()` sont proscrits. Tout message passe par `notify(message, {kind, action})` : zone discrète, non bloquante, annoncée aux lecteurs d'écran, au-dessus des modales. Chaque message d'erreur dit ce qui s'est passé et ce qu'il est possible de faire.
+
+**Annuler plutôt que confirmer.** Une action réversible ne se confirme pas : elle s'exécute et `notify` propose « Annuler ». La suppression de pages prend un instantané de l'ordre et de la sélection ; les objets de page étant conservés par référence, l'annulation restitue tout, annotations et OCR compris. On ne confirme que l'irréversible.
+
+**Toujours une issue.** Une commande lancée sans ce qu'elle requiert, une extraction sans sélection par exemple, affiche un message, jamais un silence. Un état vide porte l'action qui le remplit.
+
+**Barres.** Une seule hauteur par barre, via une variable locale, 36 px au pointeur fin et 44 px au doigt. Une seule taille de texte, 15 px. Deux graisses : 500 pour ce qui agit, 400 en gris pour ce qui étiquette.
+
+**Échelle typographique.** Cinq crans d'interface, 11, 13, 14, 15 et 17 px, plus 20 px pour les titres de fenêtre. Tout en rem. Aucune taille intermédiaire.
+
+**Propriétés logiques.** `margin-inline-start` et consorts, jamais `margin-left`. Le fichier n'en contient plus aucune.
+
+**Préférences système.** `prefers-reduced-transparency`, `prefers-contrast` et `prefers-reduced-motion` sont traités. Toute nouvelle surface en verre doit s'ajouter aux trois blocs.
+
+**Raccourcis et saisie.** Un raccourci à touche unique s'efface dès que le focus est dans un champ, sinon il avale la frappe. `typingInAnnot()` sert de garde dans l'éditeur d'annotation.
+
+## Recherche
+
+Les résultats vivent dans `findHits`, table indexée par identifiant de page, hors du modèle : ils ne partent jamais à l'export. Sources interrogées : couche de texte pdf.js, puis mots OCR. Position déduite au prorata des caractères dans chaque fragment. Un jeton d'annulation abandonne un balayage dès la frappe suivante. Les deux champs, grille et annotation, partagent un seul terme.
+
+## Images
+
+**Jamais d'URL d'objet.** Une image chargée depuis `createObjectURL` teinte le canevas quand la page est ouverte depuis le disque, dont l'origine est opaque, et `toDataURL` lève alors une erreur de sécurité. Lire par `FileReader` en data URL, via `readDataUrl` et `decodeImage`.
+
+Une image insérée dans l'éditeur est une annotation de type `image`, stockée en data URL dans le modèle, réduite à 1600 px de grand côté, PNG conservé pour la transparence. Un JPEG ou un PNG déjà sous ce seuil est gardé tel quel. Comme le texte, elle mémorise l'orientation d'affichage à la pose. pdf-lib faisant pivoter autour de l'origine de dessin, l'origine change de coin selon le quart de tour : table dans `drawAnnots`, devenue asynchrone.
+
+## Documents protégés
+
+`currentBytes` conserve les octets du document ouvert. Indispensable : quand pdf.js refuse un PDF faute de mot de passe, aucune source n'est enregistrée, et le déverrouillage n'aurait rien à traiter.
+
+## Ajout de pages
+
+En deux temps : chargement et prévisualisation, puis insertion des seules pages cochées, toutes cochées par défaut. Vignettes rendues séquentiellement. Les sources entièrement écartées sont retirées de `sources` à la fermeture.
+
 ## Rituel de validation
 
 Avant toute livraison, extraire le contenu du `<script type="module">` et lancer `node --check` dessus.
@@ -83,5 +121,8 @@ Variables CSS : `--surface`, `--panel`, `--well`, `--ink`, `--muted`, `--hair`, 
 Un sélecteur d'ID (`#intake{display:block}`) a un jour écrasé silencieusement le `display:flex` d'une classe posée sur le même élément. Un ID l'emporte toujours sur une classe, quel que soit l'ordre dans la feuille. Vérifier ce type de collision si un flex ou une grille ne s'affiche pas comme prévu.
 
 ## Pistes ouvertes
+
+Recadrage orienté comme le reste de l'interface. Rendu des vignettes au fil du défilement pour les longs documents.
+
 
 Tampon de page (numérotation, filigrane, cartouche), PDF vers images, protection par mot de passe, changement de format de page, insertion d'image dans les annotations, métadonnées, superposition et comparaison d'indices, version embarquée hors-ligne.
