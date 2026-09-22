@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Laboratoire Word vers PDF</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.4.1/dist/docx-preview.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<style>
+  :root{--surface:#E9EBEC;--panel:#FDFDFD;--well:#F1F3F4;--ink:#1B1E22;--muted:#6A7178;--hair:#D7DADD;--accent:#0E6B72;--ok:#1C7A5B;--warn:#B4462A;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",ui-sans-serif,"Segoe UI",Roboto,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);color:var(--ink);background:var(--surface);-webkit-font-smoothing:antialiased;
+    padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) 48px max(20px,env(safe-area-inset-left))}
+  .shell{max-width:1440px;margin:0 auto}
+  h1{font-size:clamp(1.6rem,3.5vw,2.2rem);letter-spacing:-.026em;font-weight:640;margin:0 0 6px}
+  .lede{color:var(--muted);margin:0 0 24px;font-size:0.938rem;max-width:70ch}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+  .btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 22px;border:0;border-radius:980px;font:inherit;font-size:0.938rem;font-weight:590;cursor:pointer;background:var(--accent);color:#fff}
+  .btn.quiet{background:var(--well);color:var(--ink)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed}
+  input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+  #status{font-size:0.938rem;color:var(--muted)}
+  .card{background:var(--panel);border-radius:22px;padding:20px 24px;box-shadow:0 2px 6px rgba(20,24,28,.05),0 24px 48px -30px rgba(20,24,28,.3);margin-bottom:22px}
+  .card h2{font-size:1.063rem;margin:0 0 12px;letter-spacing:-.01em}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .kpi{background:var(--well);border-radius:14px;padding:12px 14px}
+  .kpi .v{font-size:1.5rem;font-weight:640;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .kpi .l{font-size:0.813rem;color:var(--muted);margin-top:2px}
+  .kpi.ok .v{color:var(--ok)} .kpi.bad .v{color:var(--warn)}
+  table{border-collapse:collapse;width:100%;font-size:0.875rem;margin-top:14px}
+  th,td{text-align:start;padding:7px 10px;border-bottom:1px solid var(--hair)}
+  th{color:var(--muted);font-weight:500}
+  .tag{display:inline-block;padding:2px 8px;border-radius:980px;font-size:0.75rem;font-weight:600}
+  .tag.exact{background:#E2F1EA;color:var(--ok)} .tag.approx{background:#F7ECE8;color:var(--warn)}
+  ul.notes{margin:12px 0 0;padding-inline-start:20px;font-size:0.875rem;color:var(--ink)}
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media (max-width:980px){.panes{grid-template-columns:1fr}}
+  .pane{background:var(--panel);border-radius:22px;overflow:hidden}
+  .pane h3{margin:0;padding:14px 20px;font-size:0.938rem;font-weight:600;border-bottom:1px solid var(--hair)}
+  .pane .scroll{overflow:auto;max-height:80vh;background:#E3E6E8;padding:16px}
+  #pdfPages canvas{display:block;margin:0 auto 16px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);max-width:100%;height:auto}
+  /* docx-preview dessine ses pages avec leurs dimensions réelles : aucune transformation, sinon la mesure est faussée */
+  #docxHost .docx-wrapper{background:transparent;padding:0}
+</style>
+</head>
+<body>
+<div class="shell">
+  <h1>Laboratoire Word vers PDF</h1>
+  <p class="lede">Rendu d'un fichier .docx par le navigateur avec des polices à métrique identique, puis réécriture de chaque mot en texte vectoriel dans un PDF. Les pages sont coupées aux endroits où Word les a coupées, lorsque le fichier en garde la trace. Tout se passe sur l'appareil.</p>
+
+  <div class="bar">
+    <label class="btn" for="file">Choisir un fichier Word</label>
+    <input type="file" id="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+    <button class="btn quiet" id="dl" type="button" disabled>Télécharger le PDF</button>
+    <span id="status" role="status" aria-live="polite">En attente d'un fichier.</span>
+  </div>
+
+  <div class="card" id="report" hidden>
+    <h2>Mesures</h2>
+    <div class="kpis" id="kpis"></div>
+    <table id="fonts"></table>
+    <ul class="notes" id="notes"></ul>
+  </div>
+
+  <div class="panes">
+    <div class="pane"><h3>Rendu du navigateur</h3><div class="scroll"><div id="docxHost"></div></div></div>
+    <div class="pane"><h3>PDF produit</h3><div class="scroll"><div id="pdfPages"></div></div></div>
+  </div>
+</div>
+
+<script type="module">
+const $=id=>document.getElementById(id);
+const {PDFDocument, rgb}=window.PDFLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+
+/* ---------- polices ---------- */
+/* Jumeaux métriques : mêmes largeurs de caractères que l'original, donc mêmes fins de ligne. */
+const EXACT={
+  'arial':'arimo','helvetica':'arimo','liberation sans':'arimo','arimo':'arimo',
+  'times new roman':'tinos','times':'tinos','liberation serif':'tinos','tinos':'tinos',
+  'calibri':'carlito','calibri light':'carlito','carlito':'carlito'
+};
+const SERIF=/times|georgia|garamond|cambria|serif|book|roman|palatino|century|minion|baskerville/i;
+function twinOf(name){
+  const k=name.toLowerCase().trim();
+  if(EXACT[k]) return {pkg:EXACT[k], exact:true};
+  return {pkg:SERIF.test(k)?'tinos':'arimo', exact:false};
+}
+const fontUrl=(pkg,w,st)=>`https://cdn.jsdelivr.net/npm/@fontsource/${pkg}@5.3.0/files/${pkg}-latin-${w}-${st}.woff`;
+const byteCache=new Map();
+async function fetchBytes(url){
+  if(!byteCache.has(url)) byteCache.set(url, fetch(url).then(r=>{ if(!r.ok) throw new Error('police introuvable : '+url); return r.arrayBuffer(); }));
+  return byteCache.get(url);
+}
+/* Chaque famille du document est redéclarée vers son jumeau : le navigateur compose avec
+   exactement le fichier que le PDF intégrera, ce qui garantit l'accord entre les deux. */
+async function installFaces(families){
+  const jobs=[];
+  for(const fam of families){
+    const {pkg}=twinOf(fam);
+    for(const w of [400,700]) for(const st of ['normal','italic']){
+      jobs.push(fetchBytes(fontUrl(pkg,w,st)).then(buf=>{
+        const face=new FontFace(fam, buf.slice(0), {weight:String(w), style:st});
+        return face.load().then(f=>document.fonts.add(f));
+      }));
+    }
+  }
+  await Promise.all(jobs);
+}
+
+/* ---------- lecture du paquet Word ---------- */
+async function inspectDocx(buf){
+  const zip=await JSZip.loadAsync(buf);
+  const read=async p=>zip.file(p)?await zip.file(p).async('string'):'';
+  const doc=await read('word/document.xml'), fonts=await read('word/fontTable.xml'), app=await read('docProps/app.xml');
+  const count=re=>(doc.match(re)||[]).length;
+  const families=[...new Set([...fonts.matchAll(/<w:font w:name="([^"]+)"/g)].map(m=>m[1]))]
+    .filter(f=>!/symbol|wingdings|webdings|ｍｓ|ms gothic|ms mincho/i.test(f));
+  const pagesWord=+((app.match(/<Pages>(\d+)<\/Pages>/)||[])[1]||0);
+  return {
+    families, pagesWord,
+    lrpb:count(/<w:lastRenderedPageBreak\/>/g),
+    manual:count(/<w:br w:type="page"\/>/g),
+    unsupported:[
+      [count(/<w:txbxContent/g),'zone(s) de texte'],
+      [count(/<mc:AlternateContent/g),'forme(s) ou objet(s) dessinés'],
+      [count(/<w:shd w:val="pct\d+"/g),'trame(s) à motif, non restituées par le moteur HTML'],
+      [count(/<w:fldChar|<w:fldSimple/g),'champ(s) calculés, numéros de page par exemple'],
+    ].filter(([n])=>n>0)
+  };
+}
+
+/* ---------- utilitaires de conversion ---------- */
+function parseColor(s){
+  const m=s&&s.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?/);
+  if(!m) return null;
+  return {r:+m[1]/255,g:+m[2]/255,b:+m[3]/255,a:m[4]===undefined?1:+m[4]};
+}
+const firstFamily=s=>(s||'').split(',')[0].replace(/["']/g,'').trim();
+const ptOf=v=>{ const m=String(v||'').match(/^([\d.]+)pt$/); return m?+m[1]:null; };
+/* getComputedStyle renvoie le contenu sous forme sérialisée : la tabulation qui suit une puce
+   y apparaît en « \9 ». Sans décodage, ces deux caractères étaient dessinés tels quels et
+   venaient chevaucher le début du texte. */
+function cssUnescape(s){
+  return s.replace(/\\([0-9a-fA-F]{1,6})\s?/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/\\(.)/g,'$1');
+}
+/* puces de la police Symbol, en zone d'usage privé : absentes des polices de substitution */
+const PUA_BULLET=/[\uF000-\uF0FF]/g;
+function fmtCounter(n,fmt){
+  const roman=x=>{ const t=[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']]; let s=''; for(const [v,r] of t) while(x>=v){ s+=r; x-=v; } return s; };
+  const alpha=x=>{ let s=''; while(x>0){ x--; s=String.fromCharCode(97+x%26)+s; x=Math.floor(x/26); } return s; };
+  switch(fmt){ case 'lower-roman':return roman(n); case 'upper-roman':return roman(n).toUpperCase();
+    case 'lower-alpha':case 'lower-latin':return alpha(n); case 'upper-alpha':case 'upper-latin':return alpha(n).toUpperCase();
+    default:return String(n); }
+}
+
+/* ---------- mot coupé en fin de ligne ----------
+   Le navigateur peut couper un mot, par césure automatique ou sur un trait d'union conditionnel.
+   Le tiret qu'il affiche alors n'existe pas dans le texte : il faut le redessiner. Et un intervalle
+   d'un caractère placé juste après la coupure renvoie deux rectangles, l'un vide en fin de ligne,
+   l'autre sur la ligne suivante : leur union plaçait le caractère entre les deux lignes. */
+function splitByLine(range, node, start, word, hyphenates){
+  const groups=[];
+  for(let i=0;i<word.length;i++){
+    const ch=word[i];
+    if(ch==='\u00ad') continue;                       // trait d'union conditionnel : invisible hors coupure
+    range.setStart(node,start+i); range.setEnd(node,start+i+1);
+    const r=[...range.getClientRects()].reduce((a,b)=>(!a||b.width>a.width)?b:a,null);
+    if(!r||!r.width) continue;
+    const g=groups[groups.length-1];
+    if(g && Math.abs(g.r.top-r.top)<r.height*0.5) g.text+=ch;
+    else groups.push({text:ch, r});
+  }
+  const soft = hyphenates || word.includes('\u00ad');
+  return groups.map((g,i)=>{
+    const last=i===groups.length-1;
+    const dash = !last && soft && !/[-\u2010\u2011]$/.test(g.text);
+    return [dash?g.text+'-':g.text, g.r];
+  });
+}
+
+/* ---------- réécriture des pages en PDF vectoriel ---------- */
+async function buildPdf(sections, report){
+  const pdf=await PDFDocument.create(); pdf.registerFontkit(window.fontkit);
+  const faces=new Map();
+  async function face(fam,bold,italic){
+    const {pkg}=twinOf(fam), w=bold?700:400, st=italic?'italic':'normal', key=`${pkg}-${w}-${st}`;
+    if(!faces.has(key)){
+      const buf=await fetchBytes(fontUrl(pkg,w,st));
+      faces.set(key,{font:await pdf.embedFont(buf.slice(0),{subset:true}), fk:window.fontkit.create(new Uint8Array(buf))});
+    }
+    return faces.get(key);
+  }
+  const range=document.createRange();
+  const counters={};          // la numérotation se poursuit d'une page à l'autre
+  let widthErrSum=0, widthErrMax=0, widthN=0;
+
+  for(const sec of sections){
+    const sr=sec.getBoundingClientRect();
+    const pageW=ptOf(sec.style.width)??sr.width*0.75;
+    const k=pageW/sr.width;
+    const pageH=ptOf(sec.style.minHeight)??ptOf(sec.style.height)??sr.height*k;
+    report.fill.push(sr.height*k/pageH);
+    const page=pdf.addPage([pageW,pageH]);
+    const X=x=>(x-sr.left)*k, Y=y=>pageH-(y-sr.top)*k;
+    const all=[...sec.querySelectorAll('*')];
+
+    // 1. fonds
+    for(const el of all){
+      const bg=parseColor(getComputedStyle(el).backgroundColor);
+      if(!bg||bg.a<0.02) continue;
+      for(const r of el.getClientRects()) if(r.width>0&&r.height>0)
+        page.drawRectangle({x:X(r.left),y:Y(r.bottom),width:r.width*k,height:r.height*k,color:rgb(bg.r,bg.g,bg.b),opacity:bg.a});
+    }
+    // 2. filets
+    for(const el of all){
+      const cs=getComputedStyle(el); if(cs.display==='inline') continue;
+      const r=el.getBoundingClientRect(); if(!r.width&&!r.height) continue;
+      for(const side of ['Top','Right','Bottom','Left']){
+        const w=parseFloat(cs[`border${side}Width`]); if(!w||cs[`border${side}Style`]==='none') continue;
+        const c=parseColor(cs[`border${side}Color`]); if(!c||c.a<0.02) continue;
+        const h=w/2, seg={Top:[[r.left,r.top+h],[r.right,r.top+h]],Bottom:[[r.left,r.bottom-h],[r.right,r.bottom-h]],
+                           Left:[[r.left+h,r.top],[r.left+h,r.bottom]],Right:[[r.right-h,r.top],[r.right-h,r.bottom]]}[side];
+        page.drawLine({start:{x:X(seg[0][0]),y:Y(seg[0][1])},end:{x:X(seg[1][0]),y:Y(seg[1][1])},thickness:w*k,color:rgb(c.r,c.g,c.b)});
+      }
+    }
+    // 3. images
+    for(const img of sec.querySelectorAll('img')){
+      const src=img.getAttribute('src')||''; const r=img.getBoundingClientRect(); if(!r.width) continue;
+      try{
+        const bytes=Uint8Array.from(atob(src.slice(src.indexOf(',')+1)),c=>c.charCodeAt(0));
+        const emb=/^data:image\/png/.test(src)?await pdf.embedPng(bytes):/^data:image\/jpe?g/.test(src)?await pdf.embedJpg(bytes):null;
+        if(emb) page.drawImage(emb,{x:X(r.left),y:Y(r.bottom),width:r.width*k,height:r.height*k});
+        else report.skipped.push('image dans un format non pris en charge');
+      }catch(_){ report.skipped.push('image illisible'); }
+    }
+    // 4. puces et numéros, portés par des pseudo-éléments que le parcours du texte ne voit pas
+    for(const p of sec.querySelectorAll('p')){
+      const b=getComputedStyle(p,'::before'); const c=b.content;
+      if(!c||c==='none'||c==='normal') continue;
+      const inc=b.counterIncrement&&b.counterIncrement!=='none'?b.counterIncrement.split(' ')[0]:null;
+      if(inc) counters[inc]=(counters[inc]||0)+1;
+      let txt=''; const re=/"([^"]*)"|'([^']*)'|counter\(\s*([^,\s)]+)\s*(?:,\s*([^)]+))?\)/g; let m;
+      while((m=re.exec(c))) txt+= m[1]!=null?cssUnescape(m[1]): m[2]!=null?cssUnescape(m[2]): fmtCounter(counters[m[3]]||0,(m[4]||'decimal').trim());
+      txt=txt.replace(PUA_BULLET,'•').replace(/[\t\u00a0]/g,' ').trim(); if(!txt) continue;
+      range.selectNodeContents(p); const lines=range.getClientRects(); if(!lines.length) continue;
+      const pcs=getComputedStyle(p), pr=p.getBoundingClientRect(), first=lines[0];
+      const f=await face(firstFamily(b.fontFamily)||firstFamily(pcs.fontFamily), parseInt(b.fontWeight)>=600, b.fontStyle!=='normal');
+      const base=first.top+first.height*f.fk.ascent/(f.fk.ascent-f.fk.descent);
+      const col=parseColor(b.color)||{r:0,g:0,b:0};
+      try{ page.drawText(txt,{x:X(pr.left+parseFloat(pcs.paddingLeft||0)+parseFloat(pcs.textIndent||0)),y:Y(base),size:parseFloat(b.fontSize)*k,font:f.font,color:rgb(col.r,col.g,col.b)}); }catch(_){}
+    }
+    // 5. texte, mot par mot : la position de chaque mot est celle que le navigateur a composée
+    const walker=document.createTreeWalker(sec,NodeFilter.SHOW_TEXT); let n;
+    while((n=walker.nextNode())){
+      const t=n.nodeValue; if(!t.trim()) continue;
+      const el=n.parentElement, cs=getComputedStyle(el);
+      if(cs.visibility==='hidden'||cs.display==='none') continue;
+      const f=await face(firstFamily(cs.fontFamily), parseInt(cs.fontWeight)>=600, cs.fontStyle!=='normal');
+      const sizePt=parseFloat(cs.fontSize)*k, col=parseColor(cs.color)||{r:0,g:0,b:0};
+      const upper=cs.textTransform==='uppercase', under=/underline/.test(cs.textDecorationLine||cs.textDecoration||'');
+      const ratio=f.fk.ascent/(f.fk.ascent-f.fk.descent);
+      const re=/\S+/g; let m;
+      while((m=re.exec(t))){
+        range.setStart(n,m.index); range.setEnd(n,m.index+m[0].length);
+        const rects=[...range.getClientRects()].filter(r=>r.width>0); if(!rects.length) continue;
+        const clean=m[0].replace(/\u00ad/g,'');
+        const pieces = rects.length===1 ? [[clean,rects[0]]] : splitByLine(range, n, m.index, m[0], cs.hyphens==='auto'||cs.webkitHyphens==='auto');
+        for(const [word,r] of pieces){
+          const w=upper?word.toUpperCase():word, base=r.top+r.height*ratio;
+          try{
+            page.drawText(w,{x:X(r.left),y:Y(base),size:sizePt,font:f.font,color:rgb(col.r,col.g,col.b)});
+            if(pieces.length===1){ // accord de largeur entre la composition du navigateur et la police intégrée
+              const e=Math.abs(f.font.widthOfTextAtSize(w,sizePt)-r.width*k)/(r.width*k||1);
+              if(isFinite(e)){ widthErrSum+=e; widthErrMax=Math.max(widthErrMax,e); widthN++; }
+            }
+            if(under) page.drawLine({start:{x:X(r.left),y:Y(base)-sizePt*0.12},end:{x:X(r.right),y:Y(base)-sizePt*0.12},thickness:Math.max(0.4,sizePt*0.06),color:rgb(col.r,col.g,col.b)});
+          }catch(_){ report.skipped.push('caractère absent de la police de substitution'); }
+        }
+      }
+    }
+  }
+  report.widthMean=widthN?widthErrSum/widthN:0; report.widthMax=widthErrMax; report.words=widthN;
+  return pdf.save();
+}
+
+/* ---------- affichage ---------- */
+async function showPdf(bytes){
+  const host=$('pdfPages'); host.innerHTML='';
+  const doc=await pdfjsLib.getDocument({data:bytes.slice(0)}).promise;
+  for(let i=1;i<=doc.numPages;i++){
+    const page=await doc.getPage(i), vp=page.getViewport({scale:2});
+    const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height; c.style.width=(vp.width/2)+'px';
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise; host.appendChild(c);
+  }
+}
+function kpi(v,l,cls){ return `<div class="kpi ${cls||''}"><div class="v">${v}</div><div class="l">${l}</div></div>`; }
+function showReport(info,report,pages){
+  const fillMax=Math.max(...report.fill);
+  $('kpis').innerHTML=
+    kpi(`${pages} / ${info.pagesWord||'?'}`,'pages obtenues / pages selon Word', info.pagesWord? (pages===info.pagesWord?'ok':'bad'):'')+
+    kpi(`${Math.round(fillMax*100)} %`,'remplissage de la page la plus chargée', fillMax<=1.001?'ok':'bad')+
+    kpi(`${(report.widthMean*100).toFixed(2)} %`,`écart de largeur moyen, sur ${report.words} mots`, report.widthMean<0.01?'ok':'bad')+
+    kpi(`${info.lrpb}`,'coupures de page mémorisées par Word', '');
+  const rows=info.families.map(f=>{ const t=twinOf(f);
+    return `<tr><td>${f}</td><td>${t.pkg[0].toUpperCase()+t.pkg.slice(1)}</td><td><span class="tag ${t.exact?'exact':'approx'}">${t.exact?'métrique identique':'substitution approchée'}</span></td></tr>`; }).join('');
+  $('fonts').innerHTML=`<thead><tr><th>Police du document</th><th>Remplacée par</th><th>Fidélité</th></tr></thead><tbody>${rows}</tbody>`;
+  const notes=[];
+  if(fillMax>1.001) notes.push(`Débordement : la page la plus chargée occupe ${Math.round(fillMax*100)} % de sa hauteur. Word aurait coupé plus tôt ; le contenu excédentaire est rogné dans le PDF.`);
+  if(info.pagesWord>1 && !info.lrpb) notes.push("Le fichier ne garde aucune trace des coupures de Word : la pagination n'est pas ancrée.");
+  for(const [n,l] of info.unsupported) notes.push(`${n} ${l}.`);
+  const sk=[...new Set(report.skipped)]; for(const s of sk) notes.push(`Ignoré : ${s}.`);
+  if(!notes.length) notes.push('Aucune alerte.');
+  $('notes').innerHTML=notes.map(s=>`<li>${s}</li>`).join('');
+  $('report').hidden=false;
+}
+
+/* ---------- déroulé ---------- */
+let lastPdf=null;
+$('file').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  const status=t=>$('status').textContent=t;
+  $('dl').disabled=true; $('report').hidden=true; $('pdfPages').innerHTML=''; $('docxHost').innerHTML='';
+  try{
+    const buf=await f.arrayBuffer();
+    status('Lecture du fichier…');   const info=await inspectDocx(buf);
+    status('Chargement des polices…'); await installFaces(info.families);
+    status('Composition des pages…');
+    await docx.renderAsync(buf,$('docxHost'),null,{
+      className:'docx', inWrapper:true, breakPages:true,
+      ignoreLastRenderedPageBreak:false,   // coupe aux endroits où Word a coupé
+      experimental:true,                   // calcul des taquets de tabulation
+      useBase64URL:true                    // images en data URL : pas de canevas teinté
+    });
+    await document.fonts.ready;
+    const sections=[...$('docxHost').querySelectorAll('section.docx')];
+    status('Écriture du PDF…');
+    const report={fill:[],skipped:[]};
+    lastPdf=await buildPdf(sections,report);
+    await showPdf(lastPdf);
+    showReport(info,report,sections.length);
+    $('dl').disabled=false;
+    status(`Terminé : ${sections.length} page${sections.length>1?'s':''}, ${Math.round(lastPdf.length/1024)} Ko.`);
+  }catch(err){ console.error(err); status('Échec : '+(err&&err.message||err)); }
+});
+$('dl').addEventListener('click',()=>{
+  if(!lastPdf) return;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([lastPdf],{type:'application/pdf'}));
+  a.download='conversion-labo.pdf'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+});
+</script>
+</body>
+</html>

@@ -17,6 +17,7 @@ Application : https://ninjathune-human.github.io/atelier-pdf/
 | Extraire | Sort la sélection courante dans un fichier séparé, sans altérer le document de travail |
 | Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm). S'ouvre d'elle-même sur un PDF protégé |
 | Rechercher | Plein texte dans la couche de texte du PDF et dans les mots reconnus par OCR, surlignage en grille et en annotation |
+| Convertir | **Bêta.** Document Word (.docx) converti en pages PDF vectorielles, texte sélectionnable, puis choix des pages à insérer |
 | Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot |
 | Pivoter | ±90°, par page ou par lot, depuis la barre de sélection |
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
@@ -35,7 +36,7 @@ L'orientation du document d'origine est respectée partout, vignettes comme édi
 
 Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
 
-La barre d'outils regroupe trois menus, Pages, Ajuster et Annoter, un champ de recherche, puis Compresser et Exporter. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies.
+La barre d'outils regroupe quatre menus, Modifier, Ajuster, Annoter et Convertir, un champ de recherche, puis Compresser et Exporter. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies.
 
 | Raccourci | Effet |
 |---|---|
@@ -54,6 +55,9 @@ Chargées par CDN à l'exécution, pas de build :
 - [pdf.js](https://mozilla.github.io/pdf.js/) 3.11.174, rendu des pages en canvas
 - [qpdf-wasm](https://github.com/neslinesli93/qpdf-wasm), déverrouillage, chargé à la demande
 - [tesseract.js](https://tesseract.projectnaptha.com/) 5, OCR, chargé au premier usage
+- [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) 0.4.1 et [JSZip](https://stuk.github.io/jszip/) 3.10.1, lecture et composition des fichiers Word, chargés au premier usage
+- [@pdf-lib/fontkit](https://github.com/Hopding/fontkit) 1.1.1, intégration des polices dans le PDF converti
+- Polices [Arimo, Tinos et Carlito](https://fontsource.org/), licence OFL, jumelles métriques d'Arial, Times New Roman et Calibri
 
 Une connexion est donc nécessaire au premier chargement. Une version entièrement embarquée hors-ligne est une piste ouverte.
 
@@ -63,6 +67,7 @@ Une connexion est donc nécessaire au premier chargement. Une version entièreme
 - La compression transforme le texte natif en image : il n'est plus sélectionnable dans le fichier compressé.
 - Les images ne peuvent pas encore ouvrir une session vide, un PDF de départ est requis.
 - La modale de recadrage affiche la page non tournée, contrairement à la grille et à l'annotation.
+- La conversion Word est en bêta. Fidèle sur les documents courants, courrier, compte rendu, CV. Approchée sur les zones de texte, formes, trames à motif et champs calculés. La pagination suit celle de Word lorsque le fichier en garde la trace, c'est-à-dire lorsqu'il a été enregistré en dernier par Word ; sinon elle est recalculée. Pour un rendu exact, exporter en PDF depuis Word ou Pages. `docx-labo.html` mesure la fidélité d'une conversion sur un fichier donné.
 - La recherche positionne le surlignage au prorata des caractères : sur une police à chasse variable, il peut déborder d'un caractère. Les textes pivotés à l'intérieur du PDF, cartouches verticaux notamment, sont mal encadrés.
 - Les vignettes sont toutes calculées à l'ouverture. Sur un document de plusieurs dizaines de pages, prévoir un temps de chargement.
 

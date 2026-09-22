@@ -98,6 +98,22 @@ Une image insérée dans l'éditeur est une annotation de type `image`, stockée
 
 En deux temps : chargement et prévisualisation, puis insertion des seules pages cochées, toutes cochées par défaut. Vignettes rendues séquentiellement. Les sources entièrement écartées sont retirées de `sources` à la fermeture.
 
+## Conversion Word (bêta)
+
+Module isolé `WordConvert`, repris tel quel de `docx-labo.html`, qui reste la page de référence pour mesurer la fidélité : toute évolution du moteur se fait d'abord dans le laboratoire, se mesure, puis se reporte.
+
+**Principe.** Un .docx ne contient pas de pages. Plutôt que de recalculer la mise en page de Word, on relit ses notes : la balise `<w:lastRenderedPageBreak/>` marque où Word a coupé chaque page lors de son dernier enregistrement. docx-preview y coupe si `ignoreLastRenderedPageBreak:false`, contrairement à son réglage par défaut. Les erreurs de composition restent alors confinées à leur page au lieu de s'accumuler.
+
+**Polices.** Chaque famille du document est redéclarée, via l'API FontFace, vers son jumeau métrique : Arimo pour Arial, Tinos pour Times, Carlito pour Calibri. Le navigateur compose ainsi avec exactement le fichier que le PDF intégrera. Format **WOFF uniquement** : le WOFF2 fait planter le sous-ensemblage de fontkit.
+
+**Écriture.** Le navigateur compose, on relit la position de chaque mot par `Range.getClientRects`, et pdf-lib le réécrit en texte vectoriel. Jamais de rastérisation du HTML : elle teinte le canevas sous Safari. Images en data URL, `useBase64URL:true`.
+
+**Pièges déjà rencontrés.**
+- Les puces et numéros sont des pseudo-éléments `::before`, invisibles au parcours du texte. Leur contenu relu est **sérialisé** : une tabulation y vaut `\9`, à décoder par `cssUnescape`, sinon « -\ » chevauche le texte.
+- Un mot coupé en fin de ligne : le tiret de césure n'existe pas dans le DOM, il faut le redessiner ; et le caractère suivant la coupure renvoie deux rectangles dont l'union le place entre deux lignes. `splitByLine` regroupe par ligne en ne gardant que le rectangle réel de chaque glyphe.
+- La composition hors écran se fait par décalage, jamais par `visibility:hidden`, qui s'hérite et ferait ignorer tout le texte.
+- docx-preview lit `window.JSZip` à son propre chargement : JSZip doit être chargé avant.
+
 ## Rituel de validation
 
 Avant toute livraison, extraire le contenu du `<script type="module">` et lancer `node --check` dessus.
@@ -122,7 +138,7 @@ Un sélecteur d'ID (`#intake{display:block}`) a un jour écrasé silencieusement
 
 ## Pistes ouvertes
 
-Recadrage orienté comme le reste de l'interface. Rendu des vignettes au fil du défilement pour les longs documents.
+Conversion Word : trames à motif, zones de texte, polices Cousine pour Courier New. Recadrage orienté comme le reste de l'interface. Rendu des vignettes au fil du défilement pour les longs documents.
 
 
 Tampon de page (numérotation, filigrane, cartouche), PDF vers images, protection par mot de passe, changement de format de page, insertion d'image dans les annotations, métadonnées, superposition et comparaison d'indices, version embarquée hors-ligne.

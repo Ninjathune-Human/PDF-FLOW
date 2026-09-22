@@ -1,5 +1,20 @@
 # Journal des évolutions
 
+## 22 septembre 2026
+
+### Nouveautés
+
+- **Conversion de documents Word, en bêta.** Nouveau menu Convertir. Un .docx est composé sur l'appareil avec des polices à métrique identique à celles de Word, coupé aux endroits où Word a coupé les pages, puis réécrit en PDF vectoriel au texte sélectionnable et interrogeable. Les pages converties passent par la fenêtre de choix avant insertion, avec un avertissement listant les éléments approchés.
+- **Laboratoire de conversion**, `docx-labo.html` : page autonome qui mesure la fidélité d'une conversion, nombre de pages, débordement, écart de largeur, polices substituées.
+
+### Interface
+
+- Menu « Pages » renommé « Modifier ». Ajouter, insérer et extraire forment une section, Déverrouiller une autre.
+
+### Corrections
+
+- La zone de messages restait affichée vide en permanence : une règle d'affichage neutralisait l'attribut `hidden`.
+
 ## 21 septembre 2026
 
 ### Nouveautés

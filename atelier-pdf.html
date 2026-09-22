@@ -126,7 +126,7 @@
   .mbtn[aria-expanded="true"] .chev{transform:rotate(180deg)}
   .menu{position:absolute;left:0;top:calc(100% + 8px);z-index:20;min-width:250px;max-width:min(92vw,380px);padding:8px;border-radius:18px;background:var(--panel);box-shadow:0 2px 8px rgba(20,24,28,.10),0 24px 48px -18px rgba(20,24,28,.42);animation:pop .16s cubic-bezier(.2,.8,.2,1)}
   @keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
-  .menu .tbtn{width:100%;justify-content:flex-start}
+  .menu .tbtn{width:100%;justify-content:flex-start;text-align:start}
   .tbtn{display:inline-flex;align-items:center;gap:12px;font:inherit;font-size:0.938rem;font-weight:500;letter-spacing:-.01em;color:var(--ink);background:none;border:0;border-radius:12px;padding:11px 14px;cursor:pointer;transition:background .12s}
   .tbtn:hover{background:var(--accent-tint)}
   .tbtn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
@@ -258,6 +258,9 @@
   /* message discret, non bloquant, au-dessus des modales */
   /* choix des pages à insérer */
   .addbody{flex:1;min-height:0;overflow:auto;padding:4px 22px 18px}
+  .addnote{margin:0 22px 6px;padding:11px 14px;border-radius:12px;background:var(--accent-tint);color:var(--accent-deep);font-size:0.875rem;line-height:1.45}
+  .addnote b{font-weight:600}
+  .beta{margin-inline-start:auto;padding:2px 8px;border-radius:980px;background:var(--accent-tint);color:var(--accent-deep);font-size:0.688rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .addfile{margin:18px 0 12px;font-size:0.938rem;font-weight:600;letter-spacing:-.01em;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .addfile span{font-weight:400;color:var(--muted)}
   .addfile:first-child{margin-top:6px}
@@ -269,6 +272,7 @@
     box-shadow:0 0 0 .5px var(--glass-ring),0 18px 48px -12px rgba(0,0,0,.35);
     font-size:0.938rem;letter-spacing:-.01em;animation:noticeIn .22s cubic-bezier(.2,.8,.2,1)}
   @keyframes noticeIn{from{opacity:0;transform:translate(-50%,10px)}}
+  .notice[hidden]{display:none}
   .notice[data-kind="warn"]{color:var(--warn)}
   .notice .ntxt{min-width:0}
   .notice .nact{flex:0 0 auto;border:0;border-radius:980px;background:var(--accent);color:var(--on-accent);font:inherit;font-size:0.875rem;font-weight:590;padding:9px 16px;cursor:pointer}
@@ -430,13 +434,13 @@
 
         <div class="toolbar">
           <div class="menuwrap">
-            <button class="mbtn" id="mPages" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuPages">Pages <span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+            <button class="mbtn" id="mPages" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuPages">Modifier <span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
             <div class="menu" id="menuPages" hidden>
               <button class="tbtn" id="btnAdd" type="button" title="Ajouter des pages PDF ou des images"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Ajouter des pages…</button>
               <button class="tbtn" id="btnBlank" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3.5" y="2.5" width="9" height="11" rx="1.4" stroke="currentColor" stroke-width="1.4"/></svg>Insérer une page blanche</button>
+              <button class="tbtn" id="selExtract" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M9.5 2.5H4.5a1.4 1.4 0 0 0-1.4 1.4v8.2a1.4 1.4 0 0 0 1.4 1.4h7a1.4 1.4 0 0 0 1.4-1.4V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.5 14 2M10.5 2H14v3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Extraire la sélection…</button>
               <div class="msep" aria-hidden="true"></div>
               <button class="tbtn" id="btnUnlock" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="3.5" y="7.2" width="9" height="6.8" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M5.6 7.2V5.1a2.4 2.4 0 0 1 4.6-.9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Déverrouiller…</button>
-              <button class="tbtn" id="selExtract" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M9.5 2.5H4.5a1.4 1.4 0 0 0-1.4 1.4v8.2a1.4 1.4 0 0 0 1.4 1.4h7a1.4 1.4 0 0 0 1.4-1.4V6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.5 14 2M10.5 2H14v3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Extraire la sélection dans un fichier…</button>
             </div>
           </div>
           <div class="menuwrap">
@@ -451,6 +455,12 @@
             <div class="menu" id="menuContent" hidden>
               <button class="tbtn" id="btnAnnot" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M11 2.5l2.5 2.5L6 12.5 3 13l.5-3L11 2.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Ouvrir l'éditeur…</button>
               <button class="tbtn" id="btnOcr" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.2" stroke="currentColor" stroke-width="1.4"/><path d="M10.2 10.2 14 14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M5 6h4M5 8.2h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Reconnaissance de texte…</button>
+            </div>
+          </div>
+          <div class="menuwrap">
+            <button class="mbtn" id="mConvert" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuConvert">Convertir <span class="chev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 6 8l3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+            <div class="menu" id="menuConvert" hidden>
+              <button class="tbtn" id="btnWord" type="button"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M9.5 2.5H4.6A1.4 1.4 0 0 0 3.2 3.9v8.2a1.4 1.4 0 0 0 1.4 1.4h6.8a1.4 1.4 0 0 0 1.4-1.4V5.9L9.5 2.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.4 2.6v3.4h3.3M5.6 8.6l.8 3 1.1-2.6 1.1 2.6.8-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>Document Word…<span class="beta">Bêta</span></button>
             </div>
           </div>
           <div class="findfield">
@@ -493,6 +503,7 @@
   <!-- hidden input for adding pages -->
   <input type="file" id="addfile" accept="application/pdf,.pdf,image/*" multiple style="display:none">
   <input type="file" id="anImgFile" accept="image/*" style="display:none">
+  <input type="file" id="wordFile" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none">
 
   <!-- Crop modal -->
   <div class="modal" id="cropModal" role="dialog" aria-modal="true" aria-label="Recadrer">
@@ -568,6 +579,7 @@
         <h2>Ajouter des pages</h2>
         <button class="iconbtn" id="addClose" aria-label="Annuler l'ajout"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
       </div>
+      <p class="addnote" id="addNote" role="note" hidden></p>
       <div class="addbody" id="addBody"></div>
       <div class="addfoot">
         <span id="addInfo" role="status" aria-live="polite"></span>
@@ -1281,8 +1293,9 @@ addfile.addEventListener('change',async e=>{
   if(cands.length) openAddPicker(cands, srcIds);
 });
 
-function openAddPicker(cands, srcIds){
+function openAddPicker(cands, srcIds, note){
   addCands=cands; addSrcIds=srcIds; const token=++addToken;
+  const addNote=$('addNote'); addNote.hidden=!note; addNote.innerHTML=note||'';
   addBody.innerHTML='';
   let lastFile=null, gridEl=null;
   for(const c of cands){
@@ -1884,6 +1897,282 @@ document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show
   if(e.key==='Delete'||e.key==='Backspace'){ if(anSel>=0){ e.preventDefault(); pg2().annots.splice(anSel,1); anSel=-1; renderAnnots(); } }
   else if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); undoAnnot(); }
   else if(e.key==='Escape'){ closeAnnot(); }
+});
+
+
+/* ============ conversion Word (bêta) ============
+   Reprise telle quelle du laboratoire docx-labo.html. Principe : le navigateur compose les pages
+   avec des polices à métrique identique à celles de Word, en coupant là où Word a coupé quand le
+   fichier en garde la trace ; chaque mot est ensuite réécrit en texte vectoriel dans un PDF.
+   Dépendances chargées au premier usage seulement. */
+const WordConvert=(()=>{
+  const DEPS=["https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+              "https://cdn.jsdelivr.net/npm/docx-preview@0.4.1/dist/docx-preview.min.js",   // lit window.JSZip à son chargement : ordre impératif
+              "https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"];
+  const loadScript=src=>new Promise((res,rej)=>{ const el=document.createElement('script'); el.src=src; el.onload=res; el.onerror=()=>rej(new Error('composant introuvable, vérifiez la connexion')); document.head.appendChild(el); });
+  async function ensureDeps(){ for(const d of DEPS){ const g=d.includes('jszip')?'JSZip':d.includes('docx-preview')?'docx':'fontkit'; if(!window[g]) await loadScript(d); } }
+  const {PDFDocument, rgb}=window.PDFLib;
+/* ---------- polices ---------- */
+/* Jumeaux métriques : mêmes largeurs de caractères que l'original, donc mêmes fins de ligne. */
+const EXACT={
+  'arial':'arimo','helvetica':'arimo','liberation sans':'arimo','arimo':'arimo',
+  'times new roman':'tinos','times':'tinos','liberation serif':'tinos','tinos':'tinos',
+  'calibri':'carlito','calibri light':'carlito','carlito':'carlito'
+};
+const SERIF=/times|georgia|garamond|cambria|serif|book|roman|palatino|century|minion|baskerville/i;
+function twinOf(name){
+  const k=name.toLowerCase().trim();
+  if(EXACT[k]) return {pkg:EXACT[k], exact:true};
+  return {pkg:SERIF.test(k)?'tinos':'arimo', exact:false};
+}
+const fontUrl=(pkg,w,st)=>`https://cdn.jsdelivr.net/npm/@fontsource/${pkg}@5.3.0/files/${pkg}-latin-${w}-${st}.woff`;
+const byteCache=new Map();
+async function fetchBytes(url){
+  if(!byteCache.has(url)) byteCache.set(url, fetch(url).then(r=>{ if(!r.ok) throw new Error('police introuvable : '+url); return r.arrayBuffer(); }));
+  return byteCache.get(url);
+}
+/* Chaque famille du document est redéclarée vers son jumeau : le navigateur compose avec
+   exactement le fichier que le PDF intégrera, ce qui garantit l'accord entre les deux. */
+async function installFaces(families){
+  const jobs=[];
+  for(const fam of families){
+    const {pkg}=twinOf(fam);
+    for(const w of [400,700]) for(const st of ['normal','italic']){
+      jobs.push(fetchBytes(fontUrl(pkg,w,st)).then(buf=>{
+        const face=new FontFace(fam, buf.slice(0), {weight:String(w), style:st});
+        return face.load().then(f=>document.fonts.add(f));
+      }));
+    }
+  }
+  await Promise.all(jobs);
+}
+
+/* ---------- lecture du paquet Word ---------- */
+async function inspectDocx(buf){
+  const zip=await JSZip.loadAsync(buf);
+  const read=async p=>zip.file(p)?await zip.file(p).async('string'):'';
+  const doc=await read('word/document.xml'), fonts=await read('word/fontTable.xml'), app=await read('docProps/app.xml');
+  const count=re=>(doc.match(re)||[]).length;
+  const families=[...new Set([...fonts.matchAll(/<w:font w:name="([^"]+)"/g)].map(m=>m[1]))]
+    .filter(f=>!/symbol|wingdings|webdings|ｍｓ|ms gothic|ms mincho/i.test(f));
+  const pagesWord=+((app.match(/<Pages>(\d+)<\/Pages>/)||[])[1]||0);
+  return {
+    families, pagesWord,
+    lrpb:count(/<w:lastRenderedPageBreak\/>/g),
+    manual:count(/<w:br w:type="page"\/>/g),
+    unsupported:[
+      [count(/<w:txbxContent/g),'zone(s) de texte'],
+      [count(/<mc:AlternateContent/g),'forme(s) ou objet(s) dessinés'],
+      [count(/<w:shd w:val="pct\d+"/g),'trame(s) à motif, non restituées par le moteur HTML'],
+      [count(/<w:fldChar|<w:fldSimple/g),'champ(s) calculés, numéros de page par exemple'],
+    ].filter(([n])=>n>0)
+  };
+}
+
+/* ---------- utilitaires de conversion ---------- */
+function parseColor(s){
+  const m=s&&s.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?/);
+  if(!m) return null;
+  return {r:+m[1]/255,g:+m[2]/255,b:+m[3]/255,a:m[4]===undefined?1:+m[4]};
+}
+const firstFamily=s=>(s||'').split(',')[0].replace(/["']/g,'').trim();
+const ptOf=v=>{ const m=String(v||'').match(/^([\d.]+)pt$/); return m?+m[1]:null; };
+/* getComputedStyle renvoie le contenu sous forme sérialisée : la tabulation qui suit une puce
+   y apparaît en « \9 ». Sans décodage, ces deux caractères étaient dessinés tels quels et
+   venaient chevaucher le début du texte. */
+function cssUnescape(s){
+  return s.replace(/\\([0-9a-fA-F]{1,6})\s?/g,(_,h)=>String.fromCodePoint(parseInt(h,16))).replace(/\\(.)/g,'$1');
+}
+/* puces de la police Symbol, en zone d'usage privé : absentes des polices de substitution */
+const PUA_BULLET=/[\uF000-\uF0FF]/g;
+function fmtCounter(n,fmt){
+  const roman=x=>{ const t=[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']]; let s=''; for(const [v,r] of t) while(x>=v){ s+=r; x-=v; } return s; };
+  const alpha=x=>{ let s=''; while(x>0){ x--; s=String.fromCharCode(97+x%26)+s; x=Math.floor(x/26); } return s; };
+  switch(fmt){ case 'lower-roman':return roman(n); case 'upper-roman':return roman(n).toUpperCase();
+    case 'lower-alpha':case 'lower-latin':return alpha(n); case 'upper-alpha':case 'upper-latin':return alpha(n).toUpperCase();
+    default:return String(n); }
+}
+
+/* ---------- mot coupé en fin de ligne ----------
+   Le navigateur peut couper un mot, par césure automatique ou sur un trait d'union conditionnel.
+   Le tiret qu'il affiche alors n'existe pas dans le texte : il faut le redessiner. Et un intervalle
+   d'un caractère placé juste après la coupure renvoie deux rectangles, l'un vide en fin de ligne,
+   l'autre sur la ligne suivante : leur union plaçait le caractère entre les deux lignes. */
+function splitByLine(range, node, start, word, hyphenates){
+  const groups=[];
+  for(let i=0;i<word.length;i++){
+    const ch=word[i];
+    if(ch==='\u00ad') continue;                       // trait d'union conditionnel : invisible hors coupure
+    range.setStart(node,start+i); range.setEnd(node,start+i+1);
+    const r=[...range.getClientRects()].reduce((a,b)=>(!a||b.width>a.width)?b:a,null);
+    if(!r||!r.width) continue;
+    const g=groups[groups.length-1];
+    if(g && Math.abs(g.r.top-r.top)<r.height*0.5) g.text+=ch;
+    else groups.push({text:ch, r});
+  }
+  const soft = hyphenates || word.includes('\u00ad');
+  return groups.map((g,i)=>{
+    const last=i===groups.length-1;
+    const dash = !last && soft && !/[-\u2010\u2011]$/.test(g.text);
+    return [dash?g.text+'-':g.text, g.r];
+  });
+}
+
+/* ---------- réécriture des pages en PDF vectoriel ---------- */
+async function writePdf(sections, report){
+  const pdf=await PDFDocument.create(); pdf.registerFontkit(window.fontkit);
+  const faces=new Map();
+  async function face(fam,bold,italic){
+    const {pkg}=twinOf(fam), w=bold?700:400, st=italic?'italic':'normal', key=`${pkg}-${w}-${st}`;
+    if(!faces.has(key)){
+      const buf=await fetchBytes(fontUrl(pkg,w,st));
+      faces.set(key,{font:await pdf.embedFont(buf.slice(0),{subset:true}), fk:window.fontkit.create(new Uint8Array(buf))});
+    }
+    return faces.get(key);
+  }
+  const range=document.createRange();
+  const counters={};          // la numérotation se poursuit d'une page à l'autre
+  let widthErrSum=0, widthErrMax=0, widthN=0;
+
+  for(const sec of sections){
+    const sr=sec.getBoundingClientRect();
+    const pageW=ptOf(sec.style.width)??sr.width*0.75;
+    const k=pageW/sr.width;
+    const pageH=ptOf(sec.style.minHeight)??ptOf(sec.style.height)??sr.height*k;
+    report.fill.push(sr.height*k/pageH);
+    const page=pdf.addPage([pageW,pageH]);
+    const X=x=>(x-sr.left)*k, Y=y=>pageH-(y-sr.top)*k;
+    const all=[...sec.querySelectorAll('*')];
+
+    // 1. fonds
+    for(const el of all){
+      const bg=parseColor(getComputedStyle(el).backgroundColor);
+      if(!bg||bg.a<0.02) continue;
+      for(const r of el.getClientRects()) if(r.width>0&&r.height>0)
+        page.drawRectangle({x:X(r.left),y:Y(r.bottom),width:r.width*k,height:r.height*k,color:rgb(bg.r,bg.g,bg.b),opacity:bg.a});
+    }
+    // 2. filets
+    for(const el of all){
+      const cs=getComputedStyle(el); if(cs.display==='inline') continue;
+      const r=el.getBoundingClientRect(); if(!r.width&&!r.height) continue;
+      for(const side of ['Top','Right','Bottom','Left']){
+        const w=parseFloat(cs[`border${side}Width`]); if(!w||cs[`border${side}Style`]==='none') continue;
+        const c=parseColor(cs[`border${side}Color`]); if(!c||c.a<0.02) continue;
+        const h=w/2, seg={Top:[[r.left,r.top+h],[r.right,r.top+h]],Bottom:[[r.left,r.bottom-h],[r.right,r.bottom-h]],
+                           Left:[[r.left+h,r.top],[r.left+h,r.bottom]],Right:[[r.right-h,r.top],[r.right-h,r.bottom]]}[side];
+        page.drawLine({start:{x:X(seg[0][0]),y:Y(seg[0][1])},end:{x:X(seg[1][0]),y:Y(seg[1][1])},thickness:w*k,color:rgb(c.r,c.g,c.b)});
+      }
+    }
+    // 3. images
+    for(const img of sec.querySelectorAll('img')){
+      const src=img.getAttribute('src')||''; const r=img.getBoundingClientRect(); if(!r.width) continue;
+      try{
+        const bytes=Uint8Array.from(atob(src.slice(src.indexOf(',')+1)),c=>c.charCodeAt(0));
+        const emb=/^data:image\/png/.test(src)?await pdf.embedPng(bytes):/^data:image\/jpe?g/.test(src)?await pdf.embedJpg(bytes):null;
+        if(emb) page.drawImage(emb,{x:X(r.left),y:Y(r.bottom),width:r.width*k,height:r.height*k});
+        else report.skipped.push('image dans un format non pris en charge');
+      }catch(_){ report.skipped.push('image illisible'); }
+    }
+    // 4. puces et numéros, portés par des pseudo-éléments que le parcours du texte ne voit pas
+    for(const p of sec.querySelectorAll('p')){
+      const b=getComputedStyle(p,'::before'); const c=b.content;
+      if(!c||c==='none'||c==='normal') continue;
+      const inc=b.counterIncrement&&b.counterIncrement!=='none'?b.counterIncrement.split(' ')[0]:null;
+      if(inc) counters[inc]=(counters[inc]||0)+1;
+      let txt=''; const re=/"([^"]*)"|'([^']*)'|counter\(\s*([^,\s)]+)\s*(?:,\s*([^)]+))?\)/g; let m;
+      while((m=re.exec(c))) txt+= m[1]!=null?cssUnescape(m[1]): m[2]!=null?cssUnescape(m[2]): fmtCounter(counters[m[3]]||0,(m[4]||'decimal').trim());
+      txt=txt.replace(PUA_BULLET,'•').replace(/[\t\u00a0]/g,' ').trim(); if(!txt) continue;
+      range.selectNodeContents(p); const lines=range.getClientRects(); if(!lines.length) continue;
+      const pcs=getComputedStyle(p), pr=p.getBoundingClientRect(), first=lines[0];
+      const f=await face(firstFamily(b.fontFamily)||firstFamily(pcs.fontFamily), parseInt(b.fontWeight)>=600, b.fontStyle!=='normal');
+      const base=first.top+first.height*f.fk.ascent/(f.fk.ascent-f.fk.descent);
+      const col=parseColor(b.color)||{r:0,g:0,b:0};
+      try{ page.drawText(txt,{x:X(pr.left+parseFloat(pcs.paddingLeft||0)+parseFloat(pcs.textIndent||0)),y:Y(base),size:parseFloat(b.fontSize)*k,font:f.font,color:rgb(col.r,col.g,col.b)}); }catch(_){}
+    }
+    // 5. texte, mot par mot : la position de chaque mot est celle que le navigateur a composée
+    const walker=document.createTreeWalker(sec,NodeFilter.SHOW_TEXT); let n;
+    while((n=walker.nextNode())){
+      const t=n.nodeValue; if(!t.trim()) continue;
+      const el=n.parentElement, cs=getComputedStyle(el);
+      if(cs.visibility==='hidden'||cs.display==='none') continue;
+      const f=await face(firstFamily(cs.fontFamily), parseInt(cs.fontWeight)>=600, cs.fontStyle!=='normal');
+      const sizePt=parseFloat(cs.fontSize)*k, col=parseColor(cs.color)||{r:0,g:0,b:0};
+      const upper=cs.textTransform==='uppercase', under=/underline/.test(cs.textDecorationLine||cs.textDecoration||'');
+      const ratio=f.fk.ascent/(f.fk.ascent-f.fk.descent);
+      const re=/\S+/g; let m;
+      while((m=re.exec(t))){
+        range.setStart(n,m.index); range.setEnd(n,m.index+m[0].length);
+        const rects=[...range.getClientRects()].filter(r=>r.width>0); if(!rects.length) continue;
+        const clean=m[0].replace(/\u00ad/g,'');
+        const pieces = rects.length===1 ? [[clean,rects[0]]] : splitByLine(range, n, m.index, m[0], cs.hyphens==='auto'||cs.webkitHyphens==='auto');
+        for(const [word,r] of pieces){
+          const w=upper?word.toUpperCase():word, base=r.top+r.height*ratio;
+          try{
+            page.drawText(w,{x:X(r.left),y:Y(base),size:sizePt,font:f.font,color:rgb(col.r,col.g,col.b)});
+            if(pieces.length===1){ // accord de largeur entre la composition du navigateur et la police intégrée
+              const e=Math.abs(f.font.widthOfTextAtSize(w,sizePt)-r.width*k)/(r.width*k||1);
+              if(isFinite(e)){ widthErrSum+=e; widthErrMax=Math.max(widthErrMax,e); widthN++; }
+            }
+            if(under) page.drawLine({start:{x:X(r.left),y:Y(base)-sizePt*0.12},end:{x:X(r.right),y:Y(base)-sizePt*0.12},thickness:Math.max(0.4,sizePt*0.06),color:rgb(col.r,col.g,col.b)});
+          }catch(_){ report.skipped.push('caractère absent de la police de substitution'); }
+        }
+      }
+    }
+  }
+  report.widthMean=widthN?widthErrSum/widthN:0; report.widthMax=widthErrMax; report.words=widthN;
+  return pdf.save();
+}
+
+
+  async function convert(file, step){
+    step('Chargement du moteur de conversion…'); await ensureDeps();
+    const buf=await file.arrayBuffer();
+    step('Lecture du document…');              const info=await inspectDocx(buf);
+    step('Chargement des polices…');           await installFaces(info.families);
+    let host=document.getElementById('docxHost');
+    if(!host){ host=document.createElement('div'); host.id='docxHost'; host.setAttribute('aria-hidden','true');
+      host.style.cssText='position:fixed;left:-100000px;top:0;pointer-events:none'; document.body.appendChild(host); }
+    host.innerHTML='';
+    try{
+      step('Composition des pages…');
+      await window.docx.renderAsync(buf,host,null,{className:'docx',inWrapper:true,breakPages:true,ignoreLastRenderedPageBreak:false,experimental:true,useBase64URL:true});
+      await document.fonts.ready;
+      const sections=[...host.querySelectorAll('section.docx')];
+      if(!sections.length) throw new Error('aucune page produite');
+      step('Écriture du PDF…');
+      const report={fill:[],skipped:[]};
+      const bytes=await writePdf(sections,report);
+      const warnings=[];
+      const over=report.fill.filter(f=>f>1.001).length;
+      if(over) warnings.push(`${over} page${over>1?'s débordent':' déborde'} : du contenu peut manquer en bas de page.`);
+      if(info.pagesWord && info.pagesWord!==sections.length) warnings.push(`${sections.length} page${sections.length>1?'s':''} obtenue${sections.length>1?'s':''}, contre ${info.pagesWord} dans Word.`);
+      const approx=info.families.filter(f=>!twinOf(f).exact);
+      if(approx.length) warnings.push(`Police${approx.length>1?'s':''} remplacée${approx.length>1?'s':''} approximativement : ${approx.join(', ')}.`);
+      for(const [n,l] of info.unsupported) warnings.push(`${n} ${l}.`);
+      return {bytes, pages:sections.length, warnings};
+    } finally { host.innerHTML=''; }          // libère la composition hors écran
+  }
+  return {convert};
+})();
+
+const btnWord=$('btnWord'), wordFile=$('wordFile');
+btnWord.addEventListener('click',()=>wordFile.click());
+wordFile.addEventListener('change',async e=>{
+  const f=e.target.files[0]; wordFile.value=''; if(!f) return;
+  if(!/\.docx$/i.test(f.name)){ notify("Seul le format .docx est pris en charge. Un ancien .doc s'enregistre au format .docx depuis Word ou Pages.",{kind:'warn'}); return; }
+  try{
+    const {bytes, warnings}=await WordConvert.convert(f, t=>notify(t));
+    const id=await addSource(bytes);
+    const cands=makePagesFromSource(id).map((pg,k,arr)=>({pg, file:f.name, idx:k, count:arr.length, sel:true}));
+    hideNotice();
+    const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    const note='<b>Conversion bêta.</b> La mise en page est reconstituée, vérifiez-la avant insertion. Pour un rendu exact, exportez le document en PDF depuis Word ou Pages.'
+      + (warnings.length ? '<br>'+warnings.map(esc).join('<br>') : '');
+    openAddPicker(cands,[id],note);
+  }catch(err){
+    console.error('Conversion Word :',err);
+    notify('La conversion a échoué ('+(err&&err.message||err)+'). Exportez le document en PDF depuis Word ou Pages, puis ajoutez-le.',{kind:'warn'});
+  }
 });
 
 /* ============ export ============ */
