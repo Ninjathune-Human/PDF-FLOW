@@ -217,7 +217,15 @@
   .findfield input::-webkit-search-cancel-button{-webkit-appearance:none}
   .findcount{font-size:var(--fs-sm);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
   /* surlignage de recherche : calque d'affichage, jamais écrit dans le document */
-  .findbox{position:absolute;background:#FFE24A;opacity:.55;border-radius:1px;pointer-events:none;mix-blend-mode:multiply}
+  .findbox{position:absolute;background:#FFD400;opacity:.75;border-radius:1px;pointer-events:none;mix-blend-mode:multiply;box-shadow:0 0 0 1px #F0A800}
+  /* recherche : les pages qui contiennent le mot ressortent, les autres s'effacent */
+  .pcard[data-find]{background:#FFF7CC;box-shadow:inset 0 0 0 1.5px #F2C200}
+  :root[data-theme="dark"] .pcard[data-find]{background:rgba(255,212,0,.13);box-shadow:inset 0 0 0 1.5px rgba(255,212,0,.7)}
+  .pcard[data-find]::after{content:attr(data-find);position:absolute;top:8px;inset-inline-end:8px;z-index:3;min-width:22px;height:22px;padding:0 7px;border-radius:var(--pill);
+    background:#FFD400;color:#3A2E00;font-family:var(--mono);font-size:var(--fs-2xs);font-weight:600;line-height:22px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .pcard[data-find][data-sel="1"]{box-shadow:inset 0 0 0 1.5px var(--ink)}
+  .grid[data-finding="1"] .pcard:not([data-find]) .thumbwrap{opacity:.32;filter:grayscale(1) drop-shadow(0 0 .6px rgba(9,9,11,.45))}
+  .grid[data-finding="1"] .pcard:not([data-find]) .pnum{opacity:.5}
 
   /* sélection et grille */
   .view{padding:18px 20px 28px}
@@ -433,7 +441,10 @@
   input[type=range]:focus-visible{outline:none}
   input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 0 0 4px var(--ring)}
   /* surlignage de recherche dans la scène d'annotation, sous les annotations */
-  .findhl{fill:#FFE24A;fill-opacity:.55;pointer-events:none;mix-blend-mode:multiply}
+  .findhl{fill:#FFD400;fill-opacity:.6;stroke:#F0A000;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none;mix-blend-mode:multiply}
+  /* à l'arrivée sur la page, chaque occurrence s'annonce d'un rebond, comme la recherche de Safari */
+  .findhl.pulse{transform-box:fill-box;transform-origin:center;animation:findPulse .7s cubic-bezier(.3,1.6,.5,1) 1}
+  @keyframes findPulse{0%{transform:scale(2.2);opacity:0}60%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
   .abody{position:relative;display:flex;min-height:0;flex:1;background:var(--canvas)}
   /* palette d'outils : groupes séparés d'un filet, outil actif plein */
   .atools{flex:0 0 auto;align-self:flex-start;display:flex;flex-direction:column;gap:2px;margin:14px 0 14px 14px;padding:5px;border-radius:var(--r-lg);background:var(--surface);
@@ -472,6 +483,34 @@
      (iPad : le libellé « 100 % » se retrouvait surligné) ; seuls les champs restent sélectionnables */
   #annotModal,#cropModal{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   #annotModal input,#annotModal textarea,#cropModal input{-webkit-user-select:text;user-select:text}
+  /* mode d'emploi : panneau latéral sur la table de travail, la page reste visible et utilisable */
+  .ahelp{position:absolute;top:14px;bottom:14px;inset-inline-end:14px;width:min(360px,calc(100% - 28px));z-index:4;display:flex;flex-direction:column;
+    background:var(--surface);border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line),var(--shadow-lg);overflow:hidden;animation:helpIn .22s var(--ease)}
+  @keyframes helpIn{from{opacity:0;transform:translateX(12px)}}
+  .ahelp-head{display:flex;align-items:center;gap:8px;padding:12px 10px 8px 16px}
+  .ahelp-head h3{margin:0;flex:1;font-size:var(--fs-lg);font-weight:600;letter-spacing:-.01em}
+  .ahelp .findfield{margin:0 12px 6px;width:auto;flex:0 0 auto}
+  .ahelp .findfield input{width:100%}
+  .fclear{flex:0 0 auto;width:22px;height:22px;border:0;border-radius:50%;background:var(--subtle);color:var(--muted);display:grid;place-items:center;cursor:pointer;padding:0}
+  .fclear .i{width:13px;height:13px}
+  .fclear:hover{color:var(--ink)}
+  .findcount{overflow:hidden;text-overflow:ellipsis;min-width:0}
+  @media (pointer:coarse){ .fclear{width:28px;height:28px} .fclear .i{width:15px;height:15px} }
+  .ahelp-list{flex:1;min-height:0;overflow:auto;padding:0 8px 14px;-webkit-user-select:text;user-select:text}
+  .ahelp-sec{margin:14px 8px 4px;font-family:var(--mono);font-size:var(--fs-2xs);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  .hitem{display:grid;grid-template-columns:32px minmax(0,1fr);gap:2px 12px;padding:10px 8px;border-radius:var(--r-md)}
+  .hitem:hover,.hitem.pin{background:var(--subtle)}
+  .hitem .hic{grid-row:1/span 3;width:32px;height:32px;border-radius:9px;background:var(--subtle);box-shadow:inset 0 0 0 1px var(--line);display:grid;place-items:center;color:var(--ink-2)}
+  .hitem:hover .hic,.hitem.pin .hic{background:var(--surface)}
+  .hitem .hic .i,.hitem .hic svg{width:18px;height:18px}
+  .hitem b{font-size:var(--fs-md);font-weight:600;letter-spacing:-.006em;line-height:1.35}
+  .hitem p{margin:0;font-size:var(--fs-sm);color:var(--muted);line-height:1.5}
+  .hitem .use{justify-self:start;margin-top:6px;height:var(--h-xs);padding:0 11px;font-size:var(--fs-xs)}
+  @media (pointer:coarse){ .hitem .use{height:var(--h-sm)} }
+  .ahelp-empty{padding:28px 14px;text-align:center;color:var(--muted);font-size:var(--fs-sm);line-height:1.6}
+  kbd{font-family:var(--mono);font-size:var(--fs-2xs);padding:1px 5px;border-radius:5px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-strong);color:var(--ink-2);white-space:nowrap}
+  #anHelp[aria-expanded="true"]{background:var(--primary);color:var(--on-primary)}
+  @media (max-width:760px){ .ahelp{top:8px;bottom:8px;inset-inline:8px;width:auto} }
   .an-cmove{cursor:move}
   .an-ch[data-h="c-nw"],.an-ch[data-h="c-se"]{cursor:nwse-resize} .an-ch[data-h="c-ne"],.an-ch[data-h="c-sw"]{cursor:nesw-resize}
   .an-ch[data-h="c-n"],.an-ch[data-h="c-s"]{cursor:ns-resize} .an-ch[data-h="c-w"],.an-ch[data-h="c-e"]{cursor:ew-resize}
@@ -639,6 +678,7 @@
             <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
             <input type="search" id="findIn" placeholder="Rechercher" aria-label="Rechercher dans le document" autocomplete="off" spellcheck="false">
             <span class="findcount" id="findCount" role="status" aria-live="polite"></span>
+            <button class="fclear" id="findClear" type="button" aria-label="Effacer la recherche" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8 8 16M8 8l8 8"/></svg></button>
           </div>
           <span class="spacer"></span>
           <button class="tbtn quiet" id="btnCompress" type="button" aria-label="Compresser…"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l6.5-6.5M3.5 20.5 10 14"/></svg><span class="lbl">Compresser…</span></button>
@@ -818,6 +858,7 @@
           <button class="iconbtn" id="anNext" aria-label="Page suivante"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></button>
         </div>
         <span class="spacer"></span>
+        <button class="iconbtn" id="anHelp" type="button" data-tip="Mode d'emploi  ?" aria-label="Mode d'emploi" aria-expanded="false" aria-controls="anHelpPanel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><circle class="fill" cx="12" cy="16.9" r=".9"/></svg></button>
         <button class="tbtn ghostlbl" id="anUndo" type="button" aria-label="Annuler"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/></svg><span class="lbl">Annuler</span></button>
         <button class="tbtn danger ghostlbl" id="anDel" type="button" aria-label="Supprimer l'annotation"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l.9 13a1.5 1.5 0 0 0 1.5 1.4h7.2a1.5 1.5 0 0 0 1.5-1.4l.9-13"/><path d="M10 11v5.5M14 11v5.5"/></svg><span class="lbl">Supprimer</span></button>
         <span class="vsep" aria-hidden="true"></span>
@@ -867,6 +908,7 @@
           <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
           <input type="search" id="anFindIn" placeholder="Rechercher" aria-label="Rechercher dans le document" autocomplete="off" spellcheck="false">
           <span class="findcount" id="anFindCount" role="status" aria-live="polite"></span>
+          <button class="fclear" id="anFindClear" type="button" aria-label="Effacer la recherche" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8 8 16M8 8l8 8"/></svg></button>
         </div>
         <div class="zoomgrp" role="group" aria-label="Zoom">
           <button class="iconbtn" id="anZoomOut" type="button" aria-label="Réduire"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg></button>
@@ -900,6 +942,15 @@
             </div>
           </div>
         </div>
+        <aside class="ahelp" id="anHelpPanel" aria-label="Mode d'emploi" hidden>
+          <div class="ahelp-head"><h3>Mode d'emploi</h3><button class="iconbtn" id="anHelpClose" type="button" aria-label="Fermer le mode d'emploi"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg></button></div>
+          <div class="findfield">
+            <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+            <input type="search" id="anHelpIn" placeholder="Que voulez-vous faire ?" aria-label="Interroger le mode d'emploi" autocomplete="off" spellcheck="false">
+            <button class="fclear" id="anHelpClear" type="button" aria-label="Effacer la recherche" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8 8 16M8 8l8 8"/></svg></button>
+          </div>
+          <div class="ahelp-list" id="anHelpList" role="list"></div>
+        </aside>
       </div>
     </div>
   </div>
@@ -1162,6 +1213,7 @@ function renderGrid(){
   pages.forEach((pg,idx)=>{
     const card=document.createElement('div'); card.className='pcard'; card.tabIndex=0; card.dataset.id=pg.id;
     card.dataset.sel=selected.has(pg.id)?'1':'0';
+    if(findHits.get(pg.id)?.length) card.dataset.find=findHits.get(pg.id).length;
     const tw=document.createElement('div'); tw.className='thumbwrap'+(pg.blank?' blank':'');
     if(pg.blank){ tw.textContent='Page blanche'; }
     else { const sk=document.createElement('div'); sk.className='skel'; tw.appendChild(sk); }
@@ -1253,7 +1305,13 @@ function refreshCard(pgId){ const pg=pages.find(p=>p.id===pgId); const card=grid
 /* ============ recherche plein texte ============ */
 /* Les résultats vivent hors du modèle : ce sont des repères d'affichage, ils ne partent jamais à l'export. */
 const findIn=$('findIn'), findCount=$('findCount'), anFindIn=$('anFindIn'), anFindCount=$('anFindCount');
-let findHits=new Map(), findSeq=0, findTimer=0;
+let findHits=new Map(), findSeq=0, findTimer=0, findPulse=false;
+/* marque les cartes : nombre d'occurrences en pastille, pages sans résultat estompées */
+function markFindCard(pgId){
+  const card=grid.querySelector(`.pcard[data-id="${pgId}"]`); if(!card) return;
+  const h=findHits.get(pgId); if(h&&h.length) card.dataset.find=h.length; else delete card.dataset.find;
+}
+function clearFindMarks(){ grid.querySelectorAll('.pcard[data-find]').forEach(c=>{ delete c.dataset.find; }); delete grid.dataset.finding; }
 
 function paintFind(pgId, rot){
   const host=rot || (grid.querySelector(`.pcard[data-id="${pgId}"]`)||{}).querySelector?.('.thumbrot');
@@ -1305,7 +1363,7 @@ async function findOnPage(pg, needle){
 async function runFind(){
   const needle=findIn.value.trim().toLowerCase();
   const token=++findSeq;
-  findHits=new Map();
+  findHits=new Map(); clearFindMarks();
   if(needle.length<2){
     setFindCount(null);
     grid.querySelectorAll('.findbox').forEach(e=>e.remove());
@@ -1321,27 +1379,31 @@ async function runFind(){
     catch(err){ failed++; console.error('Recherche, page '+(pages.indexOf(pg)+1)+' :', err); }
     if(token!==findSeq) return;               // frappe suivante : ce balayage est caduc
     nText+=r.nText;
-    if(r.hits.length){ findHits.set(pg.id, r.hits); total+=r.hits.length; np++; }
-    paintFind(pg.id);
+    if(r.hits.length){ findHits.set(pg.id, r.hits); total+=r.hits.length; np++; grid.dataset.finding='1'; }
+    markFindCard(pg.id); paintFind(pg.id);
   }
   if(total) setFindCount(`${total} sur ${np} page${np>1?'s':''}`);
   else if(failed) setFindCount('recherche impossible');
   else if(!nText) setFindCount("aucun texte, lancez l'OCR");
   else setFindCount('aucun résultat');
-  if(annotModal.classList.contains('show')) renderAnnots();
+  if(annotModal.classList.contains('show')){ findPulse=true; renderAnnots(); }
 }
 /* le compteur reste dans l'arbre d'accessibilité en permanence : une zone vivante
    masquée puis démasquée n'est pas annoncée de façon fiable */
 function setFindCount(txt){
   for(const el of [findCount, anFindCount]) el.textContent = txt===null ? '' : txt;
 }
-function syncFind(v){ if(findIn.value!==v) findIn.value=v; if(anFindIn.value!==v) anFindIn.value=v; }
+function syncFind(v){ if(findIn.value!==v) findIn.value=v; if(anFindIn.value!==v) anFindIn.value=v;
+  $('findClear').hidden=$('anFindClear').hidden=!v; }
 for(const inp of [findIn, anFindIn]){
   inp.addEventListener('input',()=>{ syncFind(inp.value); clearTimeout(findTimer); findTimer=setTimeout(runFind,260); });
   inp.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); syncFind(''); runFind(); } });
 }
+/* croix d'effacement dans le champ : vide la recherche et rend la main au clavier */
+for(const [btn,inp] of [[$('findClear'),findIn],[$('anFindClear'),anFindIn]])
+  btn.addEventListener('click',()=>{ clearTimeout(findTimer); syncFind(''); runFind(); inp.focus(); });
 /* saisie en cours dans la modale : les raccourcis de la scène ne doivent pas intercepter les touches */
-function typingInAnnot(){ return document.activeElement===anText || document.activeElement===anFindIn; }
+function typingInAnnot(){ const a=document.activeElement; return a===anText || a===anFindIn || (a&&a.id==='anHelpIn'); }
 
 /* ============ selection ============ */
 function markCard(card,on){ card.dataset.sel=on?'1':'0'; const p=card.querySelector('.pick'); if(p) p.setAttribute('aria-checked',String(on)); }
@@ -1861,6 +1923,7 @@ function openAnnot(single){
   anListP=list; anPtr=start; anSel=-1; annotModal.classList.add('show'); setTool(anTool||'pen'); loadAnnotPage();
 }
 async function loadAnnotPage(){
+  findPulse=findHits.has((anListP[anPtr]||{}).id);
   const pg=pg2(); anMedia=pg.mediaBox;
   anPos.textContent=`${anPtr+1} / ${anListP.length}`;
   anPrev.disabled=anPtr===0; anNext.disabled=anPtr===anListP.length-1;
@@ -2085,10 +2148,10 @@ function bboxOf(a){
 function renderAnnots(){
   while(anSvg.firstChild) anSvg.removeChild(anSvg.firstChild);
   const pg=pg2(); if(!pg) return;
-  const hl=findHits.get(pg.id);
+  const hl=findHits.get(pg.id), pulse=findPulse; findPulse=false;   // le rebond ne joue qu'une fois, pas à chaque retouche
   if(hl) for(const h of hl){
-    const x=DX(Math.min(h.u0,h.u1)), y=DY(Math.min(h.v0,h.v1));
-    anSvg.appendChild(svgEl('rect',{x,y,width:Math.abs(DX(h.u1)-DX(h.u0)),height:Math.abs(DY(h.v1)-DY(h.v0)),class:'findhl'}));
+    const x=DX(Math.min(h.u0,h.u1)), y=DY(Math.min(h.v0,h.v1)), pad=1.5/anZoom;
+    anSvg.appendChild(svgEl('rect',{x:x-pad,y:y-pad,width:Math.abs(DX(h.u1)-DX(h.u0))+2*pad,height:Math.abs(DY(h.v1)-DY(h.v0))+2*pad,rx:2/anZoom,class:'findhl'+(pulse?' pulse':'')}));
   }
   pg.annots.forEach((a,i)=>{ const n=drawOne(cropView(a,i,pg)); if(n){ n.dataset.i=i; anSvg.appendChild(n); } });
   if(anObj){ const n=drawOne(anObj); if(n){ n.setAttribute('opacity','0.9'); anSvg.appendChild(n); } }
@@ -2541,15 +2604,130 @@ anPrev.addEventListener('click',()=>{ if(anPtr>0){ commitText(); anPtr--; loadAn
 anNext.addEventListener('click',()=>{ if(anPtr<anListP.length-1){ commitText(); anPtr++; loadAnnotPage(); } });
 anClose.addEventListener('click',closeAnnot);
 annotModal.addEventListener('click',e=>{ if(e.target===annotModal) closeAnnot(); });
-function closeAnnot(){ commitText(); if(anObjCrop) applyObjCrop(); annotModal.classList.remove('show'); anListP.forEach(pg=>refreshCard(pg.id)); }
+function closeAnnot(){ commitText(); if(anObjCrop) applyObjCrop(); toggleHelp(false); annotModal.classList.remove('show'); anListP.forEach(pg=>refreshCard(pg.id)); }
 document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show')||cropModal.classList.contains('show')||addModal.classList.contains('show'))return;
   if(typingInAnnot()) return;
   if(anObjCrop){ if(e.key==='Escape'){ e.preventDefault(); cancelObjCrop(); } else if(e.key==='Enter'){ e.preventDefault(); applyObjCrop(); } return; }
+  if(e.key==='?'){ e.preventDefault(); toggleHelp(); return; }
+  if(e.key==='Escape'&&!$('anHelpPanel').hidden){ toggleHelp(false); return; }
   if(e.key==='Delete'||e.key==='Backspace'){ if(anSel>=0){ e.preventDefault(); pg2().annots.splice(anSel,1); anSel=-1; renderAnnots(); } }
   else if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); undoAnnot(); }
   else if(e.key==='Escape'){ closeAnnot(); }
 });
 
+
+/* ============ mode d'emploi de l'éditeur ============
+   Contenu court, une fiche par geste. Chaque fiche porte des mots-clés (synonymes, mots du
+   métier) pour que la recherche trouve « caviarder » sous Masque ou « rogner » sous Recadrer.
+   tool : l'outil que le bouton « Utiliser » active. */
+const HELP=[
+ {s:'Naviguer', items:[
+  {t:'Changer de page', ic:'pages', d:'Flèches ‹ › en haut, de part et d\'autre du numéro de page.', k:'page suivante precedente naviguer feuilleter autre'},
+  {t:'Zoomer', ic:'zoom', d:'Boutons − et + en haut à droite, pincement à deux doigts ou <kbd>Ctrl</kbd> + molette. Toucher le pourcentage remet la page à la taille de l\'écran.', k:'agrandir reduire loupe zoom grossir taille ecran'},
+  {t:'Déplacer la vue', ic:'move', d:'Page agrandie : glissez une zone vide avec l\'outil Sélection, glissez à deux doigts, ou maintenez <kbd>Espace</kbd>.', k:'deplacer panoramique defiler bouger vue main'}]},
+ {s:'Dessiner et écrire', items:[
+  {t:'Stylo', tool:'pen', d:'Tracé libre à main levée. Couleur et épaisseur dans la barre du haut.', k:'dessiner crayon main levee tracer ecrire signer signature'},
+  {t:'Surligneur', tool:'hl', d:'Glissez sur le texte à mettre en évidence. Quatre teintes fluo : jaune, vert, magenta, bleu.', k:'surligner surlignage fluo marqueur stabilo souligner evidence'},
+  {t:'Formes', tool:'shape', d:'Choisissez rectangle, ellipse, flèche ou trait dans la barre du haut, puis glissez sur la page.', k:'forme rectangle carre cadre cercle rond ellipse fleche trait ligne entourer'},
+  {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic sur un texte pour le modifier.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
+  {t:'Image ou PDF', tool:'image', d:'Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s\'il en compte plusieurs, choisissez laquelle.', k:'image photo logo signature tampon importer inserer insertion ajouter pdf fichier'},
+  {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : tracez l\'emplacement, sur cette page ou une autre. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier'},
+  {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'export.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
+  {t:'Recadrer', tool:'crop', d:'Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l\'objet, sans perte, <kbd>Entrée</kbd> pour valider.', k:'recadrer recadrage rogner couper crop cadre marges decouper'}]},
+ {s:'Modifier un objet', items:[
+  {t:'Sélectionner', tool:'select', d:'Touchez un objet, quel que soit l\'outil actif. Un appui hors de la page revient à la sélection.', k:'selectionner selection choisir cliquer toucher objet'},
+  {t:'Déplacer un objet', ic:'drag', d:'Sélectionnez-le, puis glissez-le.', k:'deplacer deplacement bouger glisser objet positionner'},
+  {t:'Redimensionner, déformer', ic:'resize', d:'Tirez les poignées. Coins d\'une image : proportions gardées. Coins d\'un texte : taille du texte. Flèche : une poignée à chaque bout.', k:'redimensionner redimensionnement taille agrandir reduire poignees etirer deformer'},
+  {t:'Couleur, épaisseur', ic:'color', d:'Sélectionnez l\'objet, puis choisissez dans la barre du haut.', k:'couleur epaisseur trait changer rouge noir bleu'},
+  {t:'Supprimer', ic:'trash', d:'Sélectionnez l\'objet, puis Supprimer en haut ou touche <kbd>Suppr</kbd>.', k:'supprimer suppression effacer enlever retirer objet'},
+  {t:'Annuler', ic:'undo', d:'Bouton Annuler en haut ou <kbd>Ctrl</kbd> + <kbd>Z</kbd> : retire le dernier objet posé.', k:'annuler annulation retour arriere defaire undo erreur'}]},
+ {s:'Chercher et terminer', items:[
+  {t:'Rechercher un mot', ic:'search', d:'Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d\'occurrences, les autres s\'estompent. Dans l\'éditeur, chaque occurrence est surlignée sur la page.', k:'rechercher chercher trouver mot texte'},
+  {t:'Terminer', ic:'check', d:'Bouton Terminé : retour aux pages. Rien n\'est écrit dans le fichier avant « Exporter le PDF ».', k:'terminer quitter fermer sortir enregistrer enregistrement sauvegarder exporter export'},
+  {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
+];
+const HELP_IC={
+  pages:'<path d="m10 7-5 5 5 5M14 7l5 5-5 5"/>',
+  zoom:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2M8.5 11h5M11 8.5v5"/>',
+  move:'<path d="M12 3.5v17M3.5 12h17"/><path d="m9.5 6 2.5-2.5L14.5 6M9.5 18l2.5 2.5 2.5-2.5M6 9.5 3.5 12 6 14.5M18 9.5l2.5 2.5-2.5 2.5"/>',
+  drag:'<rect x="4" y="4" width="10" height="10" rx="1.5"/><path d="M14 14 20 20M20 15v5h-5"/>',
+  resize:'<rect x="4" y="4" width="16" height="16" rx="1.5" stroke-dasharray="2.5 2.5"/><path d="M14 20h6v-6"/>',
+  color:'<circle cx="12" cy="12" r="8.5"/><circle class="fill" cx="8.5" cy="10" r="1.3"/><circle class="fill" cx="12" cy="7.5" r="1.3"/><circle class="fill" cx="15.5" cy="10" r="1.3"/>',
+  trash:'<path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l.9 13a1.5 1.5 0 0 0 1.5 1.4h7.2a1.5 1.5 0 0 0 1.5-1.4l.9-13"/>',
+  undo:'<path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  keys:'<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/>',
+  clip:'<rect x="4" y="4" width="16" height="16" rx="3" stroke-dasharray="3 3"/>'};
+function helpIcon(it){
+  const q=it.tool==='shape'?'#anShapeTool svg':it.tool==='crop'?'#anCrop svg':it.tool&&it.tool!=='clip'?`#anTools [data-tool="${it.tool}"] svg`:null;
+  const src=q&&document.querySelector(q);
+  return src ? src.outerHTML : `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${HELP_IC[it.ic||it.tool]||''}</svg>`;
+}
+/* --- recherche tolérante : mots indépendants, accents et mots vides ignorés, fautes et débuts de mot acceptés --- */
+const HELP_STOP=new Set('le la les l de du des d un une et ou a au aux en dans pour par sur avec comment je j veux voudrais veut peux peut on est ce cet cette ces qui que qu quoi mon ma mes son sa ses mettre faire fait il elle y ne pas plus'.split(' '));
+const hNorm=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/<[^>]+>/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+const hWords=t=>hNorm(t).split(' ').filter(w=>w&&!HELP_STOP.has(w));
+function hDist(a,b,max){ if(Math.abs(a.length-b.length)>max) return max+1;
+  let p2=null, p=[...Array(b.length+1).keys()];
+  for(let i=1;i<=a.length;i++){ const c=[i]; let lo=i;
+    for(let j=1;j<=b.length;j++){ let v=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));
+      if(p2&&i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1]) v=Math.min(v,p2[j-2]+1);
+      c.push(v); lo=Math.min(lo,v); }
+    if(lo>max) return max+1; p2=p; p=c; }
+  return p[b.length]; }
+function hTok(tok,words){ let best=0;
+  for(const w of words){
+    if(w===tok) return 3;
+    if(tok.length>=2&&w.startsWith(tok)) best=Math.max(best,2);
+    else{ let k=0; while(k<w.length&&k<tok.length&&w[k]===tok[k]) k++;
+      if(k>=Math.max(4,Math.min(w.length,tok.length)-1)) best=Math.max(best,1.5);     // même racine : supprimer, suppression
+      else if(tok.length>=4&&hDist(tok,w,tok.length>=7?2:1)<=(tok.length>=7?2:1)) best=Math.max(best,1); } }
+  return best; }
+const HELP_IDX=HELP.flatMap(sec=>sec.items.map(it=>({...it, sec:sec.s, tw:hWords(it.t), aw:[...new Set(hWords(it.t+' '+it.d+' '+it.k))]})));
+function helpSearch(q){
+  const toks=hWords(q); if(!toks.length) return null;
+  const scored=HELP_IDX.map(it=>{ let sc=0, hit=0;
+    for(const t of toks){ const a=hTok(t,it.tw)*2, b=hTok(t,it.aw), v=Math.max(a,b); if(v>0){ hit++; sc+=v; } }
+    return {it, sc, hit}; }).filter(r=>r.hit>0);
+  const full=scored.filter(r=>r.hit===toks.length).sort((x,y)=>y.sc-x.sc);
+  if(full.length) return {list:full.map(r=>r.it), near:false};
+  return {list:scored.sort((x,y)=>y.hit-x.hit||y.sc-x.sc).slice(0,6).map(r=>r.it), near:true};
+}
+let helpPinned=null;
+function helpUse(it){
+  if(it.tool==='crop') $('anCrop').click();
+  else setTool(it.tool==='shape'?$('anShapeTool').dataset.tool:it.tool);
+  if(innerWidth<900) toggleHelp(false);
+}
+function renderHelp(){
+  const list=$('anHelpList'), q=$('anHelpIn').value; list.innerHTML='';
+  $('anHelpClear').hidden=!q;
+  const card=(it)=>{ const a=document.createElement('article'); a.className='hitem'+(helpPinned===it?' pin':''); a.setAttribute('role','listitem');
+    a.innerHTML=`<span class="hic">${helpIcon(it)}</span><b></b><p>${it.d}</p>`; a.querySelector('b').textContent=it.t;
+    if(it.tool){ const u=document.createElement('button'); u.type='button'; u.className='tbtn secondary sm use'; u.textContent='Utiliser'; u.addEventListener('click',()=>helpUse(it)); a.appendChild(u); }
+    return a; };
+  const sec=t=>{ const h=document.createElement('div'); h.className='ahelp-sec'; h.textContent=t; list.appendChild(h); };
+  if(helpPinned){ list.appendChild(card(helpPinned)); return; }
+  const r=helpSearch(q);
+  if(!r){ for(const g of HELP){ sec(g.s); g.items.forEach(x=>list.appendChild(card(HELP_IDX.find(y=>y.t===x.t)))); } return; }
+  if(!r.list.length){ const e=document.createElement('div'); e.className='ahelp-empty'; e.textContent='Aucune fonction ne correspond. Essayez « surligner », « copier », « masquer » ou « recadrer ».'; list.appendChild(e); return; }
+  if(r.near) sec('Résultats approchants');
+  r.list.forEach(it=>list.appendChild(card(it)));
+}
+function toggleHelp(force){
+  const panel=$('anHelpPanel'), open=force===undefined?panel.hidden:force;
+  panel.hidden=!open; $('anHelp').setAttribute('aria-expanded',String(open));
+  if(open){ helpPinned=null; renderHelp(); if(matchMedia('(pointer:fine)').matches) setTimeout(()=>$('anHelpIn').focus(),30); }
+}
+$('anHelp').addEventListener('click',()=>toggleHelp());
+$('anHelpClose').addEventListener('click',()=>toggleHelp(false));
+$('anHelpIn').addEventListener('input',()=>{ helpPinned=null; renderHelp(); $('anHelpList').scrollTop=0; });
+$('anHelpClear').addEventListener('click',()=>{ $('anHelpIn').value=''; helpPinned=null; renderHelp(); $('anHelpIn').focus(); });
+$('anHelpIn').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); if($('anHelpIn').value||helpPinned){ $('anHelpIn').value=''; helpPinned=null; renderHelp(); } else toggleHelp(false); }
+  else if(e.key==='Enter'){ e.preventDefault(); const r=helpSearch($('anHelpIn').value); if(r&&r.list.length){ helpPinned=r.list[0]; renderHelp(); $('anHelpIn').blur(); } }
+});
 
 /* ============ conversion Word (bêta) ============
    Reprise telle quelle du laboratoire docx-labo.html. Principe : le navigateur compose les pages
