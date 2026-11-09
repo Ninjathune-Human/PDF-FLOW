@@ -6,23 +6,24 @@
 
 Outil de manipulation de PDF en un seul fichier HTML. Aucune installation, aucun compte, aucun serveur : tout le traitement se fait dans le navigateur, aucun fichier ni mot de passe ne transite par le réseau.
 
-Application : https://ninjathune-human.github.io/atelier-pdf/
+Application : https://ninjathune-human.github.io/PDF-FLOW/
 
 ## Fonctions
 
 | Fonction | Détail |
 |---|---|
-| Organiser | Sélection, réorganisation par glisser-déposer, suppression au clavier ou au bouton, toujours annulable |
+| Organiser | Un clic sélectionne une seule page, la pastille ronde cumule la sélection. Réorganisation par glisser-déposer, suppression confirmée puis annulable. Déposer un PDF sur le document ouvert ouvre le choix des pages à ajouter à la suite |
 | Ajouter | Pages d'autres PDF ou images (JPEG, PNG, HEIC, WebP), prévisualisées avant insertion : on coche les pages voulues |
 | Extraire | Sort la sélection courante dans un fichier séparé, sans altérer le document de travail |
 | Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm). S'ouvre d'elle-même sur un PDF protégé |
 | Rechercher | Plein texte dans la couche de texte du PDF et dans les mots reconnus par OCR, surlignage en grille et en annotation |
 | Convertir | **Bêta.** Document Word (.docx) converti en pages PDF vectorielles, texte sélectionnable, puis choix des pages à insérer |
-| Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot |
+| Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot. Accessible depuis le menu Éditer et depuis l'éditeur d'annotation. Dans l'éditeur, avec une image ou une zone copiée sélectionnée, le bouton recadre l'objet seul, à la manière de Photoshop et d'Office, sans perte : l'original reste et peut être rendu |
 | Pivoter | ±90°, par page ou par lot, depuis la barre de sélection |
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
-| Annoter | Stylo, surligneur, rectangle, ellipse, flèche, texte, image, correction par masquage. Vectoriel à l'export. Zoom, pincement et déplacement de la vue. Double-clic sur une vignette pour y entrer |
-| Rédiger | Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
+| Annoter | Stylo, surligneur fluo, formes (rectangle, ellipse, flèche, trait), texte avec police, taille, gras et italique, image ou page de PDF (vectorielle, choix de la page si le fichier en compte plusieurs). Chaque objet sélectionné se déforme par ses poignées. Vectoriel à l'export. Zoom, pincement et déplacement de la vue. Double-clic sur une vignette pour y entrer |
+| Copier une zone | Outil d'annotation : l'icône sert de presse-papiers. Vide, le tracé copie la zone, qui file se loger dans l'icône ; pleine, le tracé la pose, sur la même page ou une autre : la zone sort de l'icône, vient prendre place dans le cadre tracé, et l'icône se vide. Vectoriel, sans perte de qualité. Une fois posée, elle (comme une image) se déplace et se redimensionne : coins en gardant les proportions, poignées médianes pour étirer un seul côté |
+| Masque | Noir ou blanc. Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
 | OCR | Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant une rédaction |
@@ -30,20 +31,25 @@ Application : https://ninjathune-human.github.io/atelier-pdf/
 
 Le modèle est non destructif : recadrage, rotation, annotations, rédaction et OCR sont conservés en état et appliqués uniquement à l'export.
 
+Une page recadrée s'affiche recadrée partout : vignette (rendue plus grande pour rester nette) et éditeur d'annotation, limité à la zone conservée. Les annotations situées hors de cette zone restent stockées mais ne sont pas visibles dans l'éditeur.
+
 L'orientation du document d'origine est respectée partout, vignettes comme éditeur d'annotation. Un texte saisi sur une page pivotée s'écrit droit à l'écran et reste solidaire du papier si la page est pivotée ensuite.
 
 ## Usage
 
 Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
 
-La barre d'outils regroupe quatre menus, Modifier, Ajuster, Annoter et Convertir, un champ de recherche, puis Compresser et Exporter. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies.
+La barre d'outils regroupe trois menus, Éditer, Annoter et Convertir, un champ de recherche, puis Compresser et Exporter. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies.
 
 | Raccourci | Effet |
 |---|---|
 | Double-clic sur une vignette | Ouvre l'éditeur d'annotation sur cette page |
 | Suppr, ou Retour arrière | Supprime les pages sélectionnées, annulable |
 | Échap | Ferme la fenêtre ouverte, ou vide le champ de recherche |
-| Espace maintenu, ou bouton central | Déplace la vue dans l'éditeur d'annotation |
+| Espace maintenu, bouton central, deux doigts | Déplace la vue dans l'éditeur d'annotation |
+| Glisser une zone vide, page agrandie | Déplace la vue, outil de sélection actif |
+| Appui hors de la page | Revient à l'outil de sélection |
+| Appui simple sur un objet, quel que soit l'outil | Sélectionne l'objet ; un glisser trace |
 | Ctrl ou Cmd + molette, pincement | Zoome dans l'éditeur d'annotation |
 | Maj + molette | Défilement latéral dans l'éditeur d'annotation |
 
@@ -58,6 +64,7 @@ Chargées par CDN à l'exécution, pas de build :
 - [docx-preview](https://github.com/VolodymyrBaydalka/docxjs) 0.4.1 et [JSZip](https://stuk.github.io/jszip/) 3.10.1, lecture et composition des fichiers Word, chargés au premier usage
 - [@pdf-lib/fontkit](https://github.com/Hopding/fontkit) 1.1.1, intégration des polices dans le PDF converti
 - Polices [Arimo, Tinos et Carlito](https://fontsource.org/), licence OFL, jumelles métriques d'Arial, Times New Roman et Calibri
+- Police d'interface [Geist et Geist Mono](https://vercel.com/font), licence OFL, via @fontsource-variable 5.3.0
 
 Une connexion est donc nécessaire au premier chargement. Une version entièrement embarquée hors-ligne est une piste ouverte.
 

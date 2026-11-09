@@ -46,7 +46,7 @@ Annotations, mots OCR et zones de rédaction sont stockés en coordonnées norma
 
 `drawAnnots` et `drawOcrLayer` prennent un paramètre `offset` pour repositionner le contenu quand une page est rastérisée dans une page plus petite (compression, rédaction) par rapport à l'export normal. Un bug réel de positionnement sur des pages recadrées puis compressées a été corrigé à ce niveau.
 
-Rédaction et correction sont volontairement deux outils distincts, jamais fusionnés : la première est destructive au niveau du pixel, la seconde est un masque cosmétique réversible.
+Masque : un seul outil, noir ou blanc (blanc par défaut), destructif au niveau du pixel à l'export. L'ancien outil de correction (masque blanc cosmétique suivi d'un texte) a été retiré à la demande ; les annotations `white` déjà présentes restent rendues et exportées.
 
 ## Vue de l'éditeur d'annotation
 
@@ -62,7 +62,7 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 ## Interface : règles de conduite
 
-**Pas de mode.** L'outil est un éditeur. Déverrouiller n'est pas un onglet mais une modale du menu Pages, comme Reconnaissance de texte et Compresser. Ne pas réintroduire de sélecteur de mode.
+**Pas de mode.** L'outil est un éditeur. Déverrouiller n'est pas un onglet mais une modale du menu Éditer, comme Reconnaissance de texte et Compresser. Ne pas réintroduire de sélecteur de mode.
 
 **Jamais de boîte système.** `alert()` et `confirm()` sont proscrits. Tout message passe par `notify(message, {kind, action})` : zone discrète, non bloquante, annoncée aux lecteurs d'écran, au-dessus des modales. Chaque message d'erreur dit ce qui s'est passé et ce qu'il est possible de faire.
 
@@ -70,9 +70,9 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 **Toujours une issue.** Une commande lancée sans ce qu'elle requiert, une extraction sans sélection par exemple, affiche un message, jamais un silence. Un état vide porte l'action qui le remplit.
 
-**Barres.** Une seule hauteur par barre, via une variable locale, 36 px au pointeur fin et 44 px au doigt. Une seule taille de texte, 15 px. Deux graisses : 500 pour ce qui agit, 400 en gris pour ce qui étiquette.
+**Barres.** Trois hauteurs de commande, `--h-sm` 32 px, `--h-md` 36 px, `--h-lg` 44 px, portées à 40, 44 et 48 px au doigt. Texte de 14 px dans 36 px : c'est cette proportion qui rend les boutons justes. Deux graisses : 500 pour ce qui agit, 400 en gris pour ce qui étiquette.
 
-**Échelle typographique.** Cinq crans d'interface, 11, 13, 14, 15 et 17 px, plus 20 px pour les titres de fenêtre. Tout en rem. Aucune taille intermédiaire.
+**Échelle typographique.** Six crans d'interface, 11, 12, 13, 14, 15 et 17 px, en rem. Police Geist (variable, @fontsource-variable 5.3.0) pour tout ; Geist Mono réservée aux numéros de page, aux étiquettes en capitales et aux légendes numérotées. Les compteurs restent en Geist à chiffres tabulaires.
 
 **Propriétés logiques.** `margin-inline-start` et consorts, jamais `margin-left`. Le fichier n'en contient plus aucune.
 
@@ -124,21 +124,27 @@ Ne jamais deviner une API tierce. Les points d'API pdf-lib et tesseract.js sont 
 
 ## Système de design
 
-Variables CSS : `--surface`, `--panel`, `--well`, `--ink`, `--muted`, `--hair`, `--hair-strong`, `--accent` (#0E6B72), `--accent-deep`, `--accent-tint`, `--ok`, `--warn`.
+Neutres zinc, une seule couleur d'action : l'encre. Les pages portent la couleur, l'interface reste en retrait.
 
-- Cibles tactiles unifiées à 32 px
-- Icônes au trait, épaisseur 1,4 à 1,6, `currentColor`, angles arrondis
-- Bordure en pointillés : convention « provisoire, éditable » (poignées de recadrage, masquage, emplacement de dépose)
-- Remplissage noir plein : exclusif à la rédaction
+Variables : `--bg`, `--surface`, `--subtle`, `--line`, `--line-strong`, `--ink`, `--ink-2`, `--muted`, `--faint`, `--primary` (encre, inversée en sombre), `--on-primary`, `--danger`, `--ok`, `--canvas` et `--dot` pour la table de travail, `--paper-accent` (bleu) pour tout ce qui se pose sur le papier. Les anciens noms (`--panel`, `--well`, `--accent`, `--warn`…) restent des alias.
+
+- Commandes autonomes en capsule ; commandes imbriquées (menu, palette d'outils) en arrondi concentrique au conteneur : 14 = 8 + 6, 14 = 9 + 5
+- Action principale : fond encre, texte clair. Secondaire : fond blanc, filet. Discrète : sans fond, survol gris
+- Icônes au trait, grille 24, classe `.i`, trait de 1,5 px à l'écran quelle que soit la taille (`vector-effect:non-scaling-stroke`), `currentColor`
+- Bordure en pointillés : convention « provisoire, éditable » (zone de dépôt, poignées, emplacement de dépose)
+- Remplissage noir plein dans une icône : exclusif à la rédaction
+- Vignettes : la page garde sa forme réelle, ombre portée par `drop-shadow` sur la case ; la sélection cerne la case, pas la page
+- Éditeur d'annotation plein écran : en-tête, bande de propriétés, table de travail pointillée. La taille de la page se mesure sur la table (`clientWidth` moins les marges), jamais sur la fenêtre
+- Copie de zone : l'état de `anClip`, et lui seul, décide. Vide = prélèvement (`clipsrc`), plein = pose (`clipdst`), quelle que soit la page ; la pose le vide. Rappeler l'outil ne le vide pas. `updateClipIcon` reflète l'état (classe `full`, miniature, infobulle), `flyToClip` et `flyFromClip` animent l'envol dans les deux sens via `clipFly`, élément volant toujours dimensionné côté page pour que liseré et arrondi restent fins
+- Barre contextuelle : `#anShapes` (formes, l'icône `#anShapeTool` porte la forme courante dans `data-tool`), `#anSizeWrap` regroupe les options de texte (police `anFont`, `anBold`, `anItalic`, taille), `#anWWrap` l'épaisseur. Texte : familles `FONT_CSS` à l'écran, `FONT_STD` (polices standard pdf-lib) à l'export, intégrées une fois par document. Un appui sur une option ne retire pas le focus de la saisie
+- Appui sur un objet avec un outil de tracé : `hitIndex` à l'appui ; au relâcher, moins de 5 px de déplacement = `selectHit`, sinon tracé normal. Texte et image sans fichier en attente décident dès l'appui
+- Insertion d'un PDF par l'outil image : `importPdfObject` enregistre la source (`addSource`), le sélecteur de pages passe en choix unique (`openAddPicker(..., pick)`, classe `over`), `preparePdfPending` rend un aperçu transparent (`background` de pdf.js) ; la pose crée une annotation `clip` sur la page entière, d'où export vectoriel, poignées et recadrage hérités
+- Recadrage d'objet, non destructif : l'objet garde son original (`src`, et `box0` pour une zone copiée) et un cadre `cr` normalisé dans l'image. En édition, `anObjCrop={pg,i,full,n}` : `full` est le rectangle de l'image entière sur la page, `n` le cadre dans `full` ; `cropView` affiche l'objet entier. `cropToImage` et `imageToCrop` passent du repère affiché à celui de l'image selon `rot`. Dans le cadre, le glisser déplace l'image dessous (le cadre reste). Validation : `data` redécoupée depuis `src`, `box` recalculé depuis `box0`, rectangle posé sur le cadre. Changer d'outil, de page, sortir, double-cliquer ou appuyer hors du cadre valide ; Échap annule
+- Éditeurs (`#annotModal`, `#cropModal`) : `user-select:none` et `selectstart` annulé hors champs, sinon Safari iPad sélectionne le texte de l'interface pendant un glisser
+- Poignées dessinées petites (`.an-h`, sans événement) doublées d'une prise invisible (`.an-hit`, porteuse de `data-h`), traits en `non-scaling-stroke`
+- Poignées : `handlesOf` choisit le jeu (extrémités `p0`/`p1` pour trait et flèche, quatre coins pour le texte, huit points ailleurs), `resizeAnnot` applique : coins proportionnels pour image et zone copiée, libres pour le reste, mise à l'échelle des points pour les tracés, du corps pour le texte
+- Surligneur : nuancier fluo `#anFluo` distinct, couleur `anHlColor`, opacité `HL_OPACITY` et mode produit partout (SVG, vignette, `BlendMode.Multiply` de pdf-lib)
+- Infobulles : un seul élément `#tip`, en position fixe, géré par délégation. Tout bouton sans texte visible affiche `data-tip`, sinon `aria-label`. Pas d'attribut `title` sur ces boutons, il doublerait l'infobulle. Le doigt n'en déclenche aucune
+- Au téléphone : menus en feuille basse, palette d'outils en bas, au pouce
+- Le recadrage s'ouvre aussi depuis l'éditeur (bouton `anCrop`, hors des outils à mode) : même fenêtre, passée au-dessus par la classe `over`. Échap ne ferme que le recadrage (`stopImmediatePropagation`), et l'éditeur recharge sa page à la fermeture
 - Une fonction, une seule façon de l'appeler. Minimiser les boutons
-
-## Piège CSS déjà rencontré
-
-Un sélecteur d'ID (`#intake{display:block}`) a un jour écrasé silencieusement le `display:flex` d'une classe posée sur le même élément. Un ID l'emporte toujours sur une classe, quel que soit l'ordre dans la feuille. Vérifier ce type de collision si un flex ou une grille ne s'affiche pas comme prévu.
-
-## Pistes ouvertes
-
-Conversion Word : trames à motif, zones de texte, polices Cousine pour Courier New. Recadrage orienté comme le reste de l'interface. Rendu des vignettes au fil du défilement pour les longs documents.
-
-
-Tampon de page (numérotation, filigrane, cartouche), PDF vers images, protection par mot de passe, changement de format de page, insertion d'image dans les annotations, métadonnées, superposition et comparaison d'indices, version embarquée hors-ligne.
