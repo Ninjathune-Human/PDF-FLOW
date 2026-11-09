@@ -2,6 +2,36 @@
 
 ## 9 novembre 2026
 
+### Hors ligne
+
+- Depuis l'adresse publiée, l'outil fonctionne sans connexion après la première visite : nouveau fichier `sw.js`, qui garde l'application, pdf-lib, pdf.js et les polices, puis chaque module chargé à la demande (OCR, déverrouillage, Word) après son premier usage. Le pied de page l'indique. Mises à jour reçues dès qu'on est de nouveau en ligne.
+
+### Grille
+
+- Les vignettes se calculent au fil du défilement, un écran d'avance, au lieu de toutes à l'ouverture : un long document s'affiche aussitôt. Une vignette pas encore affichée n'est pas recalculée à la sortie de l'éditeur, elle le sera à jour en arrivant à l'écran.
+
+### Éditeur
+
+- Le double-clic sur un texte pour le modifier, et sur un objet en cours de recadrage pour valider, fonctionne de nouveau, à la souris comme au doigt et au Pencil : il est reconnu sur les appuis eux-mêmes, le premier clic redessinant l'objet et privant le navigateur de son double-clic.
+- Changement de page au clavier : ← →, Page précédente, Page suivante, en suivant le filtre de recherche comme les flèches de l'en-tête.
+- Dans le champ Rechercher de l'éditeur, Entrée mène à l'occurrence suivante, Maj + Entrée à la précédente, en changeant de page si besoin et en bouclant au bout. L'occurrence courante ressort en orangé, le compteur indique sa position, et la vue agrandie se recentre sur elle. Le cadre des occurrences garde la même finesse à tous les zooms.
+- Les touches tapées dans un champ de l'éditeur (taille du texte notamment) n'agissent plus sur la page : Retour arrière dans Taille supprimait l'objet sélectionné.
+- Historique complet, page par page : Annuler défait la dernière modification, quelle qu'elle soit (tracé, déplacement, poignées, couleur, épaisseur, texte, recadrage d'objet, suppression), et Rétablir la refait (flèche voisine, Ctrl ou Cmd + Maj + Z, Ctrl + Y). Avant, Annuler retirait seulement le dernier objet posé : après une suppression, il effaçait un autre objet au lieu de rendre le supprimé.
+- Pendant un recadrage d'objet, Annuler abandonne le recadrage.
+- En-tête allégé : Annuler, Rétablir et Supprimer en icônes seules, avec infobulle, suivies du mode d'emploi, juste avant Terminé.
+
+### Barre d'outils
+
+- L'accueil ouvre aussi une image ou un document Word, converti en PDF. Plusieurs fichiers déposés : le premier ouvre la session, les autres passent par le choix des pages.
+- Un document Word ou une image déposés sur le document ouvert s'y ajoutent, par le même choix des pages. Le Word n'exige plus de passer par Convertir.
+
+- La suppression de pages n'est plus confirmée : elle s'exécute aussitôt et le message propose Annuler, comme le veut la règle « annuler plutôt que confirmer ».
+- Échap ferme la fenêtre Reconnaissance de texte, sauf pendant l'analyse.
+- Après un déverrouillage, « Éditer ce PDF » devient « Ouvrir ce PDF », « Éditer » désignant désormais l'éditeur.
+- Accueil et bannière : « 02 Annoter » devient « 02 Éditer ». Dans l'éditeur, le champ de recherche s'élargit pour que le compteur ne soit plus coupé.
+
+- Le menu Éditer devient Modifier. Annoter devient Éditer, un bouton direct qui ouvre l'éditeur : son seul autre article, la reconnaissance de texte, passe dans Convertir, avant Document Word.
+
 ### Dépôt
 
 - Bannière redessinée sur la nouvelle identité : neutres zinc, table de travail pointillée, cadre de rognage. Texte en Geist vectorisé, rendu identique sans police installée.
@@ -9,6 +39,8 @@
 
 ### Recherche
 
+- Le filtre sélectionne les pages trouvées, qui gardent leur jaune : il suffit de taper le mot puis d'appuyer sur Éditer pour n'ouvrir qu'elles. Vider le champ rend la sélection d'avant.
+- Dans l'éditeur, pendant une recherche, les flèches de page ne parcourent que les pages qui contiennent le mot ; le sélecteur passe au jaune et compte les pages trouvées.
 - Les pages qui contiennent le mot cherché ressortent sur la grille : fond jaune, liseré, pastille du nombre d'occurrences ; les autres s'estompent. Surlignage plus franc sur les vignettes.
 - Croix ✕ dans les champs de recherche, grille et éditeur : vide la recherche, retire les marques et rend la main au clavier.
 - Dans l'éditeur, chaque occurrence est surlignée en jaune cerné d'orange, et s'annonce d'un rebond à l'ouverture de la page.

@@ -4,7 +4,7 @@ Contrat architectural persistant. À lire avant toute modification.
 
 ## Forme
 
-Un seul fichier, `atelier-pdf.html` : HTML, CSS et JS en ligne, aucune étape de build, aucun npm. `index.html` n'est qu'un redirecteur pour GitHub Pages.
+Un seul fichier, `atelier-pdf.html` : HTML, CSS et JS en ligne, aucune étape de build, aucun npm. `index.html` n'est qu'un redirecteur pour GitHub Pages. `sw.js`, facultatif, ne sert que l'adresse publiée (pas `file://`) : il garde l'application, réseau d'abord, et les bibliothèques du CDN, cache d'abord, celles chargées à la demande à leur premier usage. Changer `CACHE` dans `sw.js` à chaque changement de version d'une bibliothèque ou de la liste `CORE`.
 
 Bibliothèques chargées par CDN à l'exécution : pdf-lib 1.17.1 et pdf.js 3.11.174 en balise `<script>` UMD, qpdf-wasm et tesseract.js 5 par `import()` dynamique à la demande.
 
@@ -52,7 +52,7 @@ Masque : un seul outil, noir ou blanc (blanc par défaut), destructif au niveau 
 
 Zoom et déplacement sont purement visuels, portés par une transformation sur la scène. Aucune coordonnée stockée n'est touchée. Le canevas est regénéré par pdf.js à la définition correspondant au zoom, avec temporisation, jeton d'annulation en cas de changement de page, et plafond à 4200 px de grand côté pour tenir dans la mémoire d'un iPad.
 
-Les vignettes sont rendues sur-échantillonnées, taille de case multipliée par la densité d'écran : c'est la réduction opérée par le navigateur qui lisse les traits fins des plans.
+Les vignettes sont rendues au fil du défilement : `thumbIO`, un `IntersectionObserver` à un écran de marge, lance `renderThumb` à l'approche de chaque carte ; `renderGrid` le déconnecte avant de reconstruire, et `refreshCard` ignore une carte jamais affichée. Une vignette pas encore rendue n'a pas de `.thumbrot` : `paintFind` la marquera au rendu. Elles sont rendues sur-échantillonnées, taille de case multipliée par la densité d'écran : c'est la réduction opérée par le navigateur qui lisse les traits fins des plans.
 
 ## Apparence
 
@@ -62,11 +62,13 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 ## Interface : règles de conduite
 
-**Pas de mode.** L'outil est un éditeur. Déverrouiller n'est pas un onglet mais une modale du menu Éditer, comme Reconnaissance de texte et Compresser. Ne pas réintroduire de sélecteur de mode.
+**Pas de mode.** L'outil est un éditeur. Déverrouiller n'est pas un onglet mais une modale du menu Modifier, comme Reconnaissance de texte (menu Convertir) et Compresser. Barre : menu Modifier, bouton direct Éditer (`btnAnnot`, ouvre l'éditeur, pas de chevron puisqu'il ne déplie rien), menu Convertir. Ne pas réintroduire de sélecteur de mode.
 
 **Jamais de boîte système.** `alert()` et `confirm()` sont proscrits. Tout message passe par `notify(message, {kind, action})` : zone discrète, non bloquante, annoncée aux lecteurs d'écran, au-dessus des modales. Chaque message d'erreur dit ce qui s'est passé et ce qu'il est possible de faire.
 
 **Annuler plutôt que confirmer.** Une action réversible ne se confirme pas : elle s'exécute et `notify` propose « Annuler ». La suppression de pages prend un instantané de l'ordre et de la sélection ; les objets de page étant conservés par référence, l'annulation restitue tout, annotations et OCR compris. On ne confirme que l'irréversible.
+
+**Historique de l'éditeur.** Toute modification d'annotation passe d'abord par `checkpoint()`, qui empile un instantané de `pg.annots` (pile `u`, rétablissements `r`, par page dans la `WeakMap` `anHist`, 100 pas). `cloneAnnot` copie les structures mais partage les chaînes : une image en data URL n'est jamais dupliquée. Une clé (`'w'+i`, `'s'+i`) regroupe les réglages continus d'un même objet en un seul pas, remise à zéro à l'évènement `change`. Déplacement et poignées : l'instantané est reconstruit au relâcher depuis `anDrag.orig`, et seulement s'il y a eu mouvement. Recadrage d'objet : instantané pris dans `startObjCrop`, empilé à la validation si le cadre a changé. Toute nouvelle commande qui modifie une annotation appelle `checkpoint()` avant.
 
 **Toujours une issue.** Une commande lancée sans ce qu'elle requiert, une extraction sans sélection par exemple, affiche un message, jamais un silence. Un état vide porte l'action qui le remplit.
 
@@ -78,11 +80,11 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 **Préférences système.** `prefers-reduced-transparency`, `prefers-contrast` et `prefers-reduced-motion` sont traités. Toute nouvelle surface en verre doit s'ajouter aux trois blocs.
 
-**Raccourcis et saisie.** Un raccourci à touche unique s'efface dès que le focus est dans un champ, sinon il avale la frappe. `typingInAnnot()` sert de garde dans l'éditeur d'annotation.
+**Raccourcis et saisie.** `typingInAnnot()` couvre tout champ de saisie (zone de texte, champ autre que bouton, case, curseur), pas une liste d'identifiants. Les flèches et Page précédente / suivante changent de page par `anGo`, sauf sur le curseur d'épaisseur. Un raccourci à touche unique s'efface dès que le focus est dans un champ, sinon il avale la frappe. `typingInAnnot()` sert de garde dans l'éditeur d'annotation.
 
 ## Recherche
 
-Marquage des pages : `markFindCard` pose `data-find` (nombre d'occurrences) sur la carte, `grid.dataset.finding` estompe les autres ; `clearFindMarks` à chaque nouvelle recherche, `renderGrid` réapplique. Dans l'éditeur, `findPulse` fait rebondir les occurrences une seule fois, à l'arrivée sur la page ou au résultat d'une recherche, jamais à chaque rendu.
+Marquage des pages : `markFindCard` pose `data-find` (nombre d'occurrences) sur la carte, `grid.dataset.finding` estompe les autres ; `clearFindMarks` à chaque nouvelle recherche, `renderGrid` réapplique. Le filtre sélectionne : `selectFound` met la sélection sur les pages trouvées à la fin de chaque balayage (aucune si rien n'est trouvé), après avoir gardé la sélection d'avant dans `findSelBase` ; `restoreSelection` la rend quand le champ se vide. Une page trouvée et sélectionnée garde son jaune, la pastille noire dit la sélection. Dans l'éditeur, filtre de navigation : tant que `findHits` n'est pas vide, `anStep` ne mène qu'aux pages trouvées, `updateAnNav` compte parmi elles et teinte le sélecteur (`data-filter`). Occurrence courante : `findCur={pgId,h}` (h, l'objet même de `findHits`), remis à zéro par chaque recherche ; `occOf(pg)` donne les occurrences visibles dans la zone conservée, triées en ordre de lecture ; `stepOcc(back)`, appelé par Entrée et Maj + Entrée dans `anFindIn`, boucle sur les pages de l'éditeur et recentre la vue agrandie. `findPulse` fait rebondir les occurrences une seule fois, à l'arrivée sur la page ou au résultat d'une recherche, jamais à chaque rendu.
 
 Les résultats vivent dans `findHits`, table indexée par identifiant de page, hors du modèle : ils ne partent jamais à l'export. Sources interrogées : couche de texte pdf.js, puis mots OCR. Position déduite au prorata des caractères dans chaque fragment. Un jeton d'annulation abandonne un balayage dès la frappe suivante. Les deux champs, grille et annotation, partagent un seul terme.
 
@@ -97,6 +99,8 @@ Une image insérée dans l'éditeur est une annotation de type `image`, stockée
 `currentBytes` conserve les octets du document ouvert. Indispensable : quand pdf.js refuse un PDF faute de mot de passe, aucune source n'est enregistrée, et le déverrouillage n'aurait rien à traiter.
 
 ## Ajout de pages
+
+Un seul chemin de lecture, `fileToPdf` : image en page (`imageToPdfBytes`), Word composé par `WordConvert` (bêta), PDF tel quel. Il sert à l'accueil (`onFile`, le premier fichier déposé ouvre la session, les suivants passent par l'ajout), au dépôt sur un document ouvert, à Modifier › Ajouter et à Convertir › Document Word, qui appellent tous `addFiles`. Les échecs passent par `readFailMsg`.
 
 En deux temps : chargement et prévisualisation, puis insertion des seules pages cochées, toutes cochées par défaut. Vignettes rendues séquentiellement. Les sources entièrement écartées sont retirées de `sources` à la fermeture.
 
@@ -150,4 +154,5 @@ Variables : `--bg`, `--surface`, `--subtle`, `--line`, `--line-strong`, `--ink`,
 - Au téléphone : menus en feuille basse, palette d'outils en bas, au pouce
 - Le recadrage s'ouvre aussi depuis l'éditeur (bouton `anCrop`, hors des outils à mode) : même fenêtre, passée au-dessus par la classe `over`. Échap ne ferme que le recadrage (`stopImmediatePropagation`), et l'éditeur recharge sa page à la fermeture
 - Mode d'emploi : tableau `HELP` (sections, fiches `t`, `d`, mots-clés `k`, `tool` pour le bouton Utiliser), panneau `#anHelpPanel`. Recherche `helpSearch` : normalisation sans accents, mots vides retirés, mot exact 3, début de mot 2, même racine 1,5, faute de frappe (distance de Damerau-Levenshtein 1, ou 2 au-delà de six lettres) 1, titre compté double. Toute nouvelle fonction de l'éditeur ajoute sa fiche, avec ses synonymes, et `MODE-EMPLOI.md` se régénère depuis `HELP`
+- Double appui : `isDoubleTap` le reconnaît dans le `pointerdown` de la scène (moins de 400 ms, moins de 10 px), `doubleTap` valide un recadrage d'objet ou ouvre un texte en modification. Pas d'évènement `dblclick` sur la scène : le premier appui redessine l'objet sous le pointeur, et le navigateur ne l'émet plus
 - Une fonction, une seule façon de l'appeler. Minimiser les boutons

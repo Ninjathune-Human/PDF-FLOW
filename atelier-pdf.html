@@ -199,6 +199,8 @@
   .mbtn .chev .i{width:14px;height:14px}
   .mbtn[aria-expanded="true"]{background:var(--subtle);color:var(--ink)}
   .mbtn[aria-expanded="true"] .chev{transform:rotate(180deg);color:var(--ink)}
+  /* commande directe parmi les menus (Éditer) : pas de chevron, marges symétriques */
+  .mbtn:not([aria-haspopup]){padding-inline:13px}
   .menu{position:absolute;left:0;top:calc(100% + 6px);z-index:20;min-width:252px;max-width:min(92vw,360px);padding:6px;border-radius:var(--r-lg);background:var(--surface);
     box-shadow:0 0 0 1px var(--line),var(--shadow-lg);transform-origin:top left;animation:pop .16s var(--ease)}
   @keyframes pop{from{opacity:0;transform:translateY(-4px) scale(.98)}}
@@ -223,7 +225,7 @@
   :root[data-theme="dark"] .pcard[data-find]{background:rgba(255,212,0,.13);box-shadow:inset 0 0 0 1.5px rgba(255,212,0,.7)}
   .pcard[data-find]::after{content:attr(data-find);position:absolute;top:8px;inset-inline-end:8px;z-index:3;min-width:22px;height:22px;padding:0 7px;border-radius:var(--pill);
     background:#FFD400;color:#3A2E00;font-family:var(--mono);font-size:var(--fs-2xs);font-weight:600;line-height:22px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.2)}
-  .pcard[data-find][data-sel="1"]{box-shadow:inset 0 0 0 1.5px var(--ink)}
+  .pcard[data-find][data-sel="1"]{background:#FFF7CC;box-shadow:inset 0 0 0 1.5px #F2C200}
   .grid[data-finding="1"] .pcard:not([data-find]) .thumbwrap{opacity:.32;filter:grayscale(1) drop-shadow(0 0 .6px rgba(9,9,11,.45))}
   .grid[data-finding="1"] .pcard:not([data-find]) .pnum{opacity:.5}
 
@@ -320,6 +322,8 @@
   .dhead .nav{display:flex;gap:2px;align-items:center;color:var(--muted);font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
   .iconbtn{width:var(--h-sm);height:var(--h-sm);flex:0 0 auto;border:0;border-radius:var(--pill);background:none;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;transition:background .15s,color .15s}
   .iconbtn:hover{background:var(--subtle);color:var(--ink)}
+  .iconbtn.danger{color:var(--danger)}
+  .iconbtn.danger:hover{background:var(--danger-bg);color:var(--danger)}
   .iconbtn:disabled{opacity:.3;cursor:not-allowed;background:none}
   .dbody{display:flex;gap:0;min-height:0;flex:1}
   .stagewrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;
@@ -406,6 +410,11 @@
   .pager .iconbtn{width:calc(var(--h-md) - 4px);height:calc(var(--h-md) - 4px)}
   .pager .iconbtn:hover:not(:disabled){background:var(--surface);box-shadow:var(--shadow-xs)}
   .pager #anPos{min-width:6ch;text-align:center;font-size:var(--fs-sm);font-weight:500;color:var(--ink-2);font-variant-numeric:tabular-nums}
+  /* filtre de mots actif : le sélecteur prend la teinte des pages trouvées, les flèches ne parcourent qu'elles */
+  .pager[data-filter]{background:#FFF7CC;box-shadow:inset 0 0 0 1.5px #F2C200}
+  .pager[data-filter] #anPos{color:#3A2E00}
+  :root[data-theme="dark"] .pager[data-filter]{background:rgba(255,212,0,.13);box-shadow:inset 0 0 0 1.5px rgba(255,212,0,.7)}
+  :root[data-theme="dark"] .pager[data-filter] #anPos{color:#FFE680}
   /* une seule ligne à taille normale ; à texte agrandi la barre défile au lieu de perdre des commandes */
   .abar{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-height:54px;padding:8px 14px 8px 16px;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none}
   .abar::-webkit-scrollbar{display:none}
@@ -417,8 +426,9 @@
   :root[data-theme="dark"] .sw[aria-pressed="true"]{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 0 0 2px var(--subtle),0 0 0 3.5px var(--ink)}
   .abar .field{gap:10px;flex:0 0 auto;white-space:nowrap;font-size:var(--fs-sm);font-weight:450;color:var(--muted)}
   .abar .field input[type=number]{height:var(--h-sm);width:56px}
-  .abar .findfield{height:var(--h-sm);width:200px;margin:0}
-  .abar .findfield input{width:100%}
+  /* le champ s'élargit pour que le compteur reste lisible en entier */
+  .abar .findfield{height:var(--h-sm);width:auto;min-width:200px;flex:0 0 auto;margin:0}
+  .abar .findfield input{width:10ch;flex:1 1 auto}
   /* choix en pastilles : formes, police, gras et italique */
   .segi{display:flex;gap:2px;flex:0 0 auto;padding:3px;border-radius:var(--pill);background:var(--subtle);box-shadow:inset 0 0 0 1px var(--line)}
   .segi button{min-width:calc(var(--h-sm) - 6px);height:calc(var(--h-sm) - 6px);padding:0 8px;border:0;border-radius:var(--pill);background:none;color:var(--ink-2);
@@ -442,6 +452,8 @@
   input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 0 0 4px var(--ring)}
   /* surlignage de recherche dans la scène d'annotation, sous les annotations */
   .findhl{fill:#FFD400;fill-opacity:.6;stroke:#F0A000;stroke-width:1.5;vector-effect:non-scaling-stroke;pointer-events:none;mix-blend-mode:multiply}
+  /* occurrence courante, atteinte par Entrée : orangée, trait plus franc */
+  .findhl.cur{fill:#FF8A00;fill-opacity:.55;stroke:#D45F00;stroke-width:2.5}
   /* à l'arrivée sur la page, chaque occurrence s'annonce d'un rebond, comme la recherche de Safari */
   .findhl.pulse{transform-box:fill-box;transform-origin:center;animation:findPulse .7s cubic-bezier(.3,1.6,.5,1) 1}
   @keyframes findPulse{0%{transform:scale(2.2);opacity:0}60%{transform:scale(.92);opacity:1}100%{transform:scale(1)}}
@@ -523,17 +535,17 @@
     .dialog.editor{border-radius:0;box-shadow:none}
     .ehead{padding-top:max(10px,env(safe-area-inset-top));padding-inline-start:14px}
     .etitle .ekicker{display:none}
-    .ehead .lbl{display:none}
-    .ehead .tbtn.ghostlbl{width:var(--h-md);padding:0}
     .ehead .vsep{display:none}
     .abody{flex-direction:column-reverse}
     .atools{flex-direction:row;align-self:stretch;margin:0;border-radius:0;box-shadow:0 -1px 0 var(--line);overflow-x:auto;scrollbar-width:none;padding:6px 10px max(6px,env(safe-area-inset-bottom))}
     .atools::-webkit-scrollbar{display:none}
     .asep{width:1px;height:auto;margin:6px 4px}
     .astagewrap{padding:14px}
-    .abar .findfield{width:150px}
+    .abar .findfield{min-width:150px}
   }
-  @media (max-width:420px){ .etitle{display:none} .ehead{gap:6px} }
+  @media (max-width:420px){ .etitle{display:none} .ehead{gap:2px} #anClose{padding-inline:12px}
+    /* quatre commandes en icônes à côté du sélecteur de page : on resserre pour tenir sur un téléphone */
+    .ehead .iconbtn{width:36px} .ehead .pager .iconbtn{width:30px} }
   @media (pointer:coarse){
     .atool{width:44px;height:44px}
     .sw{width:30px;height:30px}
@@ -579,6 +591,7 @@
     .menus{display:flex;flex:1 0 100%;gap:2px;overflow-x:auto;scrollbar-width:none;margin:0 -4px}
     .menus::-webkit-scrollbar{display:none}
     .mbtn{flex:0 0 auto;padding:0 8px 0 11px}
+    .mbtn:not([aria-haspopup]){padding-inline:11px}
     .toolbar .findfield{flex:1;margin:0}
     .toolbar .findfield input{width:100%}
     .toolbar>.spacer{display:none}
@@ -618,17 +631,17 @@
 
     <div class="panel">
       <!-- Intake -->
-      <label id="intake" class="plate" for="file" tabindex="0" role="button" aria-label="Déposer ou choisir un fichier PDF">
+      <label id="intake" class="plate" for="file" tabindex="0" role="button" aria-label="Déposer ou choisir un PDF, une image ou un document Word">
         <span class="glyph" aria-hidden="true">
           <svg class="i" viewBox="0 0 24 24"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/><path d="M12 17.5V11M9.5 13.5 12 11l2.5 2.5"/></svg>
         </span>
         <span class="big">Choisir un fichier</span>
-        <span class="small">ou déposez un PDF ici</span>
-        <input type="file" id="file" accept="application/pdf,.pdf">
+        <span class="small">ou déposez un PDF, une image ou un document Word</span>
+        <input type="file" id="file" accept="application/pdf,.pdf,image/*,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
       </label>
       <ul class="legend" aria-label="Fonctions">
         <li><span class="mono">01</span><b>Organiser</b><span>Trier, pivoter, extraire, fusionner.</span></li>
-        <li><span class="mono">02</span><b>Annoter</b><span>Stylo, formes, texte, images.</span></li>
+        <li><span class="mono">02</span><b>Éditer</b><span>Stylo, formes, texte, images.</span></li>
         <li><span class="mono">03</span><b>Recadrer</b><span>Zone libre ou détection du contenu.</span></li>
         <li><span class="mono">04</span><b>Masquer</b><span>Rédaction définitive, OCR.</span></li>
         <li><span class="mono">05</span><b>Compresser</b><span>Trois niveaux pour les scans.</span></li>
@@ -648,7 +661,7 @@
         <div class="toolbar">
           <div class="menus">
           <div class="menuwrap">
-            <button class="mbtn" id="mPages" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuPages">Éditer <span class="chev" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button>
+            <button class="mbtn" id="mPages" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuPages">Modifier <span class="chev" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button>
             <div class="menu" id="menuPages" hidden>
               <button class="tbtn" id="btnAdd" type="button" title="Ajouter des pages PDF ou des images"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/><path d="M12 11v6M9 14h6"/></svg>Ajouter des pages…</button>
               <button class="tbtn" id="btnBlank" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/></svg>Insérer une page blanche</button>
@@ -660,16 +673,11 @@
               <button class="tbtn" id="btnUnlock" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 7.7-1.5"/></svg>Déverrouiller…</button>
             </div>
           </div>
-          <div class="menuwrap">
-            <button class="mbtn" id="mContent" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuContent">Annoter <span class="chev" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button>
-            <div class="menu" id="menuContent" hidden>
-              <button class="tbtn" id="btnAnnot" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/><path d="m14.5 5.5 3 3"/></svg>Ouvrir l'éditeur…</button>
-              <button class="tbtn" id="btnOcr" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><path d="M8 9.5h8M8 12.5h8M8 15.5h5"/></svg>Reconnaissance de texte…</button>
-            </div>
-          </div>
+          <button class="mbtn" id="btnAnnot" type="button">Éditer</button>
           <div class="menuwrap">
             <button class="mbtn" id="mConvert" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menuConvert">Convertir <span class="chev" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></button>
             <div class="menu" id="menuConvert" hidden>
+              <button class="tbtn" id="btnOcr" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><path d="M8 9.5h8M8 12.5h8M8 15.5h5"/></svg>Reconnaissance de texte…</button>
               <button class="tbtn" id="btnWord" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/><path d="m8.5 11.5 1.3 5.5 2.2-4 2.2 4 1.3-5.5"/></svg>Document Word…<span class="beta">Bêta</span></button>
             </div>
           </div>
@@ -710,7 +718,7 @@
     </div>
 
     <footer class="foot">
-      <p class="privacy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 5.8v5.4c0 4.3 3 7.9 7 9.3 4-1.4 7-5 7-9.3V5.8z"/><path d="m9.2 12 2 2 3.8-4"/></svg>Traitement entièrement dans le navigateur. Aucun fichier ni mot de passe ne transite par le réseau ; seules les bibliothèques de l'outil sont téléchargées au premier chargement.</p>
+      <p class="privacy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 5.8v5.4c0 4.3 3 7.9 7 9.3 4-1.4 7-5 7-9.3V5.8z"/><path d="m9.2 12 2 2 3.8-4"/></svg>Traitement entièrement dans le navigateur. Aucun fichier ni mot de passe ne transite par le réseau ; seules les bibliothèques de l'outil sont téléchargées au premier chargement.<span id="offlineNote" hidden> L'outil fonctionne désormais hors ligne.</span></p>
     </footer>
   </div>
 
@@ -848,19 +856,20 @@
   </div>
 
   <!-- Annotate modal -->
-  <div class="modal" id="annotModal" role="dialog" aria-modal="true" aria-label="Annoter">
+  <div class="modal" id="annotModal" role="dialog" aria-modal="true" aria-label="Éditer">
     <div class="dialog editor">
       <div class="dhead ehead">
-        <div class="etitle"><span class="ekicker">Annoter</span><h2 id="anTitle">Page 1</h2></div>
+        <div class="etitle"><span class="ekicker">Éditer</span><h2 id="anTitle">Page 1</h2></div>
         <div class="pager">
           <button class="iconbtn" id="anPrev" aria-label="Page précédente"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg></button>
           <span id="anPos">1 / 1</span>
           <button class="iconbtn" id="anNext" aria-label="Page suivante"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></button>
         </div>
         <span class="spacer"></span>
+        <button class="iconbtn" id="anUndo" type="button" data-tip="Annuler  ⌘Z" aria-label="Annuler"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/></svg></button>
+        <button class="iconbtn" id="anRedo" type="button" data-tip="Rétablir  ⇧⌘Z" aria-label="Rétablir" disabled><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l4.5-4.5L15 5"/><path d="M19.5 9.5H9a4.5 4.5 0 0 0 0 9h3"/></svg></button>
+        <button class="iconbtn danger" id="anDel" type="button" data-tip="Supprimer  Suppr" aria-label="Supprimer l'annotation"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l.9 13a1.5 1.5 0 0 0 1.5 1.4h7.2a1.5 1.5 0 0 0 1.5-1.4l.9-13"/><path d="M10 11v5.5M14 11v5.5"/></svg></button>
         <button class="iconbtn" id="anHelp" type="button" data-tip="Mode d'emploi  ?" aria-label="Mode d'emploi" aria-expanded="false" aria-controls="anHelpPanel"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><circle class="fill" cx="12" cy="16.9" r=".9"/></svg></button>
-        <button class="tbtn ghostlbl" id="anUndo" type="button" aria-label="Annuler"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4.5 9.5 9 5"/><path d="M4.5 9.5H15a4.5 4.5 0 0 1 0 9h-3"/></svg><span class="lbl">Annuler</span></button>
-        <button class="tbtn danger ghostlbl" id="anDel" type="button" aria-label="Supprimer l'annotation"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l.9 13a1.5 1.5 0 0 0 1.5 1.4h7.2a1.5 1.5 0 0 0 1.5-1.4l.9-13"/><path d="M10 11v5.5M14 11v5.5"/></svg><span class="lbl">Supprimer</span></button>
         <span class="vsep" aria-hidden="true"></span>
         <button class="tbtn primary" id="anClose" type="button">Terminé</button>
       </div>
@@ -1112,17 +1121,21 @@ function makePagesFromSource(srcId){
 }
 
 /* ============ intake / open ============ */
+/* une image ou un document Word ouvre une session comme un PDF : il est d'abord converti */
 async function onFile(file){
-  if(!file) return;
-  if(file.type && file.type!=='application/pdf' && !/\.pdf$/i.test(file.name)){ notify("Seuls les fichiers PDF s'ouvrent ici. Les images s'ajoutent ensuite, depuis le menu Pages.",{kind:'warn'}); return; }
-  const bytes=new Uint8Array(await file.arrayBuffer());
-  await openDocument(bytes, file.name);
+  if(!file) return false;
+  const warns=[]; let bytes;
+  try{ bytes=await fileToPdf(file, warns); }
+  catch(err){ console.error('Ouverture :',err); notify(readFailMsg([file]),{kind:'warn'}); return false; }
+  await openDocument(bytes, isPdf(file) ? file.name : file.name.replace(/\.[^.]+$/,'')+'.pdf');
+  if(isWord(file)) notify(['Conversion bêta : vérifiez la mise en page. Pour un rendu exact, exportez le document en PDF depuis Word ou Pages.', ...warns].join(' '));
+  return true;
 }
 async function openDocument(bytes, name){
   baseName=(name||'document').replace(/\.pdf$/i,'');
   fnameEl.textContent=name||'document.pdf'; fsizeEl.textContent=fmtSize(bytes.length);
   // reset model
-  sources=new Map(); pages=[]; selected.clear(); pageSeq=0; srcSeq=0; uAnalyzed=false;
+  sources=new Map(); pages=[]; selected.clear(); findSelBase=null; pageSeq=0; srcSeq=0; uAnalyzed=false;
   currentBytes=bytes; docLocked=false;
   anClip=null; updateClipIcon();   // une zone copiée ne survit pas au changement de document
   ureadoutWrap.hidden=true; pwWrap.classList.remove('show'); pwIn.value=''; resetUnlockBtn();
@@ -1160,13 +1173,14 @@ let dragN=0;
 /* Document déjà ouvert : le dépôt rejoint le chemin d'ajout, fenêtre de choix comprise,
    et les pages retenues se placent à la suite. Redondant avec le menu, mais c'est le geste
    que l'on tente d'abord. */
-document.addEventListener('drop',e=>{
+document.addEventListener('drop',async e=>{
   const files=[...(e.dataTransfer.files||[])]; if(!files.length) return;
-  if(shell.dataset.loaded==='0'){ onFile(files[0]); return; }
-  const word=files.filter(f=>/\.docx$/i.test(f.name));
-  const ok=files.filter(f=>!/\.docx$/i.test(f.name));
-  if(word.length) notify(`${word.length>1?'Ces documents Word sont déposés':'Ce document Word est déposé'} sans conversion. Passez par Convertir, Document Word, pour les transformer en pages.`,{kind:'warn'});
-  if(ok.length) addFiles(ok);
+  if(shell.dataset.loaded==='0'){
+    const opened=await onFile(files[0]);
+    if(opened && !docLocked && files.length>1) addFiles(files.slice(1));
+    return;
+  }
+  addFiles(files);
 });
 
 /* ============ grid ============ */
@@ -1199,7 +1213,17 @@ function pageAspect(pg){
   const deg=pageDeg(pg);
   return (deg===90||deg===270) ? h/w : w/h;
 }
+/* vignettes au fil du défilement : une page n'est rendue qu'à l'approche de la vue, un écran d'avance */
+const thumbIO='IntersectionObserver' in window ? new IntersectionObserver(entries=>{
+  for(const en of entries){
+    if(!en.isIntersecting) continue;
+    thumbIO.unobserve(en.target);
+    const pg=pages.find(p=>p.id===+en.target.dataset.id);
+    if(pg && !pg.blank) renderThumb(pg, en.target.querySelector('.thumbwrap'));
+  }
+},{rootMargin:'100% 0px'}) : null;
 function renderGrid(){
+  if(thumbIO) thumbIO.disconnect();
   grid.innerHTML='';
   if(pages.length===0){
     const box=document.createElement('div'); box.className='empty';
@@ -1230,7 +1254,7 @@ function renderGrid(){
     card.addEventListener('dblclick',()=>{ if(!pg.blank) openAnnot(pg.id); });
     card.addEventListener('keydown',e=>{ if(e.key==='Enter'){ if(!pg.blank) openAnnot(pg.id); } else if(e.key===' '){ e.preventDefault(); toggleSelect(pg.id,card);} });
     grid.appendChild(card);
-    if(!pg.blank) renderThumb(pg, tw);
+    if(!pg.blank){ if(thumbIO) thumbIO.observe(card); else renderThumb(pg, tw); }
   });
   updateSelbar();
 }
@@ -1299,13 +1323,22 @@ function setBadge(pg,card){ const old=card.querySelector('.badge'); if(old)old.r
   if(tags.length){ const b=document.createElement('span'); b.className='badge'; b.textContent=tags.join(' · '); card.appendChild(b); } }
 function refreshCard(pgId){ const pg=pages.find(p=>p.id===pgId); const card=grid.querySelector(`.pcard[data-id="${pgId}"]`); if(!pg||!card)return;
   const tw=card.querySelector('.thumbwrap'); setBadge(pg,card);
-  if(!pg.blank) renderThumb(pg,tw);
+  if(pg.blank) return;
+  if(thumbIO && !tw.querySelector('.thumbrot')) return;   // pas encore affichée : elle sera rendue à l'approche, à jour
+  renderThumb(pg,tw);
 }
 
 /* ============ recherche plein texte ============ */
 /* Les résultats vivent hors du modèle : ce sont des repères d'affichage, ils ne partent jamais à l'export. */
 const findIn=$('findIn'), findCount=$('findCount'), anFindIn=$('anFindIn'), anFindCount=$('anFindCount');
 let findHits=new Map(), findSeq=0, findTimer=0, findPulse=false;
+/* occurrence courante dans l'éditeur : {pgId, h}, h étant l'objet même de findHits */
+let findCur=null, findCurPulse=false;
+/* le filtre sélectionne les pages trouvées ; la sélection d'avant revient quand le champ se vide */
+let findSelBase=null;
+function setSelection(set){ selected=set; pages.forEach(pg=>{ const c=grid.querySelector(`.pcard[data-id="${pg.id}"]`); if(c) markCard(c, selected.has(pg.id)); }); updateSelbar(); }
+function selectFound(){ if(findSelBase===null) findSelBase=new Set(selected); setSelection(new Set(findHits.keys())); }
+function restoreSelection(){ if(findSelBase===null) return; const base=findSelBase; findSelBase=null; setSelection(new Set([...base].filter(id=>pages.some(p=>p.id===id)))); }
 /* marque les cartes : nombre d'occurrences en pastille, pages sans résultat estompées */
 function markFindCard(pgId){
   const card=grid.querySelector(`.pcard[data-id="${pgId}"]`); if(!card) return;
@@ -1362,12 +1395,12 @@ async function findOnPage(pg, needle){
 }
 async function runFind(){
   const needle=findIn.value.trim().toLowerCase();
-  const token=++findSeq;
-  findHits=new Map(); clearFindMarks();
+  const token=++findSeq; findTimer=0;
+  findHits=new Map(); findCur=null; clearFindMarks();
   if(needle.length<2){
-    setFindCount(null);
+    setFindCount(null); restoreSelection();
     grid.querySelectorAll('.findbox').forEach(e=>e.remove());
-    if(annotModal.classList.contains('show')) renderAnnots();
+    if(annotModal.classList.contains('show')){ renderAnnots(); updateAnNav(); }
     return;
   }
   setFindCount('recherche…');
@@ -1386,10 +1419,34 @@ async function runFind(){
   else if(failed) setFindCount('recherche impossible');
   else if(!nText) setFindCount("aucun texte, lancez l'OCR");
   else setFindCount('aucun résultat');
-  if(annotModal.classList.contains('show')){ findPulse=true; renderAnnots(); }
+  selectFound();
+  if(annotModal.classList.contains('show')){ findPulse=true; renderAnnots(); updateAnNav(); }
 }
 /* le compteur reste dans l'arbre d'accessibilité en permanence : une zone vivante
    masquée puis démasquée n'est pas annoncée de façon fiable */
+/* occurrences visibles d'une page (dans la zone conservée), dans l'ordre de lecture */
+function occOf(pg){
+  const n=cropToNorm(pg), w=n?{u0:Math.min(n.u0,n.u1),u1:Math.max(n.u0,n.u1),v0:Math.min(n.v0,n.v1),v1:Math.max(n.v0,n.v1)}:null;
+  return (findHits.get(pg.id)||[]).filter(h=>!w||(Math.max(h.u0,h.u1)>w.u0&&Math.min(h.u0,h.u1)<w.u1&&Math.max(h.v0,h.v1)>w.v0&&Math.min(h.v0,h.v1)<w.v1))
+    .slice().sort((a,b)=>(Math.min(a.v0,a.v1)-Math.min(b.v0,b.v1))||(Math.min(a.u0,a.u1)-Math.min(b.u0,b.u1)));
+}
+async function stepOcc(back){
+  const occ=[]; anListP.forEach((pg,pi)=>occOf(pg).forEach(h=>occ.push({pi,h})));
+  if(!occ.length){ notify(findIn.value.trim().length<2?'Tapez au moins deux lettres à rechercher.':'Aucune occurrence dans les pages ouvertes.',{kind:'warn'}); return; }
+  let k=(findCur&&findCur.pgId===pg2().id) ? occ.findIndex(o=>o.h===findCur.h) : -1;
+  if(k>=0) k=(k+(back?-1:1)+occ.length)%occ.length;          // au bout, on repart de l'autre extrémité
+  else if(back){ k=occ.map(o=>o.pi<=anPtr).lastIndexOf(true); if(k<0) k=occ.length-1; }
+  else { k=occ.findIndex(o=>o.pi>=anPtr); if(k<0) k=0; }
+  const o=occ[k]; findCur={pgId:anListP[o.pi].id, h:o.h}; findCurPulse=true;
+  if(o.pi!==anPtr){ commitText(); anPtr=o.pi; await loadAnnotPage(); } else renderAnnots();
+  anFindCount.textContent=`${k+1} / ${occ.length}`;
+  /* page agrandie : on amène l'occurrence au centre de la table */
+  const el=anSvg.querySelector('.findhl.cur');
+  if(el && anZoom>1.001){
+    const r=el.getBoundingClientRect(), v=anStage.parentElement.getBoundingClientRect();
+    anPanX+=(v.left+v.width/2)-(r.left+r.width/2); anPanY+=(v.top+v.height/2)-(r.top+r.height/2); clampPan(); applyView();
+  }
+}
 function setFindCount(txt){
   for(const el of [findCount, anFindCount]) el.textContent = txt===null ? '' : txt;
 }
@@ -1399,11 +1456,18 @@ for(const inp of [findIn, anFindIn]){
   inp.addEventListener('input',()=>{ syncFind(inp.value); clearTimeout(findTimer); findTimer=setTimeout(runFind,260); });
   inp.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.stopPropagation(); syncFind(''); runFind(); } });
 }
+/* éditeur : Entrée mène à l'occurrence suivante, Maj + Entrée à la précédente */
+anFindIn.addEventListener('keydown',async e=>{
+  if(e.key!=='Enter') return; e.preventDefault();
+  if(findTimer){ clearTimeout(findTimer); await runFind(); }   // recherche encore en attente : on la lance d'abord
+  stepOcc(e.shiftKey);
+});
 /* croix d'effacement dans le champ : vide la recherche et rend la main au clavier */
 for(const [btn,inp] of [[$('findClear'),findIn],[$('anFindClear'),anFindIn]])
   btn.addEventListener('click',()=>{ clearTimeout(findTimer); syncFind(''); runFind(); inp.focus(); });
 /* saisie en cours dans la modale : les raccourcis de la scène ne doivent pas intercepter les touches */
-function typingInAnnot(){ const a=document.activeElement; return a===anText || a===anFindIn || (a&&a.id==='anHelpIn'); }
+function typingInAnnot(){ const a=document.activeElement; if(!a) return false;
+  return a.isContentEditable || a.tagName==='TEXTAREA' || a.tagName==='SELECT' || (a.tagName==='INPUT' && !/^(button|checkbox|radio|range|submit|reset|file|color)$/.test(a.type)); }
 
 /* ============ selection ============ */
 function markCard(card,on){ card.dataset.sel=on?'1':'0'; const p=card.querySelector('.pick'); if(p) p.setAttribute('aria-checked',String(on)); }
@@ -1423,14 +1487,7 @@ function updateSelbar(){
 }
 selAll.addEventListener('click',()=>{ pages.forEach(p=>selected.add(p.id)); grid.querySelectorAll('.pcard').forEach(c=>markCard(c,true)); updateSelbar(); });
 selNone.addEventListener('click',()=>{ selected.clear(); grid.querySelectorAll('.pcard').forEach(c=>markCard(c,false)); updateSelbar(); });
-selDel.addEventListener('click',()=>askDelete([...selected]));
-/* confirmation explicite : le bouton est désormais à l'écart, mais la suppression reste
-   l'action la plus coûteuse de la grille. L'annulation reste offerte ensuite. */
-function askDelete(ids){
-  if(!ids.length) return;
-  const n=ids.length;
-  notify(`Supprimer ${n} page${n>1?'s':''} ?`,{kind:'warn',action:{label:'Supprimer',danger:true,run:()=>deletePages(ids)}});
-}
+selDel.addEventListener('click',()=>deletePages([...selected]));
 /* Suppr, ou Retour arrière sur Mac, supprime la sélection depuis la grille */
 document.addEventListener('keydown',e=>{
   if(e.key!=='Delete' && e.key!=='Backspace') return;
@@ -1439,7 +1496,7 @@ document.addEventListener('keydown',e=>{
   const t=e.target;
   if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
   if(!selected.size) return;
-  e.preventDefault(); askDelete([...selected]);
+  e.preventDefault(); deletePages([...selected]);
 });
 selExtract.addEventListener('click',async()=>{
   const list=pages.filter(p=>selected.has(p.id));
@@ -1609,6 +1666,23 @@ async function imageToPdfBytes(file){
   doc.addPage([w,h]).drawImage(img,{x:0,y:0,width:w,height:h});
   return doc.save();
 }
+const isWord=f=>/\.docx$/i.test(f.name);
+const isPdf=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+/* tout fichier accepté devient des octets PDF : image en page, Word composé (bêta), PDF tel quel */
+async function fileToPdf(f, warns){
+  if(isImage(f)) return imageToPdfBytes(f);
+  if(isWord(f)){ const r=await WordConvert.convert(f, t=>notify(t)); warns.push(...r.warnings); return r.bytes; }
+  if(isPdf(f)||!f.type) return new Uint8Array(await f.arrayBuffer());
+  throw new Error('format non pris en charge');
+}
+/* message d'échec : dit ce qui s'est passé et ce qu'il est possible de faire */
+function readFailMsg(files){
+  const many=files.length>1;
+  const noms=files.slice(0,3).map(f=>f.name).join(', ')+(files.length>3?`, et ${files.length-3} autre${files.length-3>1?'s':''}`:'');
+  if(files.every(f=>/\.doc$/i.test(f.name))) return `${noms} : seul le format .docx est pris en charge. Un ancien .doc s'enregistre au format .docx depuis Word ou Pages.`;
+  if(files.every(isWord)) return `${noms} : la conversion a échoué. Exportez le document en PDF depuis Word ou Pages, puis ajoutez-le.`;
+  return `${noms} : ${many?'ces fichiers n\'ont pas pu être lus':'ce fichier n\'a pas pu être lu'}. Formats acceptés : PDF, image (JPEG, PNG, HEIC, WebP), Word (.docx). Un PDF protégé s'ouvre d'abord seul pour être déverrouillé.`;
+}
 btnAdd.addEventListener('click',()=>addfile.click());
 /* Ajout en deux temps : les fichiers sont chargés et prévisualisés, l'utilisateur coche
    les pages voulues, puis seules celles-ci sont insérées. Toutes sont cochées par défaut :
@@ -1619,22 +1693,23 @@ let addCands=[], addSrcIds=[], addToken=0, addPick=null;
 addfile.addEventListener('change',e=>{ const files=[...e.target.files]; addfile.value=''; if(files.length) addFiles(files); });
 async function addFiles(files){
   btnAdd.disabled=true; const label=btnAdd.innerHTML;
-  const cands=[], srcIds=[], failed=[];
+  const cands=[], srcIds=[], failed=[], warns=[];
   for(let i=0;i<files.length;i++){
     btnAdd.textContent = files.length>1 ? `Lecture… ${i+1}/${files.length}` : 'Lecture…';
     try{
-      const bytes = isImage(files[i]) ? await imageToPdfBytes(files[i]) : new Uint8Array(await files[i].arrayBuffer());
+      const bytes=await fileToPdf(files[i], warns);
       const id=await addSource(bytes); srcIds.push(id);
       makePagesFromSource(id).forEach((pg,k,arr)=>cands.push({pg, file:files[i].name, idx:k, count:arr.length, sel:true}));
-    }catch(err){ failed.push(files[i].name); }
+    }catch(err){ console.error('Ajout de '+files[i].name+' :',err); failed.push(files[i]); }
   }
   btnAdd.disabled=false; btnAdd.innerHTML=label;
-  if(failed.length){
-    const many=failed.length>1;
-    const noms=failed.slice(0,3).join(', ')+(failed.length>3?`, et ${failed.length-3} autre${failed.length-3>1?'s':''}`:'');
-    notify(`${noms} : ${many?'ces fichiers n\'ont pas pu être lus':'ce fichier n\'a pas pu être lu'}. PDF protégé par mot de passe, image illisible, ou fichier invalide.`,{kind:'warn'});
-  }
-  if(cands.length) openAddPicker(cands, srcIds);
+  const word=files.some(f=>isWord(f)&&!failed.includes(f));
+  if(word) hideNotice();   // efface les messages d'avancement de la conversion
+  if(failed.length) notify(readFailMsg(failed),{kind:'warn'});
+  const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const note= word ? '<b>Conversion bêta.</b> La mise en page est reconstituée, vérifiez-la avant insertion. Pour un rendu exact, exportez le document en PDF depuis Word ou Pages.'
+      + (warns.length ? '<br>'+warns.map(esc).join('<br>') : '') : null;
+  if(cands.length) openAddPicker(cands, srcIds, note);
 }
 
 /* pick : rappel recevant la page choisie ; le sélecteur passe alors en choix unique, au-dessus de l'éditeur */
@@ -1925,8 +2000,7 @@ function openAnnot(single){
 async function loadAnnotPage(){
   findPulse=findHits.has((anListP[anPtr]||{}).id);
   const pg=pg2(); anMedia=pg.mediaBox;
-  anPos.textContent=`${anPtr+1} / ${anListP.length}`;
-  anPrev.disabled=anPtr===0; anNext.disabled=anPtr===anListP.length-1;
+  updateAnNav(); syncHistory();
   anTitle.textContent='Page '+(pages.indexOf(pg)+1);
   const {jsdoc}=sources.get(pg.srcId);
   const n=cropToNorm(pg);
@@ -2149,9 +2223,11 @@ function renderAnnots(){
   while(anSvg.firstChild) anSvg.removeChild(anSvg.firstChild);
   const pg=pg2(); if(!pg) return;
   const hl=findHits.get(pg.id), pulse=findPulse; findPulse=false;   // le rebond ne joue qu'une fois, pas à chaque retouche
+  const curPulse=findCurPulse; findCurPulse=false;
   if(hl) for(const h of hl){
-    const x=DX(Math.min(h.u0,h.u1)), y=DY(Math.min(h.v0,h.v1)), pad=1.5/anZoom;
-    anSvg.appendChild(svgEl('rect',{x:x-pad,y:y-pad,width:Math.abs(DX(h.u1)-DX(h.u0))+2*pad,height:Math.abs(DY(h.v1)-DY(h.v0))+2*pad,rx:2/anZoom,class:'findhl'+(pulse?' pulse':'')}));
+    const x=DX(Math.min(h.u0,h.u1)), y=DY(Math.min(h.v0,h.v1)), pad=1.5/anZoom, cur=findCur&&findCur.h===h;
+    anSvg.appendChild(svgEl('rect',{x:x-pad,y:y-pad,width:Math.abs(DX(h.u1)-DX(h.u0))+2*pad,height:Math.abs(DY(h.v1)-DY(h.v0))+2*pad,rx:2/anZoom, style:`stroke-width:${(cur?2.5:1.5)/anZoom}px`,   // trait constant à l'écran, quel que soit le zoom
+      class:'findhl'+(cur?' cur':'')+((pulse||(cur&&curPulse))?' pulse':'')}));
   }
   pg.annots.forEach((a,i)=>{ const n=drawOne(cropView(a,i,pg)); if(n){ n.dataset.i=i; anSvg.appendChild(n); } });
   if(anObj){ const n=drawOne(anObj); if(n){ n.setAttribute('opacity','0.9'); anSvg.appendChild(n); } }
@@ -2298,7 +2374,7 @@ function applyTextOpts(){
   markTextOpts();
   if(anPending){ Object.assign(anPending,{font:anFont,bold:anBold,italic:anItalic}); styleTextInput(); anText.focus(); return; }
   const a=anSel>=0&&pg2().annots[anSel];
-  if(a&&a.type==='text'){ Object.assign(a,{font:anFont,bold:anBold,italic:anItalic}); renderAnnots(); }
+  if(a&&a.type==='text'){ checkpoint(); Object.assign(a,{font:anFont,bold:anBold,italic:anItalic}); renderAnnots(); }
 }
 /* l'appui sur une option ne doit pas retirer le focus de la saisie, sinon le texte serait validé avant d'être mis en forme */
 anSizeWrap.addEventListener('mousedown',e=>{ if(e.target.closest('button')) e.preventDefault(); });
@@ -2307,18 +2383,21 @@ $('anBold').addEventListener('click',()=>{ anBold=!anBold; applyTextOpts(); });
 $('anItalic').addEventListener('click',()=>{ anItalic=!anItalic; applyTextOpts(); });
 markTextOpts();
 /* deux nuanciers : couleurs d'encre pour les tracés, teintes fluo pour le surligneur ; chacun garde son choix */
-const anFluo=$('anFluo'), anMask=$('anMask');
+const anFluo=$('anFluo'), anMask=$('anMask'), anRedo=$('anRedo');
 function showSwatches(k){ anSwatches.hidden=k!=='std'; anFluo.hidden=k!=='fluo'; anMask.hidden=k!=='mask'; }
 function markSwatch(group,color){ group.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',String((s.dataset.color||'').toLowerCase()===(color||'').toLowerCase()))); }
 document.querySelectorAll('#anSwatches .sw, #anFluo .sw, #anMask .sw').forEach(b=>b.addEventListener('click',()=>{
   const c=b.dataset.color; if(b.closest('#anFluo')) anHlColor=c; else if(b.closest('#anMask')) anMaskColor=c; else anColor=c;
   markSwatch(b.parentElement,c);
-  if(anSel>=0&&pg2().annots[anSel]&&'color'in pg2().annots[anSel]){ pg2().annots[anSel].color=c; renderAnnots(); } }));
+  const a=anSel>=0&&pg2().annots[anSel];
+  if(a&&'color'in a&&a.color!==c){ checkpoint(); a.color=c; renderAnnots(); } }));
 markSwatch(anSwatches,anColor); markSwatch(anFluo,anHlColor); markSwatch(anMask,anMaskColor);
-anW.addEventListener('input',()=>{ anWidth=parseFloat(anW.value)||2; if(anSel>=0&&pg2().annots[anSel]&&'w'in pg2().annots[anSel]){ pg2().annots[anSel].w=anWidth; renderAnnots(); } });
+anW.addEventListener('input',()=>{ anWidth=parseFloat(anW.value)||2; if(anSel>=0&&pg2().annots[anSel]&&'w'in pg2().annots[anSel]){ checkpoint('w'+anSel); pg2().annots[anSel].w=anWidth; renderAnnots(); } });
+/* curseur relâché, champ quitté : le réglage suivant sera un nouveau pas d'annulation */
+for(const el of [anW, anSize]) el.addEventListener('change',()=>{ const pg=pg2(); if(pg) histOf(pg).key=null; });
 anSize.addEventListener('input',()=>{ anTextSize=parseInt(anSize.value)||14;
   if(anPending){ anPending.size=anTextSize; styleTextInput(); return; }
-  if(anSel>=0&&pg2().annots[anSel]&&pg2().annots[anSel].type==='text'){ pg2().annots[anSel].size=anTextSize; renderAnnots(); } });
+  if(anSel>=0&&pg2().annots[anSel]&&pg2().annots[anSel].type==='text'){ checkpoint('s'+anSel); pg2().annots[anSel].size=anTextSize; renderAnnots(); } });
 /* --- pointer drawing --- */
 anSvg.addEventListener('pointerdown',e=>{
   if(anGesture||anPanDrag||anSpace) return;
@@ -2326,6 +2405,7 @@ anSvg.addEventListener('pointerdown',e=>{
   e.preventDefault(); try{ anSvg.setPointerCapture(e.pointerId); }catch(_){}
   try{ const sl=getSelection(); if(sl&&sl.rangeCount&&!sl.isCollapsed) sl.removeAllRanges(); }catch(_){}
   const p=evtUV(e);
+  if(e.isPrimary && e.button===0 && isDoubleTap(e) && doubleTap(p)){ anDrag=null; anObj=null; return; }
   if(anObjCrop){
     const h=e.target.dataset&&e.target.dataset.h;
     if(h&&h.startsWith('c-')){ anDrag={mode:'ocrop',h:h.slice(2)}; renderAnnots(); return; }
@@ -2353,7 +2433,7 @@ anSvg.addEventListener('pointerdown',e=>{
 anSvg.addEventListener('pointermove',e=>{ if(anGesture||anPanDrag||!anDrag) return; e.preventDefault(); const p=evtUV(e);
   if(anDrag.mode==='draw'){ anObj.pts.push(p); renderAnnots(); }
   else if(anDrag.mode==='shape'){ anObj.u1=p.u; anObj.v1=p.v; renderAnnots(); }
-  else if(anDrag.mode==='resize'){ resizeAnnot(pg2().annots[anSel], anDrag, p); renderAnnots(); }
+  else if(anDrag.mode==='resize'){ anDrag.moved=true; resizeAnnot(pg2().annots[anSel], anDrag, p); renderAnnots(); }
   else if(anDrag.mode==='ocrop'&&anObjCrop){ const q=objCropUV(p), n=anObjCrop.n, h=anDrag.h, M=0.03;
     if(h.includes('w')) n.u0=Math.max(0,Math.min(n.u1-M,q.s)); if(h.includes('e')) n.u1=Math.min(1,Math.max(n.u0+M,q.s));
     if(h.includes('n')) n.v0=Math.max(0,Math.min(n.v1-M,q.t)); if(h.includes('s')) n.v1=Math.min(1,Math.max(n.v0+M,q.t));
@@ -2365,7 +2445,7 @@ anSvg.addEventListener('pointermove',e=>{ if(anGesture||anPanDrag||!anDrag) retu
     const n={u0:N.u0+du,u1:N.u1+du,v0:N.v0+dv,v1:N.v1+dv};
     const fu0=F.u0+N.u0*fw-n.u0*fw, fv0=F.v0+N.v0*fh-n.v0*fh;
     anObjCrop.n=n; anObjCrop.full={u0:fu0,u1:fu0+fw,v0:fv0,v1:fv0+fh}; renderAnnots(); }
-  else if(anDrag.mode==='move'){ moveAnnot(pg2().annots[anSel], anDrag.orig, p.u-anDrag.start.u, p.v-anDrag.start.v); renderAnnots(); }
+  else if(anDrag.mode==='move'){ anDrag.moved=true; moveAnnot(pg2().annots[anSel], anDrag.orig, p.u-anDrag.start.u, p.v-anDrag.start.v); renderAnnots(); }
 });
 anSvg.addEventListener('pointerup',e=>{ if(!anDrag) return;
   if((anDrag.mode==='draw'||anDrag.mode==='shape') && anDrag.hit>=0 && Math.hypot(e.clientX-anDrag.cx,e.clientY-anDrag.cy)<5){
@@ -2402,10 +2482,27 @@ anSvg.addEventListener('pointerup',e=>{ if(!anDrag) return;
       }
     }
     else if(big){ commit(a); } }
+  else if((anDrag.mode==='move'||anDrag.mode==='resize') && anDrag.moved && anSel>=0){
+    const snap=cloneAnnot(pg2().annots); snap[anSel]=anDrag.orig; checkpoint(null, pg2(), snap); }
   anDrag=null; renderAnnots();
 });
-anSvg.addEventListener('dblclick',e=>{ if(anObjCrop){ applyObjCrop(); return; } const p=evtUV(e); const pg=pg2(); const px=DX(p.u),py=DY(p.v);
-  for(let i=pg.annots.length-1;i>=0;i--){ const a=pg.annots[i]; if(a.type==='text'){ const bb=bboxOf(a); if(px>=bb.x-4&&px<=bb.x+bb.w+8&&py>=bb.y-4&&py<=bb.y+bb.h+6){ editTextAnnot(i); return; } } } });
+/* double appui, reconnu sur les appuis eux-mêmes : le premier redessine l'objet sous le pointeur,
+   et le navigateur, ayant perdu sa cible, n'émet alors ni click ni dblclick. Vaut pour la souris, le doigt et le Pencil. */
+let anLastDown={t:-1e9,x:0,y:0};
+function isDoubleTap(e){
+  const d=e.timeStamp-anLastDown.t, far=Math.hypot(e.clientX-anLastDown.x, e.clientY-anLastDown.y);
+  anLastDown={t:e.timeStamp,x:e.clientX,y:e.clientY};
+  if(d<400 && far<10){ anLastDown.t=-1e9; return true; }   // un troisième appui ne fait pas un second double
+  return false;
+}
+/* double appui : valide un recadrage d'objet, ou ouvre un texte en modification ; false sinon */
+function doubleTap(p){
+  if(anObjCrop){ applyObjCrop(); return true; }
+  const pg=pg2(), px=DX(p.u), py=DY(p.v);
+  for(let i=pg.annots.length-1;i>=0;i--){ const a=pg.annots[i]; if(a.type==='text'){ const bb=bboxOf(a);
+    if(px>=bb.x-4&&px<=bb.x+bb.w+8&&py>=bb.y-4&&py<=bb.y+bb.h+6){ editTextAnnot(i); return true; } } }
+  return false;
+}
 /* objet sous le pointeur, le plus haut d'abord ; -1 si aucun */
 function hitIndex(p){ const pg=pg2(); const px=DX(p.u),py=DY(p.v);
   for(let i=pg.annots.length-1;i>=0;i--){ const bb=bboxOf(pg.annots[i]); if(bb&&px>=bb.x-5&&px<=bb.x+bb.w+5&&py>=bb.y-5&&py<=bb.y+bb.h+5) return i; }
@@ -2486,12 +2583,12 @@ function imageToCrop(c, rot){
   return {u0:Math.min(pts[0][0],pts[1][0]), u1:Math.max(pts[0][0],pts[1][0]), v0:Math.min(pts[0][1],pts[1][1]), v1:Math.max(pts[0][1],pts[1][1])};
 }
 function startObjCrop(i){
-  const a=pg2().annots[i];
+  const a=pg2().annots[i], before=cloneAnnot(pg2().annots);
   if(!a.src){ a.src=a.data; a.cr={x0:0,y0:0,x1:1,y1:1}; if(a.type==='clip') a.box0={...a.box}; }
   const n=imageToCrop(a.cr, a.rot), R=normR(a);
   const w=(R.u1-R.u0)/Math.max(1e-6,n.u1-n.u0), h=(R.v1-R.v0)/Math.max(1e-6,n.v1-n.v0);
   const full={u0:R.u0-n.u0*w, v0:R.v0-n.v0*h}; full.u1=full.u0+w; full.v1=full.v0+h;
-  anObjCrop={pg:pg2(), i, full, n};
+  anObjCrop={pg:pg2(), i, full, n, n0:{...n}, before};
   $('anCrop').setAttribute('aria-pressed','true'); renderAnnots();
   notify("Ajustez le cadre, ou glissez l'image dessous. Entrée pour valider, Échap pour annuler.",{action:{label:'Valider',run:applyObjCrop}});
 }
@@ -2503,7 +2600,7 @@ function objCropUV(p){ const f=anObjCrop.full;
   return {s:clamp01((p.u-f.u0)/Math.max(1e-6,f.u1-f.u0)), t:clamp01((p.v-f.v0)/Math.max(1e-6,f.v1-f.v0))}; }
 async function applyObjCrop(){
   if(!anObjCrop) return;
-  const {pg,i,full,n}=anObjCrop; anObjCrop=null; $('anCrop').setAttribute('aria-pressed','false'); hideNotice();
+  const {pg,i,full,n,n0,before}=anObjCrop; anObjCrop=null; $('anCrop').setAttribute('aria-pressed','false'); hideNotice();
   const a=pg.annots[i]; if(!a){ renderAnnots(); return; }
   const c=cropToImage(n, a.rot), whole=c.x0<0.002&&c.y0<0.002&&c.x1>0.998&&c.y1>0.998;
   try{
@@ -2522,6 +2619,7 @@ async function applyObjCrop(){
   }
   const fw=full.u1-full.u0, fh=full.v1-full.v0;
   a.u0=full.u0+n.u0*fw; a.u1=full.u0+n.u1*fw; a.v0=full.v0+n.v0*fh; a.v1=full.v0+n.v1*fh;
+  if(['u0','u1','v0','v1'].some(k=>Math.abs(n[k]-n0[k])>1e-6)) checkpoint(null, pg, before);
   if(pg===pg2()){ anSel=i; renderAnnots(); }
   if(!annotModal.classList.contains('show')) refreshCard(pg.id);
 }
@@ -2551,7 +2649,7 @@ function drawObjCrop(){
   const at={nw:[cx0,cy0],ne:[cx1,cy0],sw:[cx0,cy1],se:[cx1,cy1],n:[mx,cy0],s:[mx,cy1],w:[cx0,my],e:[cx1,my]};
   for(const [h,[hx,hy]] of Object.entries(at)) add('rect',{x:hx-T/2,y:hy-T/2,width:T,height:T,fill:'transparent',class:'an-ch','data-h':'c-'+h});
 }
-function cloneAnnot(a){ return JSON.parse(JSON.stringify(a)); }
+function cloneAnnot(v){ return Array.isArray(v) ? v.map(cloneAnnot) : (v&&typeof v==='object') ? Object.fromEntries(Object.entries(v).map(([k,x])=>[k,cloneAnnot(x)])) : v; }
 function moveAnnot(a,orig,du,dv){
   if(a.type==='pen'||a.type==='hl'){ a.pts=orig.pts.map(p=>({u:clamp01(p.u+du),v:clamp01(p.v+dv)})); }
   else if(a.type==='text'){ a.u=clamp01(orig.u+du); a.v=clamp01(orig.v+dv); }
@@ -2591,17 +2689,56 @@ anText.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preve
 /* passer au champ Taille garde la saisie ouverte ; tout autre départ la valide */
 anText.addEventListener('blur',e=>{ if(anPending && !(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('#anSizeWrap'))) commitText(); });
 function commitText(){ if(!anPending) return; const val=anText.value.replace(/[ \t]+$/,'').replace(/\n+$/,''); const p=anPending; anPending=null; hideTextInput();
-  if(p.replace!=null){ const a=pg2().annots[p.replace]; if(a){ if(val.trim()) Object.assign(a,{text:val,size:p.size,font:p.font,bold:p.bold,italic:p.italic}); else pg2().annots.splice(p.replace,1); } renderAnnots(); return; }
+  if(p.replace!=null){ const a=pg2().annots[p.replace]; if(a){
+      const cur=[a.text,a.size,a.font||'sans',!!a.bold,!!a.italic].join('|'), next=[val,p.size,p.font||'sans',!!p.bold,!!p.italic].join('|');
+      if(!val.trim()||cur!==next) checkpoint();
+      if(val.trim()) Object.assign(a,{text:val,size:p.size,font:p.font,bold:p.bold,italic:p.italic}); else pg2().annots.splice(p.replace,1); } renderAnnots(); return; }
   if(val.trim()) commit({type:'text',color:p.color,u:p.u,v:p.v,size:p.size,text:val,rot:p.rot||0,font:p.font,bold:p.bold,italic:p.italic}); else renderAnnots();
 }
 function hideTextInput(){ anText.style.display='none'; anText.value=''; anPending=null; }
 /* --- commit / undo / delete / nav / close --- */
-function commit(a){ pg2().annots.push(a); renderAnnots(); }
-function undoAnnot(){ const pg=pg2(); if(pg&&pg.annots.length){ if(anSel===pg.annots.length-1)anSel=-1; pg.annots.pop(); renderAnnots(); } }
-anUndo.addEventListener('click',undoAnnot);
-anDel.addEventListener('click',()=>{ if(anSel>=0){ pg2().annots.splice(anSel,1); anSel=-1; renderAnnots(); } });
-anPrev.addEventListener('click',()=>{ if(anPtr>0){ commitText(); anPtr--; loadAnnotPage(); } });
-anNext.addEventListener('click',()=>{ if(anPtr<anListP.length-1){ commitText(); anPtr++; loadAnnotPage(); } });
+/* historique, page par page : un instantané des annotations avant chaque modification.
+   checkpoint(key) : une même clé répétée (curseur d'épaisseur, champ de taille) ne fait qu'un pas d'annulation */
+const anHist=new WeakMap();
+function histOf(pg){ let h=anHist.get(pg); if(!h){ h={u:[],r:[],key:null}; anHist.set(pg,h); } return h; }
+function checkpoint(key, pg=pg2(), snap=null){
+  const h=histOf(pg);
+  if(key && key===h.key) return;
+  h.u.push(snap||cloneAnnot(pg.annots)); if(h.u.length>100) h.u.shift();
+  h.r.length=0; h.key=key||null; syncHistory();
+}
+function syncHistory(){ const pg=pg2(), h=pg&&histOf(pg); anUndo.disabled=!h||!h.u.length; anRedo.disabled=!h||!h.r.length; }
+function stepHistory(back){
+  if(anObjCrop){ cancelObjCrop(); return; }          // pendant un recadrage d'objet, Annuler abandonne le recadrage
+  const pg=pg2(); if(!pg) return;
+  const h=histOf(pg), from=back?h.u:h.r, to=back?h.r:h.u;
+  if(!from.length) return;
+  to.push(cloneAnnot(pg.annots)); pg.annots=from.pop(); h.key=null;
+  anSel=-1; renderAnnots(); syncHistory();
+}
+function commit(a){ checkpoint(); pg2().annots.push(a); renderAnnots(); }
+function deleteSelAnnot(){ if(anSel<0) return; checkpoint(); pg2().annots.splice(anSel,1); anSel=-1; renderAnnots(); }
+anUndo.addEventListener('click',()=>stepHistory(true));
+anRedo.addEventListener('click',()=>stepHistory(false));
+anDel.addEventListener('click',deleteSelAnnot);
+/* filtre de mots actif : les flèches ne parcourent que les pages qui contiennent le terme */
+function anFiltered(){ const f=[]; anListP.forEach((p,i)=>{ if(findHits.has(p.id)) f.push(i); }); return f.length?f:null; }
+function anStep(d){
+  const f=anFiltered();
+  const i= f ? (d<0 ? f.filter(x=>x<anPtr).pop() : f.find(x=>x>anPtr)) : anPtr+d;
+  return (i!=null && i>=0 && i<anListP.length) ? i : -1;
+}
+function updateAnNav(){
+  const f=anFiltered(), pager=anPos.parentElement;
+  anPos.textContent= f ? `${(f.indexOf(anPtr)+1)||'–'} / ${f.length}` : `${anPtr+1} / ${anListP.length}`;
+  if(f) pager.dataset.filter='1'; else delete pager.dataset.filter;
+  anPrev.disabled=anStep(-1)<0; anNext.disabled=anStep(1)<0;
+  anPrev.setAttribute('aria-label', f?'Page précédente avec résultat':'Page précédente');
+  anNext.setAttribute('aria-label', f?'Page suivante avec résultat':'Page suivante');
+}
+function anGo(d){ const i=anStep(d); if(i>=0){ commitText(); anPtr=i; loadAnnotPage(); } }
+anPrev.addEventListener('click',()=>anGo(-1));
+anNext.addEventListener('click',()=>anGo(1));
 anClose.addEventListener('click',closeAnnot);
 annotModal.addEventListener('click',e=>{ if(e.target===annotModal) closeAnnot(); });
 function closeAnnot(){ commitText(); if(anObjCrop) applyObjCrop(); toggleHelp(false); annotModal.classList.remove('show'); anListP.forEach(pg=>refreshCard(pg.id)); }
@@ -2610,8 +2747,12 @@ document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show
   if(anObjCrop){ if(e.key==='Escape'){ e.preventDefault(); cancelObjCrop(); } else if(e.key==='Enter'){ e.preventDefault(); applyObjCrop(); } return; }
   if(e.key==='?'){ e.preventDefault(); toggleHelp(); return; }
   if(e.key==='Escape'&&!$('anHelpPanel').hidden){ toggleHelp(false); return; }
-  if(e.key==='Delete'||e.key==='Backspace'){ if(anSel>=0){ e.preventDefault(); pg2().annots.splice(anSel,1); anSel=-1; renderAnnots(); } }
-  else if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); undoAnnot(); }
+  if(e.key==='Delete'||e.key==='Backspace'){ if(anSel>=0){ e.preventDefault(); deleteSelAnnot(); } }
+  else if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); stepHistory(!e.shiftKey); }
+  else if(e.ctrlKey&&e.key.toLowerCase()==='y'){ e.preventDefault(); stepHistory(false); }
+  else if(!e.metaKey&&!e.ctrlKey&&!e.altKey&&/^(ArrowLeft|ArrowRight|PageUp|PageDown)$/.test(e.key)
+          && !(document.activeElement&&document.activeElement.type==='range')){   // le curseur d'épaisseur garde ses flèches
+    e.preventDefault(); anGo(/^(ArrowLeft|PageUp)$/.test(e.key)?-1:1); }
   else if(e.key==='Escape'){ closeAnnot(); }
 });
 
@@ -2622,14 +2763,14 @@ document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show
    tool : l'outil que le bouton « Utiliser » active. */
 const HELP=[
  {s:'Naviguer', items:[
-  {t:'Changer de page', ic:'pages', d:'Flèches ‹ › en haut, de part et d\'autre du numéro de page.', k:'page suivante precedente naviguer feuilleter autre'},
+  {t:'Changer de page', ic:'pages', d:'Flèches ‹ › en haut, de part et d\'autre du numéro de page, ou touches <kbd>←</kbd> <kbd>→</kbd> du clavier. Pendant une recherche, le sélecteur passe au jaune et les flèches ne parcourent que les pages qui contiennent le mot.', k:'page suivante precedente naviguer feuilleter autre filtre filtrer resultat recherche'},
   {t:'Zoomer', ic:'zoom', d:'Boutons − et + en haut à droite, pincement à deux doigts ou <kbd>Ctrl</kbd> + molette. Toucher le pourcentage remet la page à la taille de l\'écran.', k:'agrandir reduire loupe zoom grossir taille ecran'},
   {t:'Déplacer la vue', ic:'move', d:'Page agrandie : glissez une zone vide avec l\'outil Sélection, glissez à deux doigts, ou maintenez <kbd>Espace</kbd>.', k:'deplacer panoramique defiler bouger vue main'}]},
  {s:'Dessiner et écrire', items:[
   {t:'Stylo', tool:'pen', d:'Tracé libre à main levée. Couleur et épaisseur dans la barre du haut.', k:'dessiner crayon main levee tracer ecrire signer signature'},
   {t:'Surligneur', tool:'hl', d:'Glissez sur le texte à mettre en évidence. Quatre teintes fluo : jaune, vert, magenta, bleu.', k:'surligner surlignage fluo marqueur stabilo souligner evidence'},
   {t:'Formes', tool:'shape', d:'Choisissez rectangle, ellipse, flèche ou trait dans la barre du haut, puis glissez sur la page.', k:'forme rectangle carre cadre cercle rond ellipse fleche trait ligne entourer'},
-  {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic sur un texte pour le modifier.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
+  {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic, ou double appui au doigt, sur un texte pour le modifier, quel que soit l\'outil.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
   {t:'Image ou PDF', tool:'image', d:'Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s\'il en compte plusieurs, choisissez laquelle.', k:'image photo logo signature tampon importer inserer insertion ajouter pdf fichier'},
   {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : tracez l\'emplacement, sur cette page ou une autre. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier'},
   {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'export.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
@@ -2639,12 +2780,12 @@ const HELP=[
   {t:'Déplacer un objet', ic:'drag', d:'Sélectionnez-le, puis glissez-le.', k:'deplacer deplacement bouger glisser objet positionner'},
   {t:'Redimensionner, déformer', ic:'resize', d:'Tirez les poignées. Coins d\'une image : proportions gardées. Coins d\'un texte : taille du texte. Flèche : une poignée à chaque bout.', k:'redimensionner redimensionnement taille agrandir reduire poignees etirer deformer'},
   {t:'Couleur, épaisseur', ic:'color', d:'Sélectionnez l\'objet, puis choisissez dans la barre du haut.', k:'couleur epaisseur trait changer rouge noir bleu'},
-  {t:'Supprimer', ic:'trash', d:'Sélectionnez l\'objet, puis Supprimer en haut ou touche <kbd>Suppr</kbd>.', k:'supprimer suppression effacer enlever retirer objet'},
-  {t:'Annuler', ic:'undo', d:'Bouton Annuler en haut ou <kbd>Ctrl</kbd> + <kbd>Z</kbd> : retire le dernier objet posé.', k:'annuler annulation retour arriere defaire undo erreur'}]},
+  {t:'Supprimer', ic:'trash', d:'Sélectionnez l\'objet, puis la corbeille rouge en haut ou touche <kbd>Suppr</kbd>.', k:'supprimer suppression effacer enlever retirer objet'},
+  {t:'Annuler, rétablir', ic:'undo', d:'Flèche Annuler en haut ou <kbd>Ctrl</kbd> + <kbd>Z</kbd> : défait la dernière modification de la page, tracé, déplacement, taille, couleur, recadrage ou suppression. La flèche voisine, ou <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd>, la rétablit.', k:'annuler annulation retour arriere defaire undo erreur retablir refaire redo historique'}]},
  {s:'Chercher et terminer', items:[
-  {t:'Rechercher un mot', ic:'search', d:'Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d\'occurrences, les autres s\'estompent. Dans l\'éditeur, chaque occurrence est surlignée sur la page.', k:'rechercher chercher trouver mot texte'},
+  {t:'Rechercher un mot', ic:'search', d:'Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d\'occurrences, les autres s\'estompent, et elles se sélectionnent : le bouton Éditer n\'ouvre qu\'elles. Vider le champ rend la sélection d\'avant. Dans l\'éditeur, chaque occurrence est surlignée sur la page ; <kbd>Entrée</kbd> dans le champ mène à la suivante, d\'une page à l\'autre, <kbd>Maj</kbd> + <kbd>Entrée</kbd> à la précédente.', k:'rechercher chercher trouver mot texte filtre filtrer selectionner selection occurrence suivante precedente'},
   {t:'Terminer', ic:'check', d:'Bouton Terminé : retour aux pages. Rien n\'est écrit dans le fichier avant « Exporter le PDF ».', k:'terminer quitter fermer sortir enregistrer enregistrement sauvegarder exporter export'},
-  {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
+  {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd> rétablir · <kbd>←</kbd> <kbd>→</kbd> page précédente ou suivante · <kbd>Entrée</kbd> dans Rechercher, occurrence suivante · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
 ];
 const HELP_IC={
   pages:'<path d="m10 7-5 5 5 5M14 7l5 5-5 5"/>',
@@ -2988,20 +3129,8 @@ const btnWord=$('btnWord'), wordFile=$('wordFile');
 btnWord.addEventListener('click',()=>wordFile.click());
 wordFile.addEventListener('change',async e=>{
   const f=e.target.files[0]; wordFile.value=''; if(!f) return;
-  if(!/\.docx$/i.test(f.name)){ notify("Seul le format .docx est pris en charge. Un ancien .doc s'enregistre au format .docx depuis Word ou Pages.",{kind:'warn'}); return; }
-  try{
-    const {bytes, warnings}=await WordConvert.convert(f, t=>notify(t));
-    const id=await addSource(bytes);
-    const cands=makePagesFromSource(id).map((pg,k,arr)=>({pg, file:f.name, idx:k, count:arr.length, sel:true}));
-    hideNotice();
-    const esc=t=>t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-    const note='<b>Conversion bêta.</b> La mise en page est reconstituée, vérifiez-la avant insertion. Pour un rendu exact, exportez le document en PDF depuis Word ou Pages.'
-      + (warnings.length ? '<br>'+warnings.map(esc).join('<br>') : '');
-    openAddPicker(cands,[id],note);
-  }catch(err){
-    console.error('Conversion Word :',err);
-    notify('La conversion a échoué ('+(err&&err.message||err)+'). Exportez le document en PDF depuis Word ou Pages, puis ajoutez-le.',{kind:'warn'});
-  }
+  if(!isWord(f)){ notify(readFailMsg([f]),{kind:'warn'}); return; }
+  addFiles([f]);
 });
 
 /* ============ export ============ */
@@ -3053,6 +3182,7 @@ let ocrLang='fra';
 btnOcr.addEventListener('click',()=>{ if(pages.length===0)return; ocrModal.classList.add('show'); });
 ocrClose.addEventListener('click',()=>{ if(!ocrGo.disabled) ocrModal.classList.remove('show'); });
 ocrModal.addEventListener('click',e=>{ if(e.target===ocrModal && !ocrGo.disabled) ocrModal.classList.remove('show'); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ocrModal.classList.contains('show')&&!ocrGo.disabled) ocrModal.classList.remove('show'); });
 ocrSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ ocrLang=b.dataset.k;
   ocrSeg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x===b))); }));
 ocrGo.addEventListener('click', async()=>{
@@ -3263,7 +3393,7 @@ async function doUnlock(){
     unlockBtn.onclick=()=>download(r.output, dl);
     // offer to edit the decrypted file
     if(!document.getElementById('editUnlocked')){
-      const b=document.createElement('button'); b.id='editUnlocked'; b.className='btn ghost'; b.type='button'; b.textContent='Éditer ce PDF';
+      const b=document.createElement('button'); b.id='editUnlocked'; b.className='btn ghost'; b.type='button'; b.textContent='Ouvrir ce PDF';
       b.addEventListener('click',()=>{ closeUnlock(); openDocument(r.output.slice(), baseName+'.pdf'); });
       unlockBtn.parentElement.appendChild(b);
     }
@@ -3322,6 +3452,14 @@ function setTheme(dark){
 let savedTheme=null; try{ savedTheme=localStorage.getItem('atelier-pdf-theme'); }catch(_){}
 setTheme(savedTheme==='dark');
 themeBtn.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme!=='dark'));
+
+/* ============ hors ligne ============ */
+/* Depuis l'adresse publiée, sw.js garde l'application et ses bibliothèques après le premier chargement.
+   Ouvert depuis le disque, le navigateur n'accepte pas de service worker : rien ne change. */
+if('serviceWorker' in navigator && window.isSecureContext && location.protocol!=='file:'){
+  navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready)
+    .then(()=>{ $('offlineNote').hidden=false; }).catch(err=>console.warn('Hors ligne indisponible :',err));
+}
 
 /* ============ boot ============ */
 if(!DEPS_OK){
