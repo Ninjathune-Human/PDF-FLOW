@@ -1287,12 +1287,16 @@ async function renderThumb(pg, tw){
     paintFind(pg.id, rot);
   }catch(e){ tw.innerHTML='<div class="skel"></div>'; }
 }
+/* les masques forment la couche la plus basse : tout ce qui est posé, texte compris, passe dessus.
+   L'ordre du tableau ne change pas (indices, historique) ; seuls le dessin et l'appui suivent cet ordre. */
+const isMask=a=>a.type==='redact'||a.type==='white';
+function maskFirst(annots){ const m=[], o=[]; annots.forEach((a,i)=>(isMask(a)?m:o).push(i)); return m.concat(o); }
 /* bake pg.annots onto an already-rendered page canvas (used for the grid thumbnail) */
 function paintAnnotsOnCanvas(canvas, pg, onLate){
   if(!pg.annots || !pg.annots.length) return;
   const ctx=canvas.getContext('2d'); const W=canvas.width, H=canvas.height, px=W/pg.mediaBox.width;
   const X=u=>u*W, Y=v=>v*H;
-  for(const a of pg.annots){
+  for(const i of maskFirst(pg.annots)){ const a=pg.annots[i];
     ctx.strokeStyle=a.color; ctx.fillStyle=a.color; ctx.lineWidth=Math.max(0.75,(a.w||2)*px); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha=1;
     if(a.type==='white'){ ctx.fillStyle='#fff'; ctx.fillRect(X(Math.min(a.u0,a.u1)),Y(Math.min(a.v0,a.v1)),Math.abs(X(a.u1)-X(a.u0)),Math.abs(Y(a.v1)-Y(a.v0))); }
     else if(a.type==='redact'){ ctx.fillStyle=a.color||'#000'; ctx.fillRect(X(Math.min(a.u0,a.u1)),Y(Math.min(a.v0,a.v1)),Math.abs(X(a.u1)-X(a.u0)),Math.abs(Y(a.v1)-Y(a.v0))); }
@@ -2229,7 +2233,7 @@ function renderAnnots(){
     anSvg.appendChild(svgEl('rect',{x:x-pad,y:y-pad,width:Math.abs(DX(h.u1)-DX(h.u0))+2*pad,height:Math.abs(DY(h.v1)-DY(h.v0))+2*pad,rx:2/anZoom, style:`stroke-width:${(cur?2.5:1.5)/anZoom}px`,   // trait constant à l'écran, quel que soit le zoom
       class:'findhl'+(cur?' cur':'')+((pulse||(cur&&curPulse))?' pulse':'')}));
   }
-  pg.annots.forEach((a,i)=>{ const n=drawOne(cropView(a,i,pg)); if(n){ n.dataset.i=i; anSvg.appendChild(n); } });
+  maskFirst(pg.annots).forEach(i=>{ const n=drawOne(cropView(pg.annots[i],i,pg)); if(n){ n.dataset.i=i; anSvg.appendChild(n); } });
   if(anObj){ const n=drawOne(anObj); if(n){ n.setAttribute('opacity','0.9'); anSvg.appendChild(n); } }
   if(anObjCrop && anObjCrop.pg===pg && pg.annots[anObjCrop.i]){ drawObjCrop(); return; }
   if(anSel>=0 && pg.annots[anSel]){ const sa=pg.annots[anSel], bb=bboxOf(sa); if(!bb) return;
@@ -2401,6 +2405,7 @@ anSize.addEventListener('input',()=>{ anTextSize=parseInt(anSize.value)||14;
 /* --- pointer drawing --- */
 anSvg.addEventListener('pointerdown',e=>{
   if(anGesture||anPanDrag||anSpace) return;
+  anTouchDown=e.pointerType!=='mouse';
   if(anPending) commitText();
   e.preventDefault(); try{ anSvg.setPointerCapture(e.pointerId); }catch(_){}
   try{ const sl=getSelection(); if(sl&&sl.rangeCount&&!sl.isCollapsed) sl.removeAllRanges(); }catch(_){}
@@ -2420,7 +2425,8 @@ anSvg.addEventListener('pointerdown',e=>{
   /* outils de tracé : un glisser trace, un appui simple sur un objet existant le sélectionne.
      Texte et image sans fichier en attente n'ont pas de glisser : la sélection se décide dès l'appui. */
   const hit=hitIndex(p);
-  if(anTool==='text'){ if(hit>=0) selectHit(hit); else startText(p,''); return; }
+  /* l'outil texte traite un masque comme le fond : on écrit dessus au lieu de le sélectionner */
+  if(anTool==='text'){ const h=hitIndex(p,true); if(h>=0) selectHit(h); else startText(p,''); return; }
   if(anTool==='image' && !anPendingImg){ if(hit>=0) selectHit(hit); else anImgFile.click(); return; }
   if(anTool==='pen'||anTool==='hl'){ anObj={type:anTool,color:anTool==='hl'?anHlColor:anColor,w:anWidth,pts:[p]}; anDrag={mode:'draw',hit,cx:e.clientX,cy:e.clientY}; return; }
   /* outil « Copier une zone » : icône vide, le tracé prélève ; icône pleine, il pose, sur cette page ou une autre */
@@ -2447,7 +2453,9 @@ anSvg.addEventListener('pointermove',e=>{ if(anGesture||anPanDrag||!anDrag) retu
     anObjCrop.n=n; anObjCrop.full={u0:fu0,u1:fu0+fw,v0:fv0,v1:fv0+fh}; renderAnnots(); }
   else if(anDrag.mode==='move'){ anDrag.moved=true; moveAnnot(pg2().annots[anSel], anDrag.orig, p.u-anDrag.start.u, p.v-anDrag.start.v); renderAnnots(); }
 });
-anSvg.addEventListener('pointerup',e=>{ if(!anDrag) return;
+anSvg.addEventListener('pointerup',e=>{
+  if(anFocusOnUp){ anFocusOnUp=false; if(anPending) focusText(); }
+  if(!anDrag) return;
   if((anDrag.mode==='draw'||anDrag.mode==='shape') && anDrag.hit>=0 && Math.hypot(e.clientX-anDrag.cx,e.clientY-anDrag.cy)<5){
     const i=anDrag.hit; anObj=null; anDrag=null; selectHit(i); return; }
   if(anDrag.mode==='draw'){ if(anObj.pts.length>1) commit(anObj); anObj=null; }
@@ -2504,8 +2512,9 @@ function doubleTap(p){
   return false;
 }
 /* objet sous le pointeur, le plus haut d'abord ; -1 si aucun */
-function hitIndex(p){ const pg=pg2(); const px=DX(p.u),py=DY(p.v);
-  for(let i=pg.annots.length-1;i>=0;i--){ const bb=bboxOf(pg.annots[i]); if(bb&&px>=bb.x-5&&px<=bb.x+bb.w+5&&py>=bb.y-5&&py<=bb.y+bb.h+5) return i; }
+function hitIndex(p, overMask){ const pg=pg2(); const px=DX(p.u),py=DY(p.v);
+  const order=maskFirst(pg.annots);   // le plus haut d'abord : un masque ne passe qu'après ce qui le recouvre
+  for(let k=order.length-1;k>=0;k--){ const i=order[k], bb=bboxOf(pg.annots[i]); if(overMask&&isMask(pg.annots[i])) continue; if(bb&&px>=bb.x-5&&px<=bb.x+bb.w+5&&py>=bb.y-5&&py<=bb.y+bb.h+5) return i; }
   return -1;
 }
 function hitSelect(p){ anSel=hitIndex(p); if(anSel>=0) syncControls(); renderAnnots(); }
@@ -2668,7 +2677,12 @@ function showTextInput(u,v,size,color,val,rot){ const t=anText; const sz=size*an
      une demi-conduite de 0,1 em au-dessus du glyphe, qu'il faut retrancher */
   t.style.display='block'; t.style.left=DX(u)+'px'; t.style.top=(DY(v)-sz*0.1)+'px';
   t.style.transformOrigin='0 0'; t.style.transform=`rotate(${-(rot||0)}deg)`;
-  anTextRun=(rot===90||rot===270) ? anDispH : anDispW; t.style.fontSize=(size*anPxPerPt)+'px'; t.style.color=color; t.value=val; autoGrow(t); setTimeout(()=>{t.focus();t.setSelectionRange(t.value.length,t.value.length);},10); }
+  anTextRun=(rot===90||rot===270) ? anDispH : anDispW; t.style.fontSize=(size*anPxPerPt)+'px'; t.style.color=color; t.value=val; autoGrow(t);
+  /* le clavier d'iPad et d'iPhone ne s'ouvre que si le focus est donné pendant le geste lui-même, jamais après un délai :
+     souris, tout de suite ; doigt et Pencil, au relâcher (pointerup), seul moment que Safari tient pour un geste */
+  if(anTouchDown) anFocusOnUp=true; else focusText(); }
+let anTouchDown=false, anFocusOnUp=false;
+function focusText(){ anText.focus({preventScroll:true}); const n=anText.value.length; anText.setSelectionRange(n,n); }
 /* la zone de saisie part au plus court et suit le texte tapé, en largeur comme en hauteur */
 let anTextRun=0;
 const anMeasure=document.createElement('span');
@@ -2773,7 +2787,7 @@ const HELP=[
   {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic, ou double appui au doigt, sur un texte pour le modifier, quel que soit l\'outil.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
   {t:'Image ou PDF', tool:'image', d:'Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s\'il en compte plusieurs, choisissez laquelle.', k:'image photo logo signature tampon importer inserer insertion ajouter pdf fichier'},
   {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : tracez l\'emplacement, sur cette page ou une autre. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier'},
-  {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'export.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
+  {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'export. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
   {t:'Recadrer', tool:'crop', d:'Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l\'objet, sans perte, <kbd>Entrée</kbd> pour valider.', k:'recadrer recadrage rogner couper crop cadre marges decouper'}]},
  {s:'Modifier un objet', items:[
   {t:'Sélectionner', tool:'select', d:'Touchez un objet, quel que soit l\'outil actif. Un appui hors de la page revient à la sélection.', k:'selectionner selection choisir cliquer toucher objet'},
@@ -3270,7 +3284,7 @@ async function drawAnnots(page, pg, mb, fontArg, offset){
   const ox=(offset&&offset.x)||0, oy=(offset&&offset.y)||0;
   const mx=mb.x-ox, my=mb.y-oy, mw=mb.width, mh=mb.height;
   const X=u=>mx+u*mw, Y=v=>my+(1-v)*mh;
-  for(const a of pg.annots){
+  for(const i of maskFirst(pg.annots)){ const a=pg.annots[i];   // ancien masque blanc cosmétique d'abord, sous le reste
     if(a.type==='redact') continue; // handled separately: painted into the raster before this page's content exists, never as a vector overlay
     const col=hexRgb(a.color); const w=a.w||1.5;
     if(a.type==='white'){ page.drawRectangle({x:X(Math.min(a.u0,a.u1)),y:Y(Math.max(a.v0,a.v1)),width:Math.abs(a.u1-a.u0)*mw,height:Math.abs(a.v1-a.v0)*mh,color:PDFLib.rgb(1,1,1)}); }
@@ -3457,8 +3471,10 @@ themeBtn.addEventListener('click',()=>setTheme(document.documentElement.dataset.
 /* Depuis l'adresse publiée, sw.js garde l'application et ses bibliothèques après le premier chargement.
    Ouvert depuis le disque, le navigateur n'accepte pas de service worker : rien ne change. */
 if('serviceWorker' in navigator && window.isSecureContext && location.protocol!=='file:'){
+  /* certains navigateurs intégrés à une application (aperçus iOS limités à leurs domaines), ou la navigation privée,
+     refusent le service worker : c'est attendu, l'outil marche alors en ligne comme avant, sans rien signaler */
   navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready)
-    .then(()=>{ $('offlineNote').hidden=false; }).catch(err=>console.warn('Hors ligne indisponible :',err));
+    .then(()=>{ $('offlineNote').hidden=false; }).catch(()=>{});
 }
 
 /* ============ boot ============ */

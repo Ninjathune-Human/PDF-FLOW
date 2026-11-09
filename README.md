@@ -23,7 +23,7 @@ Application : https://ninjathune-human.github.io/PDF-FLOW/
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
 | Éditer | Stylo, surligneur fluo (jaune, vert, magenta, bleu), formes (rectangle, ellipse, flèche, trait), texte avec police, taille, gras et italique, image ou page de PDF (vectorielle, choix de la page si le fichier en compte plusieurs). Un appui sélectionne un objet quel que soit l'outil ; ses poignées le déforment. Vectoriel à l'export |
 | Copier une zone | L'icône de l'outil sert de presse-papiers. Vide, le tracé copie la zone, qui file se loger dans l'icône ; pleine, le tracé la pose, sur la même page ou une autre, et l'icône se vide. Vectoriel, sans perte. Une fois posée, elle se déplace, se redimensionne et se recadre comme une image |
-| Masque | Blanc par défaut, ou noir. Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
+| Masque | Blanc par défaut, ou noir. Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage. Le masque reste sur la couche la plus basse : un texte posé ensuite s'écrit dessus |
 | OCR | Menu Convertir. Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant un masque |
