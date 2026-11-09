@@ -82,6 +82,8 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 ## Recherche
 
+Marquage des pages : `markFindCard` pose `data-find` (nombre d'occurrences) sur la carte, `grid.dataset.finding` estompe les autres ; `clearFindMarks` à chaque nouvelle recherche, `renderGrid` réapplique. Dans l'éditeur, `findPulse` fait rebondir les occurrences une seule fois, à l'arrivée sur la page ou au résultat d'une recherche, jamais à chaque rendu.
+
 Les résultats vivent dans `findHits`, table indexée par identifiant de page, hors du modèle : ils ne partent jamais à l'export. Sources interrogées : couche de texte pdf.js, puis mots OCR. Position déduite au prorata des caractères dans chaque fragment. Un jeton d'annulation abandonne un balayage dès la frappe suivante. Les deux champs, grille et annotation, partagent un seul terme.
 
 ## Images
@@ -147,4 +149,5 @@ Variables : `--bg`, `--surface`, `--subtle`, `--line`, `--line-strong`, `--ink`,
 - Infobulles : un seul élément `#tip`, en position fixe, géré par délégation. Tout bouton sans texte visible affiche `data-tip`, sinon `aria-label`. Pas d'attribut `title` sur ces boutons, il doublerait l'infobulle. Le doigt n'en déclenche aucune
 - Au téléphone : menus en feuille basse, palette d'outils en bas, au pouce
 - Le recadrage s'ouvre aussi depuis l'éditeur (bouton `anCrop`, hors des outils à mode) : même fenêtre, passée au-dessus par la classe `over`. Échap ne ferme que le recadrage (`stopImmediatePropagation`), et l'éditeur recharge sa page à la fermeture
+- Mode d'emploi : tableau `HELP` (sections, fiches `t`, `d`, mots-clés `k`, `tool` pour le bouton Utiliser), panneau `#anHelpPanel`. Recherche `helpSearch` : normalisation sans accents, mots vides retirés, mot exact 3, début de mot 2, même racine 1,5, faute de frappe (distance de Damerau-Levenshtein 1, ou 2 au-delà de six lettres) 1, titre compté double. Toute nouvelle fonction de l'éditeur ajoute sa fiche, avec ses synonymes, et `MODE-EMPLOI.md` se régénère depuis `HELP`
 - Une fonction, une seule façon de l'appeler. Minimiser les boutons

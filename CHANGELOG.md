@@ -2,6 +2,23 @@
 
 ## 9 novembre 2026
 
+### Dépôt
+
+- Bannière redessinée sur la nouvelle identité : neutres zinc, table de travail pointillée, cadre de rognage. Texte en Geist vectorisé, rendu identique sans police installée.
+- README revu de bout en bout : description de l'éditeur, raccourcis complets, liste des fichiers du dépôt.
+
+### Recherche
+
+- Les pages qui contiennent le mot cherché ressortent sur la grille : fond jaune, liseré, pastille du nombre d'occurrences ; les autres s'estompent. Surlignage plus franc sur les vignettes.
+- Croix ✕ dans les champs de recherche, grille et éditeur : vide la recherche, retire les marques et rend la main au clavier.
+- Dans l'éditeur, chaque occurrence est surlignée en jaune cerné d'orange, et s'annonce d'un rebond à l'ouverture de la page.
+
+### Mode d'emploi
+
+- **Mode d'emploi intégré à l'éditeur** : bouton ? en haut ou touche ?, panneau latéral qui laisse la page visible. Une fiche courte par geste, rangée en quatre parties : naviguer, dessiner et écrire, modifier un objet, chercher et terminer. Bouton « Utiliser » pour activer directement l'outil décrit.
+- **Interroger les fonctions** : champ « Que voulez-vous faire ? », recherche tolérante (mots dans n'importe quel ordre, accents et mots vides ignorés, fautes de frappe et débuts de mot acceptés, synonymes du métier comme caviarder ou rogner). Résultats classés, « Résultats approchants » à défaut ; ✕ efface, Échap vide puis ferme, Entrée ne garde que la meilleure fiche.
+- `MODE-EMPLOI.md` : le même contenu, en document.
+
 ### Refonte graphique
 
 - Police Geist sur tous les appareils, Geist Mono pour les numéros de page et les étiquettes. Fini le repli sur Segoe UI sous Windows.
