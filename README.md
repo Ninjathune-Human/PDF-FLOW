@@ -12,19 +12,19 @@ Application : https://ninjathune-human.github.io/PDF-FLOW/
 
 | Fonction | Détail |
 |---|---|
-| Organiser | Un clic sélectionne une seule page, la pastille ronde cumule la sélection. Réorganisation par glisser-déposer. Suppression depuis la barre de sélection, confirmée puis annulable. Déposer un PDF sur le document ouvert ouvre le choix des pages à ajouter à la suite |
+| Organiser | Un clic sélectionne une seule page, la pastille ronde cumule la sélection. Réorganisation par glisser-déposer. Suppression depuis la barre de sélection, immédiate et annulable. Déposer un PDF, une image ou un document Word sur le document ouvert ouvre le choix des pages à ajouter à la suite |
 | Ajouter | Pages d'autres PDF ou images (JPEG, PNG, HEIC, WebP), prévisualisées avant insertion : on coche les pages voulues |
 | Extraire | Sort la sélection courante dans un fichier séparé, sans altérer le document de travail |
 | Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm). S'ouvre d'elle-même sur un PDF protégé |
-| Rechercher | Plein texte dans la couche de texte du PDF et dans les mots reconnus par OCR. Sur la grille, les pages trouvées ressortent avec leur nombre d'occurrences, les autres s'estompent ; dans l'éditeur, chaque occurrence est surlignée. Le bouton ✕ ou Échap vide le champ |
+| Rechercher | Plein texte dans la couche de texte du PDF et dans les mots reconnus par OCR. Sur la grille, les pages trouvées ressortent en jaune avec leur nombre d'occurrences et se sélectionnent, les autres s'estompent : le bouton Éditer n'ouvre alors qu'elles, et vider le champ rend la sélection d'avant ; dans l'éditeur, chaque occurrence est surlignée, Entrée passe de l'une à l'autre (Maj + Entrée pour revenir), et les flèches de page ne parcourent que les pages trouvées. Le bouton ✕ ou Échap vide le champ |
 | Convertir | **Bêta.** Document Word (.docx) converti en pages PDF vectorielles, texte sélectionnable, puis choix des pages à insérer |
-| Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot, depuis le menu Éditer ou l'éditeur. Dans l'éditeur, avec une image ou une zone copiée sélectionnée, le bouton recadre l'objet seul, à la manière de Photoshop et d'Office, sans perte : l'original reste et peut être rendu |
+| Recadrer | Rectangle ajustable, détection automatique du contenu, page par page ou par lot, depuis le menu Modifier ou l'éditeur. Dans l'éditeur, avec une image ou une zone copiée sélectionnée, le bouton recadre l'objet seul, à la manière de Photoshop et d'Office, sans perte : l'original reste et peut être rendu |
 | Pivoter | ±90°, par page ou par lot, depuis la barre de sélection |
 | Supprimer les marges | Détection du contenu, marge conservée réglable, annulation à bascule |
-| Annoter | Stylo, surligneur fluo (jaune, vert, magenta, bleu), formes (rectangle, ellipse, flèche, trait), texte avec police, taille, gras et italique, image ou page de PDF (vectorielle, choix de la page si le fichier en compte plusieurs). Un appui sélectionne un objet quel que soit l'outil ; ses poignées le déforment. Vectoriel à l'export |
+| Éditer | Stylo, surligneur fluo (jaune, vert, magenta, bleu), formes (rectangle, ellipse, flèche, trait), texte avec police, taille, gras et italique, image ou page de PDF (vectorielle, choix de la page si le fichier en compte plusieurs). Un appui sélectionne un objet quel que soit l'outil ; ses poignées le déforment. Vectoriel à l'export |
 | Copier une zone | L'icône de l'outil sert de presse-papiers. Vide, le tracé copie la zone, qui file se loger dans l'icône ; pleine, le tracé la pose, sur la même page ou une autre, et l'icône se vide. Vectoriel, sans perte. Une fois posée, elle se déplace, se redimensionne et se recadre comme une image |
 | Masque | Blanc par défaut, ou noir. Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage |
-| OCR | Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
+| OCR | Menu Convertir. Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant un masque |
 | Apparence | Mode clair par défaut, bascule vers le mode nuit, choix mémorisé. Respecte les réglages système de transparence réduite, de contraste renforcé et de mouvement réduit |
@@ -37,11 +37,11 @@ L'orientation du document d'origine est respectée partout, vignettes comme édi
 
 ## Usage
 
-Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
+Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus, puis choisir ou déposer un PDF, une image ou un document Word : l'image et le document Word sont d'abord convertis en PDF. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
 
-**Grille des pages.** La barre d'outils regroupe trois menus, Éditer, Annoter et Convertir, un champ de recherche, puis Compresser et Exporter le PDF. Les rotations, l'extraction et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies. Au téléphone, les menus s'ouvrent en feuille basse.
+**Grille des pages.** La barre d'outils regroupe le menu Modifier (ajout, extraction, recadrage, marges, déverrouillage), le bouton Éditer, qui ouvre l'éditeur, le menu Convertir (reconnaissance de texte, document Word), un champ de recherche, puis Compresser et Exporter le PDF. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies. Au téléphone, les menus s'ouvrent en feuille basse.
 
-**Éditeur.** Double-clic sur une vignette, ou Annoter › Ouvrir l'éditeur. Plein écran, en trois bandes : l'en-tête (pages, mode d'emploi, Annuler, Supprimer, Terminé), une barre de propriétés qui change avec l'outil (couleurs, formes, options de texte, épaisseur, recherche, zoom), puis la table de travail avec sa palette d'outils : sélection, recadrage, stylo, surligneur, forme, texte, image, copie de zone, masque. Chaque outil affiche son nom au survol.
+**Éditeur.** Double-clic sur une vignette, ou bouton Éditer. Plein écran, en trois bandes : l'en-tête (pages, puis en icônes Annuler, Rétablir, Supprimer et mode d'emploi, puis Terminé), une barre de propriétés qui change avec l'outil (couleurs, formes, options de texte, épaisseur, recherche, zoom), puis la table de travail avec sa palette d'outils : sélection, recadrage, stylo, surligneur, forme, texte, image, copie de zone, masque. Chaque outil affiche son nom au survol.
 
 Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable, tolérant aux fautes de frappe. Le même contenu est dans [`MODE-EMPLOI.md`](MODE-EMPLOI.md).
 
@@ -49,10 +49,13 @@ Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable,
 |---|---|
 | ? | Ouvre le mode d'emploi de l'éditeur |
 | Double-clic sur une vignette | Ouvre l'éditeur sur cette page |
-| Suppr, ou Retour arrière | Grille : supprime les pages sélectionnées. Éditeur : supprime l'objet sélectionné |
-| Ctrl ou Cmd + Z | Éditeur : retire le dernier objet posé |
+| Suppr, ou Retour arrière | Grille : supprime les pages sélectionnées, annulable. Éditeur : supprime l'objet sélectionné |
+| Ctrl ou Cmd + Z | Éditeur : défait la dernière modification de la page (tracé, déplacement, taille, couleur, recadrage, suppression) |
+| Ctrl ou Cmd + Maj + Z, Ctrl + Y | Éditeur : rétablit ce qui vient d'être défait |
 | Échap | Ferme la fenêtre ouverte, vide le champ de recherche, ou annule le recadrage d'un objet |
-| Entrée | Valide le texte saisi ou le recadrage d'un objet |
+| Entrée | Valide le texte saisi ou le recadrage d'un objet. Dans le champ Rechercher de l'éditeur : occurrence suivante, d'une page à l'autre |
+| Maj + Entrée | Champ Rechercher de l'éditeur : occurrence précédente |
+| ← →, Page précédente, Page suivante | Éditeur : change de page ; pendant une recherche, seulement parmi les pages trouvées |
 | Appui simple sur un objet, quel que soit l'outil | Sélectionne l'objet ; un glisser trace |
 | Appui hors de la page | Revient à l'outil de sélection |
 | Glisser une zone vide, page agrandie | Déplace la vue, outil de sélection actif |
@@ -66,6 +69,7 @@ Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable,
 |---|---|
 | `atelier-pdf.html` | L'application entière : HTML, CSS et JS en ligne |
 | `index.html` | Redirection, pour GitHub Pages |
+| `sw.js` | Fonctionnement hors ligne depuis l'adresse publiée |
 | `docx-labo.html` | Laboratoire de la conversion Word : mesure la fidélité d'une conversion |
 | `MODE-EMPLOI.md` | Mode d'emploi de l'éditeur |
 | `CHANGELOG.md` | Historique des versions |
@@ -84,17 +88,17 @@ Chargées par CDN à l'exécution, pas de build :
 - Polices [Arimo, Tinos et Carlito](https://fontsource.org/), licence OFL, jumelles métriques d'Arial, Times New Roman et Calibri
 - Police d'interface [Geist et Geist Mono](https://vercel.com/font), licence OFL, via @fontsource-variable 5.3.0
 
-Une connexion est donc nécessaire au premier chargement. Une version entièrement embarquée hors-ligne est une piste ouverte.
+Une connexion est donc nécessaire au premier chargement. Ensuite, depuis l'adresse publiée, l'outil fonctionne hors ligne : `sw.js` garde l'application, pdf-lib, pdf.js et les polices dès la première visite, et chaque module chargé à la demande (reconnaissance de texte, déverrouillage, conversion Word) après sa première utilisation. Le pied de page l'indique : « L'outil fonctionne désormais hors ligne ».
 
 ## Limites connues
 
 - Le déverrouillage suppose un mot de passe connu. Aucune tentative par force brute n'est possible ni prévue.
 - La compression transforme le texte natif en image : il n'est plus sélectionnable dans le fichier compressé.
-- Les images ne peuvent pas encore ouvrir une session vide, un PDF de départ est requis.
 - La fenêtre de recadrage de page affiche la page non tournée, contrairement à la grille et à l'éditeur.
 - La conversion Word est en bêta. Fidèle sur les documents courants, courrier, compte rendu, CV. Approchée sur les zones de texte, formes, trames à motif et champs calculés. La pagination suit celle de Word lorsque le fichier en garde la trace, c'est-à-dire lorsqu'il a été enregistré en dernier par Word ; sinon elle est recalculée. Pour un rendu exact, exporter en PDF depuis Word ou Pages. `docx-labo.html` mesure la fidélité d'une conversion sur un fichier donné.
 - La recherche positionne le surlignage au prorata des caractères : sur une police à chasse variable, il peut déborder d'un caractère. Les textes pivotés à l'intérieur du PDF, cartouches verticaux notamment, sont mal encadrés.
-- Les vignettes sont toutes calculées à l'ouverture. Sur un document de plusieurs dizaines de pages, prévoir un temps de chargement.
+- Les vignettes sont calculées à l'approche de l'écran, avec un écran d'avance : un défilement très rapide sur un long document peut laisser voir un instant des pages grises.
+- Hors ligne seulement depuis l'adresse publiée : un fichier ouvert depuis le disque n'y a pas droit, le navigateur le refuse. Sur iPad et iPhone, Safari efface les données d'un site non visité depuis sept jours ; ajouter l'outil à l'écran d'accueil les préserve.
 - Les fonctions qui déclenchent un téléchargement ne fonctionnent pas dans un aperçu en bac à sable : ouvrir le fichier directement dans le navigateur.
 
 ## Licence

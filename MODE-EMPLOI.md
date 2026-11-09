@@ -4,7 +4,7 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 ## Naviguer
 
-**Changer de page** — Flèches ‹ › en haut, de part et d'autre du numéro de page.
+**Changer de page** — Flèches ‹ › en haut, de part et d'autre du numéro de page, ou touches `←` `→` du clavier. Pendant une recherche, le sélecteur passe au jaune et les flèches ne parcourent que les pages qui contiennent le mot.
 
 **Zoomer** — Boutons − et + en haut à droite, pincement à deux doigts ou `Ctrl` + molette. Toucher le pourcentage remet la page à la taille de l'écran.
 
@@ -19,7 +19,7 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Formes** — Choisissez rectangle, ellipse, flèche ou trait dans la barre du haut, puis glissez sur la page.
 
-**Texte** — Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. `Entrée` valide, `Maj` + `Entrée` passe à la ligne. Double-clic sur un texte pour le modifier.
+**Texte** — Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. `Entrée` valide, `Maj` + `Entrée` passe à la ligne. Double-clic, ou double appui au doigt, sur un texte pour le modifier, quel que soit l'outil.
 
 **Image ou PDF** — Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s'il en compte plusieurs, choisissez laquelle.
 
@@ -40,15 +40,15 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Couleur, épaisseur** — Sélectionnez l'objet, puis choisissez dans la barre du haut.
 
-**Supprimer** — Sélectionnez l'objet, puis Supprimer en haut ou touche `Suppr`.
+**Supprimer** — Sélectionnez l'objet, puis la corbeille rouge en haut ou touche `Suppr`.
 
-**Annuler** — Bouton Annuler en haut ou `Ctrl` + `Z` : retire le dernier objet posé.
+**Annuler, rétablir** — Flèche Annuler en haut ou `Ctrl` + `Z` : défait la dernière modification de la page, tracé, déplacement, taille, couleur, recadrage ou suppression. La flèche voisine, ou `Ctrl` + `Maj` + `Z`, la rétablit.
 
 
 ## Chercher et terminer
 
-**Rechercher un mot** — Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d'occurrences, les autres s'estompent. Dans l'éditeur, chaque occurrence est surlignée sur la page.
+**Rechercher un mot** — Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d'occurrences, les autres s'estompent, et elles se sélectionnent : le bouton Éditer n'ouvre qu'elles. Vider le champ rend la sélection d'avant. Dans l'éditeur, chaque occurrence est surlignée sur la page ; `Entrée` dans le champ mène à la suivante, d'une page à l'autre, `Maj` + `Entrée` à la précédente.
 
 **Terminer** — Bouton Terminé : retour aux pages. Rien n'est écrit dans le fichier avant « Exporter le PDF ».
 
-**Raccourcis** — `?` ce mode d'emploi · `Échap` fermer ou annuler · `Suppr` supprimer · `Ctrl` + `Z` annuler · `Espace` maintenu, déplacer la vue.
+**Raccourcis** — `?` ce mode d'emploi · `Échap` fermer ou annuler · `Suppr` supprimer · `Ctrl` + `Z` annuler · `Ctrl` + `Maj` + `Z` rétablir · `←` `→` page précédente ou suivante · `Entrée` dans Rechercher, occurrence suivante · `Espace` maintenu, déplacer la vue.
