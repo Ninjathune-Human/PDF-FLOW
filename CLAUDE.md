@@ -4,7 +4,7 @@ Contrat architectural persistant. À lire avant toute modification.
 
 ## Forme
 
-Un seul fichier, `atelier-pdf.html` : HTML, CSS et JS en ligne, aucune étape de build, aucun npm. `index.html` n'est qu'un redirecteur pour GitHub Pages. `sw.js`, facultatif, ne sert que l'adresse publiée (pas `file://`) : il garde l'application, réseau d'abord, et les bibliothèques du CDN, cache d'abord, celles chargées à la demande à leur premier usage. Changer `CACHE` dans `sw.js` à chaque changement de version d'une bibliothèque ou de la liste `CORE`.
+Un seul fichier, `atelier-pdf.html` : HTML, CSS et JS en ligne, aucune étape de build, aucun npm. `index.html` n'est qu'un redirecteur pour GitHub Pages. `sw.js`, facultatif, ne sert que l'adresse publiée (pas `file://`) : il garde l'application, réseau d'abord, et les bibliothèques du CDN, cache d'abord, celles chargées à la demande à leur premier usage. Changer `CACHE` dans `sw.js` à chaque changement de version d'une bibliothèque ou de la liste `CORE`. Un refus d'enregistrement (aperçu iOS limité à ses domaines, « Job rejected for non app-bound domain », navigation privée) est attendu et reste silencieux.
 
 Bibliothèques chargées par CDN à l'exécution : pdf-lib 1.17.1 et pdf.js 3.11.174 en balise `<script>` UMD, qpdf-wasm et tesseract.js 5 par `import()` dynamique à la demande.
 
@@ -46,7 +46,7 @@ Annotations, mots OCR et zones de rédaction sont stockés en coordonnées norma
 
 `drawAnnots` et `drawOcrLayer` prennent un paramètre `offset` pour repositionner le contenu quand une page est rastérisée dans une page plus petite (compression, rédaction) par rapport à l'export normal. Un bug réel de positionnement sur des pages recadrées puis compressées a été corrigé à ce niveau.
 
-Masque : un seul outil, noir ou blanc (blanc par défaut), destructif au niveau du pixel à l'export. L'ancien outil de correction (masque blanc cosmétique suivi d'un texte) a été retiré à la demande ; les annotations `white` déjà présentes restent rendues et exportées.
+Masque : un seul outil, noir ou blanc (blanc par défaut), destructif au niveau du pixel à l'export. Couche la plus basse : `maskFirst(annots)` donne l'ordre de dessin, masques d'abord (`isMask` : `redact` et l'ancien `white`), sans toucher au tableau ; il sert à l'éditeur, à la vignette, à `drawAnnots` et à `hitIndex`, qui teste donc le masque en dernier. `hitIndex(p, true)` ignore les masques : l'outil Texte écrit dessus. L'ancien outil de correction (masque blanc cosmétique suivi d'un texte) a été retiré à la demande ; les annotations `white` déjà présentes restent rendues et exportées.
 
 ## Vue de l'éditeur d'annotation
 
@@ -80,7 +80,7 @@ Les éléments posés sur le papier — poignées de recadrage, cadre de rognage
 
 **Préférences système.** `prefers-reduced-transparency`, `prefers-contrast` et `prefers-reduced-motion` sont traités. Toute nouvelle surface en verre doit s'ajouter aux trois blocs.
 
-**Raccourcis et saisie.** `typingInAnnot()` couvre tout champ de saisie (zone de texte, champ autre que bouton, case, curseur), pas une liste d'identifiants. Les flèches et Page précédente / suivante changent de page par `anGo`, sauf sur le curseur d'épaisseur. Un raccourci à touche unique s'efface dès que le focus est dans un champ, sinon il avale la frappe. `typingInAnnot()` sert de garde dans l'éditeur d'annotation.
+**Raccourcis et saisie.** `typingInAnnot()` couvre tout champ de saisie (zone de texte, champ autre que bouton, case, curseur), pas une liste d'identifiants. Les flèches et Page précédente / suivante changent de page par `anGo`, sauf sur le curseur d'épaisseur. Un raccourci à touche unique s'efface dès que le focus est dans un champ, sinon il avale la frappe. `typingInAnnot()` sert de garde dans l'éditeur d'annotation. Focus de la saisie de texte : jamais après un délai, Safari n'ouvre alors pas le clavier ; `focusText()` tout de suite à la souris, au `pointerup` pour le doigt et le Pencil (`anTouchDown`, `anFocusOnUp`).
 
 ## Recherche
 

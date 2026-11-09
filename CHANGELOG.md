@@ -4,6 +4,7 @@
 
 ### Hors ligne
 
+- Plus d'avertissement en console quand un navigateur refuse le service worker (aperçu intégré à une application iOS, navigation privée) : c'est attendu, l'outil fonctionne alors en ligne, sans la mention hors ligne.
 - Depuis l'adresse publiée, l'outil fonctionne sans connexion après la première visite : nouveau fichier `sw.js`, qui garde l'application, pdf-lib, pdf.js et les polices, puis chaque module chargé à la demande (OCR, déverrouillage, Word) après son premier usage. Le pied de page l'indique. Mises à jour reçues dès qu'on est de nouveau en ligne.
 
 ### Grille
@@ -12,6 +13,8 @@
 
 ### Éditeur
 
+- Outil Texte : la saisie s'ouvre, clavier compris, dès le premier appui sur la page. Sur iPad et iPhone, il fallait toucher deux fois : le focus, donné après un court délai, n'était plus tenu pour un geste et Safari n'ouvrait pas le clavier.
+- Le masque, blanc ou noir, reste toujours sur la couche la plus basse, dans l'éditeur, la vignette et l'export : un texte ou un tracé posé dessus reste visible. L'outil Texte écrit sur un masque au lieu de le sélectionner.
 - Le double-clic sur un texte pour le modifier, et sur un objet en cours de recadrage pour valider, fonctionne de nouveau, à la souris comme au doigt et au Pencil : il est reconnu sur les appuis eux-mêmes, le premier clic redessinant l'objet et privant le navigateur de son double-clic.
 - Changement de page au clavier : ← →, Page précédente, Page suivante, en suivant le filtre de recherche comme les flèches de l'en-tête.
 - Dans le champ Rechercher de l'éditeur, Entrée mène à l'occurrence suivante, Maj + Entrée à la précédente, en changeant de page si besoin et en bouclant au bout. L'occurrence courante ressort en orangé, le compteur indique sa position, et la vue agrandie se recentre sur elle. Le cadre des occurrences garde la même finesse à tous les zooms.

@@ -25,7 +25,7 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Copier une zone** — Icône vide : tracez la zone à copier, elle se loge dans l'icône. Icône pleine : tracez l'emplacement, sur cette page ou une autre. Reste vectoriel.
 
-**Masque** — Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l'export.
+**Masque** — Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l'export. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.
 
 **Recadrer** — Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l'objet, sans perte, `Entrée` pour valider.
 
