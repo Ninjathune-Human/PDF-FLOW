@@ -12,7 +12,7 @@ Application : https://ninjathune-human.github.io/PDF-FLOW/
 
 | Fonction | Détail |
 |---|---|
-| Organiser | Un clic sélectionne une seule page, la pastille ronde cumule la sélection. Réorganisation par glisser-déposer. Suppression depuis la barre de sélection, immédiate et annulable. Déposer un PDF, une image ou un document Word sur le document ouvert ouvre le choix des pages à ajouter à la suite |
+| Organiser | Un clic sélectionne une seule page, la pastille ronde cumule la sélection. `Maj` + clic retient toutes les pages d'une page à l'autre, `Ctrl` + clic (`Cmd` sur Mac) en ajoute ou en retire une, où qu'elle soit. Recliquer une page retenue la laisse sélectionnée ; on relâche par la pastille, par une autre page ou par un clic dans le vide. Réorganisation par glisser-déposer. Suppression depuis la barre de sélection, immédiate et annulable. Déposer un PDF, une image ou un document Word sur le document ouvert ouvre le choix des pages à ajouter à la suite |
 | Ajouter | Pages d'autres PDF ou images (JPEG, PNG, HEIC, WebP), prévisualisées avant insertion : on coche les pages voulues |
 | Extraire | Sort la sélection courante dans un fichier séparé, sans altérer le document de travail |
 | Déverrouiller | Retire un mot de passe connu ou des restrictions de permissions (qpdf-wasm). S'ouvre d'elle-même sur un PDF protégé |
@@ -50,6 +50,8 @@ Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable,
 |---|---|
 | ? | Ouvre le mode d'emploi de l'éditeur |
 | Double-clic sur une vignette | Ouvre l'éditeur sur cette page |
+| Maj + clic sur une vignette | Sélectionne de la dernière page cliquée à celle-ci, pages intermédiaires comprises |
+| Ctrl + clic, Cmd + clic sur Mac | Ajoute une page à la sélection, ou l'en retire |
 | Suppr, ou Retour arrière | Grille : supprime les pages sélectionnées, annulable. Éditeur : supprime l'objet sélectionné |
 | Ctrl ou Cmd + Z | Éditeur : défait la dernière modification de la page (tracé, déplacement, taille, couleur, recadrage, suppression) |
 | Ctrl ou Cmd + Maj + Z, Ctrl + Y | Éditeur : rétablit ce qui vient d'être défait |
@@ -91,7 +93,7 @@ Chargées par CDN à l'exécution, pas de build :
 - Polices [Arimo, Tinos et Carlito](https://fontsource.org/), licence OFL, jumelles métriques d'Arial, Times New Roman et Calibri
 - Police d'interface [Geist et Geist Mono](https://vercel.com/font), licence OFL, via @fontsource-variable 5.3.0
 
-Une connexion est donc nécessaire au premier chargement. Ensuite, depuis l'adresse publiée, l'outil fonctionne hors ligne : `sw.js` garde l'application, pdf-lib, pdf.js et les polices dès la première visite, et chaque module chargé à la demande (reconnaissance de texte, déverrouillage, conversion Word) après sa première utilisation. Le pied de page l'indique : « L'outil fonctionne désormais hors ligne ».
+Une connexion est donc nécessaire au premier chargement. Ensuite, depuis l'adresse publiée, l'outil fonctionne hors ligne : `sw.js` garde l'application, pdf-lib, pdf.js et les polices dès la première visite, et chaque module chargé à la demande (reconnaissance de texte, déverrouillage, conversion Word) après sa première utilisation. Le pied de page l'indique : « L'outil fonctionne hors ligne, seules les bibliothèques d'outils sont téléchargées au chargement de l'application ».
 
 ## Limites connues
 

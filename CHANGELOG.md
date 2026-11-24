@@ -11,6 +11,16 @@
 ### Convertir
 
 - « Document Word… » devient « Word en PDF… » : le menu dit le sens de la conversion.
+
+### Grille
+
+- Sélection comme dans un explorateur de fichiers : `Maj` + clic retient toutes les pages depuis la dernière cliquée, pages intermédiaires comprises ; `Ctrl` + clic (`Cmd` sur Mac) ajoute ou retire une page, où qu'elle soit.
+- Plus de double cadre sur la page cliquée avec `Maj` ou `Ctrl` : le cadre de focus ne s'affiche qu'en navigation au clavier.
+- Un clic sur une page déjà sélectionnée ne la relâche plus : le double-clic pour l'éditer se fait sans clignotement de la pastille. On relâche par la pastille, par une autre page ou par un clic dans le vide de la zone des pages.
+
+### Pied de page
+
+- Nouvelle mention : « L'outil fonctionne hors ligne, seules les bibliothèques d'outils sont téléchargées au chargement de l'application. » Là où le hors ligne n'est pas disponible (fichier ouvert depuis le disque, aperçu intégré), seule la seconde moitié s'affiche.
 - « Exporter le PDF » devient « Enregistrer le PDF », « Enregistrer » au téléphone pour laisser sa place au champ de recherche. Les messages suivent : « Enregistrement… », « L'enregistrement a échoué ». Sur grand écran, le double espace apparu avant « le PDF » disparaît.
 
 ### Dépôt
