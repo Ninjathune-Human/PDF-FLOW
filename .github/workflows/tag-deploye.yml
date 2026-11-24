@@ -1,0 +1,26 @@
+# Après chaque déploiement GitHub Pages réussi, le tag « deploye » se place sur le commit publié.
+# Pages se déploie par son propre workflow (pages-build-deployment) : on s'accroche à sa fin.
+name: Tag deploye
+
+on:
+  workflow_run:
+    workflows: ["pages-build-deployment"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déplacer le tag deploye sur le commit publié
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          gh api -X PATCH "repos/$REPO/git/refs/tags/deploye" -f sha="$SHA" -F force=true \
+            || gh api -X POST "repos/$REPO/git/refs" -f ref=refs/tags/deploye -f sha="$SHA"
+          echo "deploye → $SHA"

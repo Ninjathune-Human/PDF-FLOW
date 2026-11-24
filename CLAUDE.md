@@ -94,6 +94,10 @@ Les résultats vivent dans `findHits`, table indexée par identifiant de page, h
 
 Une image insérée dans l'éditeur est une annotation de type `image`, stockée en data URL dans le modèle, réduite à 1600 px de grand côté, PNG conservé pour la transparence. Un JPEG ou un PNG déjà sous ce seuil est gardé tel quel. Comme le texte, elle mémorise l'orientation d'affichage à la pose. pdf-lib faisant pivoter autour de l'origine de dessin, l'origine change de coin selon le quart de tour : table dans `drawAnnots`, devenue asynchrone.
 
+## Impression
+
+Une seule source, `buildPdf(list)`, comme l'export : les pages imprimées sont rendues par pdf.js depuis le PDF construit, en JPEG de 3000 px de grand côté (`PRINT_PX`), dans `#printSheet`, enfant direct du corps, invisible à l'écran. La classe `printing` sur le corps, posée au clic, masque tout le reste en `@media print` ; sans elle, l'impression du navigateur reste celle de l'interface. `preparePrint` part à l'ouverture (`openPrint`, choix prérempli avec la sélection, `rangeText` / `parseRange`) et à chaque changement, avec jeton d'annulation `prSeq` : au clic, `window.print()` est appelé pendant le geste, condition de Safari sur iPad. Exception assumée à la règle des URL d'objet : ces images ne sont jamais redessinées dans un canevas. Elles restent après `print()`, que l'impression d'iPad peut relire au retour ; `clearPrint` les libère à la préparation suivante, à la fermeture sans imprimer et à l'ouverture d'un document. `Ctrl` ou `Cmd` + `P` ouvre la fenêtre, au-dessus de l'éditeur s'il est ouvert (classe `over`).
+
 ## Documents protégés
 
 `currentBytes` conserve les octets du document ouvert. Indispensable : quand pdf.js refuse un PDF faute de mot de passe, aucune source n'est enregistrée, et le déverrouillage n'aurait rien à traiter.

@@ -25,6 +25,7 @@ Application : https://ninjathune-human.github.io/PDF-FLOW/
 | Copier une zone | L'icône de l'outil sert de presse-papiers. Vide, le tracé copie la zone, qui file se loger dans l'icône ; pleine, le tracé la pose, sur la même page ou une autre, et l'icône se vide. Vectoriel, sans perte. Une fois posée, elle se déplace, se redimensionne et se recadre comme une image |
 | Masque | Blanc par défaut, ou noir. Suppression réellement destructive : la zone est peinte au niveau du pixel avant réencodage. Le masque reste sur la couche la plus basse : un texte posé ensuite s'écrit dessus |
 | OCR | Menu Convertir. Français, anglais ou les deux. Couche de texte invisible calée sur les mots détectés |
+| Imprimer | Tout le document ou un choix de pages (« 1-3, 6 »), prérempli avec la sélection en cours. Pages imprimées telles qu'à l'export : recadrages, annotations et masques compris. `Ctrl` ou `Cmd` + `P` ouvre la même fenêtre |
 | Compresser | Trois préréglages, rastérisation et réencodage JPEG |
 | Exporter | Vectoriel préservé, sauf sur les pages contenant un masque |
 | Apparence | Mode clair par défaut, bascule vers le mode nuit, choix mémorisé. Respecte les réglages système de transparence réduite, de contraste renforcé et de mouvement réduit |
@@ -39,7 +40,7 @@ L'orientation du document d'origine est respectée partout, vignettes comme édi
 
 Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus, puis choisir ou déposer un PDF, une image ou un document Word : l'image et le document Word sont d'abord convertis en PDF. Conçu pour PC, iPad et iPhone, avec prise en charge du tactile et du stylet.
 
-**Grille des pages.** La barre d'outils regroupe le menu Modifier (ajout, extraction, recadrage, marges, déverrouillage), le bouton Éditer, qui ouvre l'éditeur, le menu Convertir (reconnaissance de texte, document Word), un champ de recherche, puis Compresser et Exporter le PDF. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies. Au téléphone, les menus s'ouvrent en feuille basse.
+**Grille des pages.** La barre d'outils regroupe le menu Modifier (ajout, extraction, recadrage, marges, déverrouillage), le bouton Éditer, qui ouvre l'éditeur, le menu Convertir (reconnaissance de texte, document Word), un champ de recherche, puis Imprimer, Compresser et Exporter le PDF. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies. Au téléphone, les menus s'ouvrent en feuille basse.
 
 **Éditeur.** Double-clic sur une vignette, ou bouton Éditer. Plein écran, en trois bandes : l'en-tête (pages, puis en icônes Annuler, Rétablir, Supprimer et mode d'emploi, puis Terminé), une barre de propriétés qui change avec l'outil (couleurs, formes, options de texte, épaisseur, recherche, zoom), puis la table de travail avec sa palette d'outils : sélection, recadrage, stylo, surligneur, forme, texte, image, copie de zone, masque. Chaque outil affiche son nom au survol.
 
@@ -60,6 +61,7 @@ Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable,
 | Appui hors de la page | Revient à l'outil de sélection |
 | Glisser une zone vide, page agrandie | Déplace la vue, outil de sélection actif |
 | Espace maintenu, bouton central, deux doigts | Déplace la vue |
+| Ctrl ou Cmd + P | Ouvre la fenêtre Imprimer, aussi depuis l'éditeur |
 | Ctrl ou Cmd + molette, pincement | Zoome |
 | Maj + molette | Défilement latéral |
 
@@ -73,6 +75,7 @@ Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable,
 | `docx-labo.html` | Laboratoire de la conversion Word : mesure la fidélité d'une conversion |
 | `MODE-EMPLOI.md` | Mode d'emploi de l'éditeur |
 | `CHANGELOG.md` | Historique des versions |
+| `.github/workflows/tag-deploye.yml` | Après chaque déploiement réussi, place le tag `deploye` sur le commit publié |
 | `CLAUDE.md` | Conventions d'architecture et de design, à lire avant toute modification |
 
 ## Dépendances
