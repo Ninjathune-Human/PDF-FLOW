@@ -51,4 +51,4 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Terminer** — Bouton Terminé : retour aux pages. Rien n'est écrit dans le fichier avant « Exporter le PDF ».
 
-**Raccourcis** — `?` ce mode d'emploi · `Échap` fermer ou annuler · `Suppr` supprimer · `Ctrl` + `Z` annuler · `Ctrl` + `Maj` + `Z` rétablir · `←` `→` page précédente ou suivante · `Entrée` dans Rechercher, occurrence suivante · `Espace` maintenu, déplacer la vue.
+**Raccourcis** — `?` ce mode d'emploi · `Échap` fermer ou annuler · `Suppr` supprimer · `Ctrl` + `Z` annuler · `Ctrl` + `Maj` + `Z` rétablir · `Ctrl` + `P` imprimer · `←` `→` page précédente ou suivante · `Entrée` dans Rechercher, occurrence suivante · `Espace` maintenu, déplacer la vue.

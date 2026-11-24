@@ -191,7 +191,7 @@
   .vsep{flex:0 0 auto;width:1px;height:20px;background:var(--line);margin:0 6px}
   .menuwrap{position:relative}
   .menus{display:contents}
-  #btnCompress .i{display:none}
+  #btnCompress .i,#btnPrint .i{display:none}
   .mbtn{display:inline-flex;align-items:center;gap:4px;height:var(--h-md);padding:0 10px 0 13px;border:0;border-radius:var(--pill);background:none;color:var(--ink-2);
     font:inherit;font-size:var(--fs-md);font-weight:500;letter-spacing:-.006em;cursor:pointer;transition:background .15s,color .15s}
   .mbtn:hover{background:var(--subtle);color:var(--ink)}
@@ -291,6 +291,19 @@
   .readout pre{margin:10px 0 0;padding:12px 14px;background:var(--subtle);border-radius:var(--r-md);box-shadow:inset 0 0 0 1px var(--line);font-family:var(--mono);font-size:var(--fs-xs);line-height:1.6;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;max-height:190px;overflow:auto}
   .pw{margin-top:18px;display:none}
   .pw.show{display:block}
+  /* impression : les pages préparées ne s'affichent qu'à l'impression, et l'interface disparaît */
+  #printSheet{display:none}
+  #prInfo.bad{color:var(--danger)}
+  @media print{
+    @page{margin:8mm}
+    body.printing{display:block;padding:0;background:#fff;min-height:0}
+    body.printing::before{display:none}
+    body.printing>*:not(#printSheet){display:none!important}
+    body.printing #printSheet{display:block}
+    #printSheet .psheet{break-after:page;page-break-after:always}
+    #printSheet .psheet:last-child{break-after:auto;page-break-after:auto}
+    #printSheet img{display:block;margin:0 auto;max-width:100%;max-height:calc(100vh - 2px);object-fit:contain}
+  }
   .pw label{display:block;font-size:var(--fs-sm);font-weight:500;color:var(--ink-2);margin-bottom:7px}
   .pw .row{display:flex;gap:8px;max-width:440px}
   .pw input{flex:1;height:var(--h-md);font:inherit;font-size:var(--fs-md);padding:0 12px;border:0;border-radius:var(--r-md);background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line-strong)}
@@ -595,9 +608,10 @@
     .toolbar .findfield{flex:1;margin:0}
     .toolbar .findfield input{width:100%}
     .toolbar>.spacer{display:none}
-    #btnCompress{width:var(--h-md);padding:0}
-    #btnCompress .i{display:block;width:18px;height:18px}
-    #btnCompress .lbl{display:none}
+    #btnCompress,#btnPrint{width:var(--h-md);padding:0}
+    #btnCompress .i,#btnPrint .i{display:block;width:18px;height:18px}
+    #btnCompress .lbl,#btnPrint .lbl{display:none}
+    #btnExport .xl{display:none}   /* « Exporter » seul : la recherche garde sa place à côté d'Imprimer */
     /* au pouce : le menu s'ouvre en feuille au bas de l'écran */
     .menu{position:fixed;left:12px;right:12px;top:auto;bottom:max(12px,env(safe-area-inset-bottom));min-width:0;max-width:none;padding:8px;border-radius:var(--r-xl);
       box-shadow:0 0 0 1px var(--line),0 -8px 40px -8px rgba(9,9,11,.35);animation:sheet .26s var(--ease)}
@@ -689,8 +703,9 @@
             <button class="fclear" id="findClear" type="button" aria-label="Effacer la recherche" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 8 8 16M8 8l8 8"/></svg></button>
           </div>
           <span class="spacer"></span>
+          <button class="tbtn quiet" id="btnPrint" type="button" aria-label="Imprimer…"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5"/><path d="M7 17H5.5A2 2 0 0 1 3.5 15v-4a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H17"/><path d="M7 14h10v6.5H7z"/></svg><span class="lbl">Imprimer…</span></button>
           <button class="tbtn quiet" id="btnCompress" type="button" aria-label="Compresser…"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l6.5-6.5M3.5 20.5 10 14"/></svg><span class="lbl">Compresser…</span></button>
-          <button class="tbtn primary" id="btnExport" type="button">Exporter le PDF</button>
+          <button class="tbtn primary" id="btnExport" type="button">Exporter<span class="xl"> le PDF</span></button>
         </div>
 
         <!-- EDIT VIEW -->
@@ -851,6 +866,28 @@
         </div>
         <p style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0">Chaque page est ré-encodée en image à la résolution choisie — idéal pour alléger des scans ou des plans volumineux. Le texte natif (sélectionnable) devient alors une image et n'est plus recherchable dans le fichier compressé ; les annotations restent nettes et vectorielles.</p>
         <button class="btn primary" id="cpGo" type="button">Compresser et télécharger</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print modal -->
+  <div class="modal" id="printModal" role="dialog" aria-modal="true" aria-label="Imprimer">
+    <div class="dialog" style="max-width:460px">
+      <div class="dhead">
+        <h2>Imprimer</h2>
+        <button class="iconbtn" id="prClose" aria-label="Fermer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg></button>
+      </div>
+      <div style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:16px">
+        <div class="seg" id="prSeg" role="radiogroup" style="width:100%">
+          <button data-k="all" aria-selected="true" style="flex:1">Tout le document</button>
+          <button data-k="pages" aria-selected="false" style="flex:1">Choix des pages</button>
+        </div>
+        <div class="pw" id="prPagesWrap" style="margin-top:0">
+          <label for="prPages">Pages à imprimer</label>
+          <div class="row"><input type="text" id="prPages" placeholder="ex. 1-3, 6" autocomplete="off" spellcheck="false" enterkeyhint="done"></div>
+        </div>
+        <p id="prInfo" aria-live="polite" style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0"></p>
+        <button class="btn primary" id="prGo" type="button" disabled>Préparation…</button>
       </div>
     </div>
   </div>
@@ -1135,7 +1172,7 @@ async function openDocument(bytes, name){
   baseName=(name||'document').replace(/\.pdf$/i,'');
   fnameEl.textContent=name||'document.pdf'; fsizeEl.textContent=fmtSize(bytes.length);
   // reset model
-  sources=new Map(); pages=[]; selected.clear(); findSelBase=null; pageSeq=0; srcSeq=0; uAnalyzed=false;
+  sources=new Map(); pages=[]; selected.clear(); findSelBase=null; pageSeq=0; clearPrint(); srcSeq=0; uAnalyzed=false;
   currentBytes=bytes; docLocked=false;
   anClip=null; updateClipIcon();   // une zone copiée ne survit pas au changement de document
   ureadoutWrap.hidden=true; pwWrap.classList.remove('show'); pwIn.value=''; resetUnlockBtn();
@@ -2756,7 +2793,7 @@ anNext.addEventListener('click',()=>anGo(1));
 anClose.addEventListener('click',closeAnnot);
 annotModal.addEventListener('click',e=>{ if(e.target===annotModal) closeAnnot(); });
 function closeAnnot(){ commitText(); if(anObjCrop) applyObjCrop(); toggleHelp(false); annotModal.classList.remove('show'); anListP.forEach(pg=>refreshCard(pg.id)); }
-document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show')||cropModal.classList.contains('show')||addModal.classList.contains('show'))return;
+document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show')||cropModal.classList.contains('show')||addModal.classList.contains('show')||printModal.classList.contains('show'))return;
   if(typingInAnnot()) return;
   if(anObjCrop){ if(e.key==='Escape'){ e.preventDefault(); cancelObjCrop(); } else if(e.key==='Enter'){ e.preventDefault(); applyObjCrop(); } return; }
   if(e.key==='?'){ e.preventDefault(); toggleHelp(); return; }
@@ -2799,7 +2836,7 @@ const HELP=[
  {s:'Chercher et terminer', items:[
   {t:'Rechercher un mot', ic:'search', d:'Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d\'occurrences, les autres s\'estompent, et elles se sélectionnent : le bouton Éditer n\'ouvre qu\'elles. Vider le champ rend la sélection d\'avant. Dans l\'éditeur, chaque occurrence est surlignée sur la page ; <kbd>Entrée</kbd> dans le champ mène à la suivante, d\'une page à l\'autre, <kbd>Maj</kbd> + <kbd>Entrée</kbd> à la précédente.', k:'rechercher chercher trouver mot texte filtre filtrer selectionner selection occurrence suivante precedente'},
   {t:'Terminer', ic:'check', d:'Bouton Terminé : retour aux pages. Rien n\'est écrit dans le fichier avant « Exporter le PDF ».', k:'terminer quitter fermer sortir enregistrer enregistrement sauvegarder exporter export'},
-  {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd> rétablir · <kbd>←</kbd> <kbd>→</kbd> page précédente ou suivante · <kbd>Entrée</kbd> dans Rechercher, occurrence suivante · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
+  {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd> rétablir · <kbd>Ctrl</kbd> + <kbd>P</kbd> imprimer · <kbd>←</kbd> <kbd>→</kbd> page précédente ou suivante · <kbd>Entrée</kbd> dans Rechercher, occurrence suivante · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
 ];
 const HELP_IC={
   pages:'<path d="m10 7-5 5 5 5M14 7l5 5-5 5"/>',
@@ -3467,6 +3504,93 @@ let savedTheme=null; try{ savedTheme=localStorage.getItem('atelier-pdf-theme'); 
 setTheme(savedTheme==='dark');
 themeBtn.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme!=='dark'));
 
+/* ============ impression ============ */
+/* Les pages imprimées sont celles de l'export (buildPdf : recadrage, rotation, annotations, masques), rendues en images
+   par pdf.js dans #printSheet, que seule l'impression montre (classe printing sur le corps).
+   La préparation part dès l'ouverture et à chaque changement de choix : au clic, window.print() est appelé pendant
+   le geste, condition de Safari sur iPad. URL d'objet permises ici : ces images ne sont jamais redessinées dans un
+   canevas, elles ne peuvent donc pas le teinter. Elles restent jusqu'à la préparation suivante ou au document suivant,
+   l'impression d'iPad pouvant relire la page après le retour de print(). */
+const printModal=$('printModal'), prSeg=$('prSeg'), prPages=$('prPages'), prPagesWrap=$('prPagesWrap'), prInfo=$('prInfo'), prGo=$('prGo'), prClose=$('prClose'), printSheet=$('printSheet'), btnPrint=$('btnPrint');
+const PRINT_PX=3000;   // grand côté d'une page : environ 260 dpi sur A4, 180 sur A3
+let prKey='all', prSeq=0, prReady=false, prTimer=0, prUrls=[];
+function rangeText(nums){   // [2,4,5] → « 2, 4-5 »
+  const out=[]; for(let i=0;i<nums.length;i++){ let j=i; while(j+1<nums.length&&nums[j+1]===nums[j]+1) j++; out.push(j>i?`${nums[i]}-${nums[j]}`:`${nums[i]}`); i=j; } return out.join(', ');
+}
+function parseRange(txt, n){  // « 1-3, 6 » → pages 1, 2, 3, 6 dans l'ordre du document ; ce qui n'existe pas va dans bad
+  const set=new Set(), bad=[];
+  for(const tok of txt.replace(/\s*[-–]\s*/g,'-').split(/[,;\s]+/).filter(Boolean)){
+    const m=tok.match(/^(\d+)(?:-(\d+))?$/); if(!m){ bad.push(tok); continue; }
+    let a=+m[1], b=m[2]?+m[2]:a; if(a>b) [a,b]=[b,a];
+    if(a<1||b>n){ bad.push(tok); continue; }
+    for(let k=a;k<=b;k++) set.add(k);
+  }
+  return {nums:[...set].sort((x,y)=>x-y), bad};
+}
+function clearPrint(){ prSeq++; prReady=false; printSheet.innerHTML=''; prUrls.forEach(u=>URL.revokeObjectURL(u)); prUrls=[]; document.body.classList.remove('printing'); }
+function setPrKey(k){ prKey=k; prSeg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.k===k))); prPagesWrap.classList.toggle('show',k==='pages'); }
+function prMsg(t,bad){ prInfo.textContent=t; prInfo.classList.toggle('bad',!!bad); }
+async function preparePrint(){
+  clearPrint(); const token=prSeq; prGo.disabled=true; prGo.textContent='Imprimer';
+  let list=pages;
+  if(prKey==='pages'){
+    const r=parseRange(prPages.value, pages.length);
+    if(r.bad.length){ prMsg(`${r.bad.join(', ')} : ${r.bad.length>1?'ces pages n\'existent':'cette page n\'existe'} pas, le document en compte ${pages.length}. Notez par exemple 1-3, 6.`,true); return; }
+    if(!r.nums.length){ prMsg('Indiquez les pages à imprimer, par exemple 1-3, 6.'); return; }
+    list=r.nums.map(k=>pages[k-1]);
+  }
+  prMsg(`${list.length} page${list.length>1?'s':''}, telles qu'à l'export : recadrages, annotations et masques compris.`);
+  prGo.textContent='Préparation…';
+  let doc=null;
+  try{
+    const bytes=await buildPdf(list); if(token!==prSeq) return;
+    doc=await pdfjsLib.getDocument({data:bytes}).promise;
+    for(let i=1;i<=doc.numPages;i++){
+      if(token!==prSeq) return;
+      prGo.textContent=doc.numPages>1?`Préparation… ${i}/${doc.numPages}`:'Préparation…';
+      const page=await doc.getPage(i), v1=page.getViewport({scale:1});
+      const vp=page.getViewport({scale:PRINT_PX/Math.max(v1.width,v1.height)});
+      const c=document.createElement('canvas'); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
+      const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+      await page.render({canvasContext:ctx, viewport:vp}).promise;
+      const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',0.92)); c.width=c.height=0; page.cleanup();
+      if(token!==prSeq) return;
+      const url=URL.createObjectURL(blob); prUrls.push(url);
+      const sh=document.createElement('div'); sh.className='psheet'; const im=new Image(); im.alt=''; im.src=url; sh.appendChild(im); printSheet.appendChild(sh);
+    }
+    await Promise.all([...printSheet.querySelectorAll('img')].map(im=>im.decode().catch(()=>{})));
+    if(token!==prSeq) return;
+    prReady=true; prGo.disabled=false; prGo.textContent='Imprimer';
+  }catch(err){
+    console.error('Impression :',err);
+    if(token===prSeq){ prGo.textContent='Imprimer'; prMsg('La préparation a échoué ('+(err&&err.message||err)+'). Exportez le PDF, puis imprimez-le depuis votre lecteur de PDF.',true); }
+  }finally{ if(doc) doc.destroy(); }
+}
+function openPrint(){
+  if(!pages.length) return;
+  if(anPending) commitText();
+  const sel=[]; pages.forEach((p,i)=>{ if(selected.has(p.id)) sel.push(i+1); });
+  prPages.value=sel.length?rangeText(sel):'';
+  setPrKey(sel.length&&sel.length<pages.length?'pages':'all');   // une sélection en cours propose ses pages
+  printModal.classList.toggle('over', annotModal.classList.contains('show'));
+  printModal.classList.add('show'); preparePrint();
+}
+function closePrint(){ printModal.classList.remove('show'); clearTimeout(prTimer); }
+btnPrint.addEventListener('click',openPrint);
+prClose.addEventListener('click',()=>{ closePrint(); clearPrint(); });
+printModal.addEventListener('click',e=>{ if(e.target===printModal){ closePrint(); clearPrint(); } });
+prSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.k===prKey) return;
+  setPrKey(b.dataset.k); if(prKey==='pages'){ prPages.focus(); prPages.select(); } preparePrint(); }));
+prPages.addEventListener('input',()=>{ clearTimeout(prTimer); clearPrint(); prGo.disabled=true; prTimer=setTimeout(preparePrint,400); });
+prPages.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); prGo.click(); } });
+prGo.addEventListener('click',()=>{ if(!prReady) return; document.body.classList.add('printing'); window.print(); closePrint(); });
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&printModal.classList.contains('show')){ e.stopImmediatePropagation(); closePrint(); clearPrint(); return; }
+  /* Ctrl ou Cmd + P : la fenêtre d'impression de l'outil plutôt que l'impression de l'interface */
+  if((e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='p'&&shell.dataset.loaded==='1'){ e.preventDefault(); openPrint(); }
+},true);
+
 /* ============ hors ligne ============ */
 /* Depuis l'adresse publiée, sw.js garde l'application et ses bibliothèques après le premier chargement.
    Ouvert depuis le disque, le navigateur n'accepte pas de service worker : rien ne change. */
@@ -3482,5 +3606,6 @@ if(!DEPS_OK){
   intake.innerHTML='<div style="padding:8px 4px"><b>Les composants n\u2019ont pas pu se charger.</b><br><span style="color:var(--muted);font-size:.844rem">Vérifiez votre connexion (pdf-lib et pdf.js sont récupérés via cdn.jsdelivr.net), puis rechargez la page.</span></div>';
 }
 </script>
+<div id="printSheet" aria-hidden="true"></div>
 </body>
 </html>

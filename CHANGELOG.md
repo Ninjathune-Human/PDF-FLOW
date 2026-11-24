@@ -1,5 +1,18 @@
 # Journal des évolutions
 
+## 24 novembre 2026
+
+### Impression
+
+- Nouveau bouton Imprimer, à côté de Compresser (icône au téléphone) : tout le document ou un choix de pages (« 1-3, 6 »), prérempli avec la sélection en cours, donc avec les pages trouvées par une recherche. Les pages sortent telles qu'à l'export, recadrages, annotations et masques compris.
+- La préparation commence dès l'ouverture de la fenêtre et suit chaque changement de choix : le bouton Imprimer lance l'impression dans le geste même, ce qu'exige Safari sur iPad.
+- `Ctrl` ou `Cmd` + `P` ouvre cette fenêtre, aussi depuis l'éditeur, au lieu d'imprimer l'interface.
+- Au téléphone, « Exporter le PDF » devient « Exporter » pour laisser sa place au champ de recherche.
+
+### Dépôt
+
+- Après chaque déploiement GitHub Pages réussi, le tag `deploye` se place sur le commit publié (`.github/workflows/tag-deploye.yml`).
+
 ## 9 novembre 2026
 
 ### Hors ligne
