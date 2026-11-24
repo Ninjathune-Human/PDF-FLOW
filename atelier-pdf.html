@@ -293,7 +293,6 @@
   .pw.show{display:block}
   /* impression : les pages préparées ne s'affichent qu'à l'impression, et l'interface disparaît */
   #printSheet{display:none}
-  #prInfo.bad{color:var(--danger)}
   @media print{
     @page{margin:8mm}
     body.printing{display:block;padding:0;background:#fff;min-height:0}
@@ -611,7 +610,8 @@
     #btnCompress,#btnPrint{width:var(--h-md);padding:0}
     #btnCompress .i,#btnPrint .i{display:block;width:18px;height:18px}
     #btnCompress .lbl,#btnPrint .lbl{display:none}
-    #btnExport .xl{display:none}   /* « Exporter » seul : la recherche garde sa place à côté d'Imprimer */
+    #btnExport .xl{display:none}
+    #btnExport{padding-inline:13px}   /* « Exporter » seul : la recherche garde sa place à côté d'Imprimer */
     /* au pouce : le menu s'ouvre en feuille au bas de l'écran */
     .menu{position:fixed;left:12px;right:12px;top:auto;bottom:max(12px,env(safe-area-inset-bottom));min-width:0;max-width:none;padding:8px;border-radius:var(--r-xl);
       box-shadow:0 0 0 1px var(--line),0 -8px 40px -8px rgba(9,9,11,.35);animation:sheet .26s var(--ease)}
@@ -705,7 +705,7 @@
           <span class="spacer"></span>
           <button class="tbtn quiet" id="btnPrint" type="button" aria-label="Imprimer…"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5"/><path d="M7 17H5.5A2 2 0 0 1 3.5 15v-4a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H17"/><path d="M7 14h10v6.5H7z"/></svg><span class="lbl">Imprimer…</span></button>
           <button class="tbtn quiet" id="btnCompress" type="button" aria-label="Compresser…"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l6.5-6.5M3.5 20.5 10 14"/></svg><span class="lbl">Compresser…</span></button>
-          <button class="tbtn primary" id="btnExport" type="button">Exporter<span class="xl"> le PDF</span></button>
+          <button class="tbtn primary" id="btnExport" type="button"><span>Enregistrer<span class="xl"> le PDF</span></span></button>
         </div>
 
         <!-- EDIT VIEW -->
@@ -866,28 +866,6 @@
         </div>
         <p style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0">Chaque page est ré-encodée en image à la résolution choisie — idéal pour alléger des scans ou des plans volumineux. Le texte natif (sélectionnable) devient alors une image et n'est plus recherchable dans le fichier compressé ; les annotations restent nettes et vectorielles.</p>
         <button class="btn primary" id="cpGo" type="button">Compresser et télécharger</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Print modal -->
-  <div class="modal" id="printModal" role="dialog" aria-modal="true" aria-label="Imprimer">
-    <div class="dialog" style="max-width:460px">
-      <div class="dhead">
-        <h2>Imprimer</h2>
-        <button class="iconbtn" id="prClose" aria-label="Fermer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg></button>
-      </div>
-      <div style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:16px">
-        <div class="seg" id="prSeg" role="radiogroup" style="width:100%">
-          <button data-k="all" aria-selected="true" style="flex:1">Tout le document</button>
-          <button data-k="pages" aria-selected="false" style="flex:1">Choix des pages</button>
-        </div>
-        <div class="pw" id="prPagesWrap" style="margin-top:0">
-          <label for="prPages">Pages à imprimer</label>
-          <div class="row"><input type="text" id="prPages" placeholder="ex. 1-3, 6" autocomplete="off" spellcheck="false" enterkeyhint="done"></div>
-        </div>
-        <p id="prInfo" aria-live="polite" style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0"></p>
-        <button class="btn primary" id="prGo" type="button" disabled>Préparation…</button>
       </div>
     </div>
   </div>
@@ -2793,7 +2771,7 @@ anNext.addEventListener('click',()=>anGo(1));
 anClose.addEventListener('click',closeAnnot);
 annotModal.addEventListener('click',e=>{ if(e.target===annotModal) closeAnnot(); });
 function closeAnnot(){ commitText(); if(anObjCrop) applyObjCrop(); toggleHelp(false); annotModal.classList.remove('show'); anListP.forEach(pg=>refreshCard(pg.id)); }
-document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show')||cropModal.classList.contains('show')||addModal.classList.contains('show')||printModal.classList.contains('show'))return;
+document.addEventListener('keydown',e=>{ if(!annotModal.classList.contains('show')||cropModal.classList.contains('show')||addModal.classList.contains('show'))return;
   if(typingInAnnot()) return;
   if(anObjCrop){ if(e.key==='Escape'){ e.preventDefault(); cancelObjCrop(); } else if(e.key==='Enter'){ e.preventDefault(); applyObjCrop(); } return; }
   if(e.key==='?'){ e.preventDefault(); toggleHelp(); return; }
@@ -2824,7 +2802,7 @@ const HELP=[
   {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic, ou double appui au doigt, sur un texte pour le modifier, quel que soit l\'outil.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
   {t:'Image ou PDF', tool:'image', d:'Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s\'il en compte plusieurs, choisissez laquelle.', k:'image photo logo signature tampon importer inserer insertion ajouter pdf fichier'},
   {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : tracez l\'emplacement, sur cette page ou une autre. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier'},
-  {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'export. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
+  {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'enregistrement. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
   {t:'Recadrer', tool:'crop', d:'Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l\'objet, sans perte, <kbd>Entrée</kbd> pour valider.', k:'recadrer recadrage rogner couper crop cadre marges decouper'}]},
  {s:'Modifier un objet', items:[
   {t:'Sélectionner', tool:'select', d:'Touchez un objet, quel que soit l\'outil actif. Un appui hors de la page revient à la sélection.', k:'selectionner selection choisir cliquer toucher objet'},
@@ -2835,7 +2813,7 @@ const HELP=[
   {t:'Annuler, rétablir', ic:'undo', d:'Flèche Annuler en haut ou <kbd>Ctrl</kbd> + <kbd>Z</kbd> : défait la dernière modification de la page, tracé, déplacement, taille, couleur, recadrage ou suppression. La flèche voisine, ou <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd>, la rétablit.', k:'annuler annulation retour arriere defaire undo erreur retablir refaire redo historique'}]},
  {s:'Chercher et terminer', items:[
   {t:'Rechercher un mot', ic:'search', d:'Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d\'occurrences, les autres s\'estompent, et elles se sélectionnent : le bouton Éditer n\'ouvre qu\'elles. Vider le champ rend la sélection d\'avant. Dans l\'éditeur, chaque occurrence est surlignée sur la page ; <kbd>Entrée</kbd> dans le champ mène à la suivante, d\'une page à l\'autre, <kbd>Maj</kbd> + <kbd>Entrée</kbd> à la précédente.', k:'rechercher chercher trouver mot texte filtre filtrer selectionner selection occurrence suivante precedente'},
-  {t:'Terminer', ic:'check', d:'Bouton Terminé : retour aux pages. Rien n\'est écrit dans le fichier avant « Exporter le PDF ».', k:'terminer quitter fermer sortir enregistrer enregistrement sauvegarder exporter export'},
+  {t:'Terminer', ic:'check', d:'Bouton Terminé : retour aux pages. Rien n\'est écrit dans le fichier avant « Enregistrer le PDF ».', k:'terminer quitter fermer sortir enregistrer enregistrement sauvegarder exporter export'},
   {t:'Raccourcis', ic:'keys', d:'<kbd>?</kbd> ce mode d\'emploi · <kbd>Échap</kbd> fermer ou annuler · <kbd>Suppr</kbd> supprimer · <kbd>Ctrl</kbd> + <kbd>Z</kbd> annuler · <kbd>Ctrl</kbd> + <kbd>Maj</kbd> + <kbd>Z</kbd> rétablir · <kbd>Ctrl</kbd> + <kbd>P</kbd> imprimer · <kbd>←</kbd> <kbd>→</kbd> page précédente ou suivante · <kbd>Entrée</kbd> dans Rechercher, occurrence suivante · <kbd>Espace</kbd> maintenu, déplacer la vue.', k:'raccourcis clavier touches'}]}
 ];
 const HELP_IC={
@@ -3218,9 +3196,9 @@ async function buildPdf(list){
 }
 btnExport.addEventListener('click',async()=>{
   if(pages.length===0)return;
-  btnExport.disabled=true; const label=btnExport.innerHTML; btnExport.innerHTML='<span class="spin"></span>Export…';
+  btnExport.disabled=true; const label=btnExport.innerHTML; btnExport.innerHTML='<span class="spin"></span>Enregistrement…';
   try{ download(await buildPdf(pages), baseName+' — édité.pdf'); }
-  catch(e){ notify("L'export a échoué : "+(e&&e.message||e)+". Exportez une sélection réduite pour identifier la page en cause.",{kind:'warn'}); }
+  catch(e){ notify("L'enregistrement a échoué : "+(e&&e.message||e)+". Extrayez une sélection réduite (Modifier › Extraire la sélection) pour identifier la page en cause.",{kind:'warn'}); }
   btnExport.disabled=false; btnExport.innerHTML=label;
 });
 
@@ -3505,90 +3483,64 @@ setTheme(savedTheme==='dark');
 themeBtn.addEventListener('click',()=>setTheme(document.documentElement.dataset.theme!=='dark'));
 
 /* ============ impression ============ */
-/* Les pages imprimées sont celles de l'export (buildPdf : recadrage, rotation, annotations, masques), rendues en images
-   par pdf.js dans #printSheet, que seule l'impression montre (classe printing sur le corps).
-   La préparation part dès l'ouverture et à chaque changement de choix : au clic, window.print() est appelé pendant
-   le geste, condition de Safari sur iPad. URL d'objet permises ici : ces images ne sont jamais redessinées dans un
-   canevas, elles ne peuvent donc pas le teinter. Elles restent jusqu'à la préparation suivante ou au document suivant,
-   l'impression d'iPad pouvant relire la page après le retour de print(). */
-const printModal=$('printModal'), prSeg=$('prSeg'), prPages=$('prPages'), prPagesWrap=$('prPagesWrap'), prInfo=$('prInfo'), prGo=$('prGo'), prClose=$('prClose'), printSheet=$('printSheet'), btnPrint=$('btnPrint');
+/* Imprimer ouvre directement l'impression du système, avec ses imprimantes et leurs pilotes ; le choix des pages s'y fait,
+   les numéros y sont ceux de la grille (une page du document par feuille).
+   Les pages sont celles de l'enregistrement (buildPdf), rendues en images par pdf.js dans #printSheet, que seule
+   l'impression montre (classe printing sur le corps). URL d'objet permises ici : ces images ne sont jamais redessinées
+   dans un canevas. Elles restent prêtes tant que le document ne change pas (printSig) : une nouvelle impression part
+   alors pendant le geste même. Safari sur iPad et iPhone n'ouvre l'impression que dans un geste : après une préparation,
+   un message propose Imprimer ; ailleurs, l'impression s'ouvre seule. */
+const printSheet=$('printSheet'), btnPrint=$('btnPrint');
 const PRINT_PX=3000;   // grand côté d'une page : environ 260 dpi sur A4, 180 sur A3
-let prKey='all', prSeq=0, prReady=false, prTimer=0, prUrls=[];
-function rangeText(nums){   // [2,4,5] → « 2, 4-5 »
-  const out=[]; for(let i=0;i<nums.length;i++){ let j=i; while(j+1<nums.length&&nums[j+1]===nums[j]+1) j++; out.push(j>i?`${nums[i]}-${nums[j]}`:`${nums[i]}`); i=j; } return out.join(', ');
-}
-function parseRange(txt, n){  // « 1-3, 6 » → pages 1, 2, 3, 6 dans l'ordre du document ; ce qui n'existe pas va dans bad
-  const set=new Set(), bad=[];
-  for(const tok of txt.replace(/\s*[-–]\s*/g,'-').split(/[,;\s]+/).filter(Boolean)){
-    const m=tok.match(/^(\d+)(?:-(\d+))?$/); if(!m){ bad.push(tok); continue; }
-    let a=+m[1], b=m[2]?+m[2]:a; if(a>b) [a,b]=[b,a];
-    if(a<1||b>n){ bad.push(tok); continue; }
-    for(let k=a;k<=b;k++) set.add(k);
-  }
-  return {nums:[...set].sort((x,y)=>x-y), bad};
-}
-function clearPrint(){ prSeq++; prReady=false; printSheet.innerHTML=''; prUrls.forEach(u=>URL.revokeObjectURL(u)); prUrls=[]; document.body.classList.remove('printing'); }
-function setPrKey(k){ prKey=k; prSeg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.k===k))); prPagesWrap.classList.toggle('show',k==='pages'); }
-function prMsg(t,bad){ prInfo.textContent=t; prInfo.classList.toggle('bad',!!bad); }
-async function preparePrint(){
-  clearPrint(); const token=prSeq; prGo.disabled=true; prGo.textContent='Imprimer';
-  let list=pages;
-  if(prKey==='pages'){
-    const r=parseRange(prPages.value, pages.length);
-    if(r.bad.length){ prMsg(`${r.bad.join(', ')} : ${r.bad.length>1?'ces pages n\'existent':'cette page n\'existe'} pas, le document en compte ${pages.length}. Notez par exemple 1-3, 6.`,true); return; }
-    if(!r.nums.length){ prMsg('Indiquez les pages à imprimer, par exemple 1-3, 6.'); return; }
-    list=r.nums.map(k=>pages[k-1]);
-  }
-  prMsg(`${list.length} page${list.length>1?'s':''}, telles qu'à l'export : recadrages, annotations et masques compris.`);
-  prGo.textContent='Préparation…';
-  let doc=null;
+const IOS=/iP(hone|ad|od)/.test(navigator.platform)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let prSeq=0, prSig=null, prBusy=false, prUrls=[];
+function printSig(){ return JSON.stringify(pages.map(p=>[p.id,p.srcId,p.srcIndex,p.rotation,p.crop,p.blank,p.annots])); }
+function clearPrint(){ prSeq++; prSig=null; printSheet.innerHTML=''; prUrls.forEach(u=>URL.revokeObjectURL(u)); prUrls=[]; document.body.classList.remove('printing'); }
+function launchPrint(){ document.body.classList.add('printing'); window.print(); }
+async function preparePrint(sig){
+  clearPrint(); const token=prSeq; let doc=null;
+  const label=btnPrint.innerHTML; btnPrint.disabled=true;
+  const progress=t=>{ btnPrint.innerHTML='<span class="spin"></span><span class="lbl">'+t+'</span>'; };
+  progress('Préparation…');
   try{
-    const bytes=await buildPdf(list); if(token!==prSeq) return;
+    const bytes=await buildPdf(pages); if(token!==prSeq) return false;
     doc=await pdfjsLib.getDocument({data:bytes}).promise;
     for(let i=1;i<=doc.numPages;i++){
-      if(token!==prSeq) return;
-      prGo.textContent=doc.numPages>1?`Préparation… ${i}/${doc.numPages}`:'Préparation…';
+      if(token!==prSeq) return false;
+      if(doc.numPages>1) progress(`Préparation… ${i}/${doc.numPages}`);
       const page=await doc.getPage(i), v1=page.getViewport({scale:1});
       const vp=page.getViewport({scale:PRINT_PX/Math.max(v1.width,v1.height)});
       const c=document.createElement('canvas'); c.width=Math.round(vp.width); c.height=Math.round(vp.height);
       const ctx=c.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
       await page.render({canvasContext:ctx, viewport:vp}).promise;
       const blob=await new Promise(res=>c.toBlob(res,'image/jpeg',0.92)); c.width=c.height=0; page.cleanup();
-      if(token!==prSeq) return;
+      if(token!==prSeq) return false;
       const url=URL.createObjectURL(blob); prUrls.push(url);
       const sh=document.createElement('div'); sh.className='psheet'; const im=new Image(); im.alt=''; im.src=url; sh.appendChild(im); printSheet.appendChild(sh);
     }
     await Promise.all([...printSheet.querySelectorAll('img')].map(im=>im.decode().catch(()=>{})));
-    if(token!==prSeq) return;
-    prReady=true; prGo.disabled=false; prGo.textContent='Imprimer';
+    if(token!==prSeq) return false;
+    prSig=sig; return true;
   }catch(err){
     console.error('Impression :',err);
-    if(token===prSeq){ prGo.textContent='Imprimer'; prMsg('La préparation a échoué ('+(err&&err.message||err)+'). Exportez le PDF, puis imprimez-le depuis votre lecteur de PDF.',true); }
-  }finally{ if(doc) doc.destroy(); }
+    if(token===prSeq) notify("L'impression n'a pas pu être préparée ("+(err&&err.message||err)+"). Enregistrez le PDF, puis imprimez-le depuis votre lecteur de PDF.",{kind:'warn'});
+    return false;
+  }finally{ if(doc) doc.destroy(); btnPrint.disabled=false; btnPrint.innerHTML=label; }
 }
-function openPrint(){
-  if(!pages.length) return;
+async function doPrint(){
+  if(!pages.length||prBusy) return;
   if(anPending) commitText();
-  const sel=[]; pages.forEach((p,i)=>{ if(selected.has(p.id)) sel.push(i+1); });
-  prPages.value=sel.length?rangeText(sel):'';
-  setPrKey(sel.length&&sel.length<pages.length?'pages':'all');   // une sélection en cours propose ses pages
-  printModal.classList.toggle('over', annotModal.classList.contains('show'));
-  printModal.classList.add('show'); preparePrint();
+  const sig=printSig();
+  if(sig===prSig){ launchPrint(); return; }          // déjà prêtes : l'impression part dans le geste
+  prBusy=true; const ok=await preparePrint(sig); prBusy=false;
+  if(!ok) return;
+  if(IOS) notify(`${pages.length>1?pages.length+' pages prêtes':'Page prête'} à imprimer.`,{action:{label:'Imprimer',run:launchPrint}});
+  else launchPrint();
 }
-function closePrint(){ printModal.classList.remove('show'); clearTimeout(prTimer); }
-btnPrint.addEventListener('click',openPrint);
-prClose.addEventListener('click',()=>{ closePrint(); clearPrint(); });
-printModal.addEventListener('click',e=>{ if(e.target===printModal){ closePrint(); clearPrint(); } });
-prSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-  if(b.dataset.k===prKey) return;
-  setPrKey(b.dataset.k); if(prKey==='pages'){ prPages.focus(); prPages.select(); } preparePrint(); }));
-prPages.addEventListener('input',()=>{ clearTimeout(prTimer); clearPrint(); prGo.disabled=true; prTimer=setTimeout(preparePrint,400); });
-prPages.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); prGo.click(); } });
-prGo.addEventListener('click',()=>{ if(!prReady) return; document.body.classList.add('printing'); window.print(); closePrint(); });
+btnPrint.addEventListener('click',doPrint);
+/* Ctrl ou Cmd + P : les pages du document plutôt que l'interface */
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&printModal.classList.contains('show')){ e.stopImmediatePropagation(); closePrint(); clearPrint(); return; }
-  /* Ctrl ou Cmd + P : la fenêtre d'impression de l'outil plutôt que l'impression de l'interface */
-  if((e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='p'&&shell.dataset.loaded==='1'){ e.preventDefault(); openPrint(); }
+  if((e.metaKey||e.ctrlKey)&&!e.altKey&&e.key.toLowerCase()==='p'&&shell.dataset.loaded==='1'){ e.preventDefault(); doPrint(); }
 },true);
 
 /* ============ hors ligne ============ */

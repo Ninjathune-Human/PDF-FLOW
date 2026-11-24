@@ -4,10 +4,10 @@
 
 ### Impression
 
-- Nouveau bouton Imprimer, à côté de Compresser (icône au téléphone) : tout le document ou un choix de pages (« 1-3, 6 »), prérempli avec la sélection en cours, donc avec les pages trouvées par une recherche. Les pages sortent telles qu'à l'export, recadrages, annotations et masques compris.
-- La préparation commence dès l'ouverture de la fenêtre et suit chaque changement de choix : le bouton Imprimer lance l'impression dans le geste même, ce qu'exige Safari sur iPad.
-- `Ctrl` ou `Cmd` + `P` ouvre cette fenêtre, aussi depuis l'éditeur, au lieu d'imprimer l'interface.
-- Au téléphone, « Exporter le PDF » devient « Exporter » pour laisser sa place au champ de recherche.
+- Nouveau bouton Imprimer, à côté de Compresser (icône au téléphone) : il ouvre directement l'impression du système, avec les imprimantes installées et leurs pilotes. Le choix des pages se fait dans cette boîte, avec les numéros de la grille. Les pages sortent telles qu'enregistrées, recadrages, annotations et masques compris.
+- Les pages préparées restent prêtes tant que le document ne change pas : une nouvelle impression s'ouvre aussitôt. Sur iPad et iPhone, Safari n'ouvrant l'impression que pendant un geste, un message « Imprimer » confirme après la première préparation.
+- `Ctrl` ou `Cmd` + `P` imprime le document, aussi depuis l'éditeur, au lieu de l'interface.
+- « Exporter le PDF » devient « Enregistrer le PDF », « Enregistrer » au téléphone pour laisser sa place au champ de recherche. Les messages suivent : « Enregistrement… », « L'enregistrement a échoué ». Sur grand écran, le double espace apparu avant « le PDF » disparaît.
 
 ### Dépôt
 
