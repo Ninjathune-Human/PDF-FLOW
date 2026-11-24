@@ -25,7 +25,7 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Copier une zone** — Icône vide : tracez la zone à copier, elle se loge dans l'icône. Icône pleine : tracez l'emplacement, sur cette page ou une autre. Reste vectoriel.
 
-**Masque** — Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l'export. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.
+**Masque** — Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l'enregistrement. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.
 
 **Recadrer** — Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l'objet, sans perte, `Entrée` pour valider.
 
@@ -49,6 +49,6 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Rechercher un mot** — Champ Rechercher : sur la grille, les pages qui contiennent le mot ressortent en jaune avec leur nombre d'occurrences, les autres s'estompent, et elles se sélectionnent : le bouton Éditer n'ouvre qu'elles. Vider le champ rend la sélection d'avant. Dans l'éditeur, chaque occurrence est surlignée sur la page ; `Entrée` dans le champ mène à la suivante, d'une page à l'autre, `Maj` + `Entrée` à la précédente.
 
-**Terminer** — Bouton Terminé : retour aux pages. Rien n'est écrit dans le fichier avant « Exporter le PDF ».
+**Terminer** — Bouton Terminé : retour aux pages. Rien n'est écrit dans le fichier avant « Enregistrer le PDF ».
 
 **Raccourcis** — `?` ce mode d'emploi · `Échap` fermer ou annuler · `Suppr` supprimer · `Ctrl` + `Z` annuler · `Ctrl` + `Maj` + `Z` rétablir · `Ctrl` + `P` imprimer · `←` `→` page précédente ou suivante · `Entrée` dans Rechercher, occurrence suivante · `Espace` maintenu, déplacer la vue.
