@@ -7,6 +7,10 @@
 - Nouveau bouton Imprimer, à côté de Compresser (icône au téléphone) : il ouvre directement l'impression du système, avec les imprimantes installées et leurs pilotes. Le choix des pages se fait dans cette boîte, avec les numéros de la grille. Les pages sortent telles qu'enregistrées, recadrages, annotations et masques compris.
 - Les pages préparées restent prêtes tant que le document ne change pas : une nouvelle impression s'ouvre aussitôt. Sur iPad et iPhone, Safari n'ouvrant l'impression que pendant un geste, un message « Imprimer » confirme après la première préparation.
 - `Ctrl` ou `Cmd` + `P` imprime le document, aussi depuis l'éditeur, au lieu de l'interface.
+
+### Convertir
+
+- « Document Word… » devient « Word en PDF… » : le menu dit le sens de la conversion.
 - « Exporter le PDF » devient « Enregistrer le PDF », « Enregistrer » au téléphone pour laisser sa place au champ de recherche. Les messages suivent : « Enregistrement… », « L'enregistrement a échoué ». Sur grand écran, le double espace apparu avant « le PDF » disparaît.
 
 ### Dépôt

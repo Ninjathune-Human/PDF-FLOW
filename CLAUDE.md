@@ -104,7 +104,7 @@ Pas de fenêtre propre : Imprimer (`doPrint`, aussi `Ctrl` ou `Cmd` + `P`) ouvre
 
 ## Ajout de pages
 
-Un seul chemin de lecture, `fileToPdf` : image en page (`imageToPdfBytes`), Word composé par `WordConvert` (bêta), PDF tel quel. Il sert à l'accueil (`onFile`, le premier fichier déposé ouvre la session, les suivants passent par l'ajout), au dépôt sur un document ouvert, à Modifier › Ajouter et à Convertir › Document Word, qui appellent tous `addFiles`. Les échecs passent par `readFailMsg`.
+Un seul chemin de lecture, `fileToPdf` : image en page (`imageToPdfBytes`), Word composé par `WordConvert` (bêta), PDF tel quel. Il sert à l'accueil (`onFile`, le premier fichier déposé ouvre la session, les suivants passent par l'ajout), au dépôt sur un document ouvert, à Modifier › Ajouter et à Convertir › Word en PDF, qui appellent tous `addFiles`. Les échecs passent par `readFailMsg`.
 
 En deux temps : chargement et prévisualisation, puis insertion des seules pages cochées, toutes cochées par défaut. Vignettes rendues séquentiellement. Les sources entièrement écartées sont retirées de `sources` à la fermeture.
 
