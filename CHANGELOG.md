@@ -1,5 +1,11 @@
 # Journal des évolutions
 
+## 25 novembre 2026
+
+### Éditeur
+
+- La barre de propriétés ne montre plus que ce dont l'outil a besoin. Sélection sans objet choisi, recadrage, image et copie de zone : ni couleurs ni épaisseur. Un objet sélectionné fait paraître ses propres réglages (couleur, épaisseur, options de texte), qui disparaissent quand on le relâche ; une image ou une zone copiée n'en a pas.
+
 ## 24 novembre 2026
 
 ### Impression

@@ -42,7 +42,7 @@ Ouvrir `atelier-pdf.html` dans un navigateur, ou passer par le lien ci-dessus, p
 
 **Grille des pages.** La barre d'outils regroupe le menu Modifier (ajout, extraction, recadrage, marges, déverrouillage), le bouton Éditer, qui ouvre l'éditeur, le menu Convertir (reconnaissance de texte, Word en PDF), un champ de recherche, puis Imprimer, Compresser et Enregistrer le PDF. Les rotations et la suppression vivent dans la barre de sélection, au-dessus des vignettes, puisqu'elles portent sur les pages choisies. Au téléphone, les menus s'ouvrent en feuille basse.
 
-**Éditeur.** Double-clic sur une vignette, ou bouton Éditer. Plein écran, en trois bandes : l'en-tête (pages, puis en icônes Annuler, Rétablir, Supprimer et mode d'emploi, puis Terminé), une barre de propriétés qui change avec l'outil (couleurs, formes, options de texte, épaisseur, recherche, zoom), puis la table de travail avec sa palette d'outils : sélection, recadrage, stylo, surligneur, forme, texte, image, copie de zone, masque. Chaque outil affiche son nom au survol.
+**Éditeur.** Double-clic sur une vignette, ou bouton Éditer. Plein écran, en trois bandes : l'en-tête (pages, puis en icônes Annuler, Rétablir, Supprimer et mode d'emploi, puis Terminé), une barre de propriétés qui ne montre que ce dont l'outil ou l'objet sélectionné a besoin (couleurs, formes, options de texte, épaisseur), avec la recherche et le zoom, puis la table de travail avec sa palette d'outils : sélection, recadrage, stylo, surligneur, forme, texte, image, copie de zone, masque. Chaque outil affiche son nom au survol.
 
 Le bouton ? de l'éditeur, ou la touche ?, ouvre un mode d'emploi interrogeable, tolérant aux fautes de frappe. Le même contenu est dans [`MODE-EMPLOI.md`](MODE-EMPLOI.md).
 
