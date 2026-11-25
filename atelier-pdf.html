@@ -435,8 +435,9 @@
   .notice .nclose:hover{opacity:1;background:color-mix(in srgb,var(--on-primary) 12%,transparent)}
   footer.foot{margin:20px 4px 0;color:var(--muted);font-size:var(--fs-sm);line-height:1.55}
   footer.foot p{margin:0}
-  footer.foot .privacy{display:flex;align-items:flex-start;gap:8px}
-  footer.foot .privacy .i{margin-top:2px;color:var(--ink-2)}
+  /* centré comme le titre, l'accroche et la zone de dépôt ; l'icône reste dans le fil du texte pour suivre la première ligne */
+  footer.foot .privacy{text-align:center;text-wrap:balance}
+  footer.foot .privacy .i{display:inline-block;vertical-align:-3px;margin-inline-end:8px;color:var(--ink-2)}
 
   /* --- éditeur d'annotation : plein écran, en trois bandes ---
      en-tête (navigation, actions), propriétés de l'outil, puis la table de travail */
