@@ -342,9 +342,13 @@
   .dbody{display:flex;gap:0;min-height:0;flex:1}
   .stagewrap{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;
     background-color:var(--canvas);background-image:radial-gradient(var(--dot) 1px,transparent 1.3px);background-size:20px 20px}
-  .cropstage{position:relative;line-height:0;overflow:hidden;touch-action:none;background:#fff;box-shadow:0 0 0 .5px rgba(9,9,11,.14),0 20px 40px -16px rgba(9,9,11,.3)}
+  .cropstage{position:relative;line-height:0;touch-action:none;background:#fff;box-shadow:0 0 0 .5px rgba(9,9,11,.14),0 20px 40px -16px rgba(9,9,11,.3)}
   .cropstage canvas{display:block}
-  .crop-rect{position:absolute;border:1.5px solid #fff;box-shadow:0 0 0 100vmax rgba(9,9,11,.5);cursor:move}
+  /* voile hors du cadre, rogné à la page dans sa propre couche : la scène, elle, laisse déborder les poignées */
+  .cropdim{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .crop-rect[hidden]+.cropdim{display:none}
+  .cropdim i{position:absolute;box-shadow:0 0 0 100vmax rgba(9,9,11,.5)}
+  .crop-rect{position:absolute;z-index:1;border:1.5px solid #fff;cursor:move}
   .crop-rect .h{position:absolute;width:var(--hsz);height:var(--hsz);background:#fff;border:1.25px solid var(--paper-accent);border-radius:50%;box-shadow:0 1px 2px rgba(0,0,0,.25)}
   .crop-rect .h::before{content:"";position:absolute;inset:-10px}
   @media (pointer:coarse){ .crop-rect .h::before{inset:-16px} }
@@ -660,7 +664,7 @@
       <ul class="legend" aria-label="Fonctions">
         <li><span class="mono">01</span><b>Organiser</b><span>Trier, pivoter, extraire, fusionner.</span></li>
         <li><span class="mono">02</span><b>Éditer</b><span>Stylo, formes, texte, images.</span></li>
-        <li><span class="mono">03</span><b>Recadrer</b><span>Zone libre ou détection du contenu.</span></li>
+        <li><span class="mono">03</span><b>Recadrer</b><span>Zone libre ou suppression des marges.</span></li>
         <li><span class="mono">04</span><b>Masquer</b><span>Rédaction définitive, OCR.</span></li>
         <li><span class="mono">05</span><b>Compresser</b><span>Trois niveaux pour les scans.</span></li>
         <li><span class="mono">06</span><b>Convertir</b><span>Word vers PDF, en bêta.</span></li>
@@ -769,11 +773,12 @@
               <span class="h n" data-h="n"></span><span class="h s" data-h="s"></span>
               <span class="h w" data-h="w"></span><span class="h e" data-h="e"></span>
             </div>
+            <div class="cropdim" aria-hidden="true"><i id="cropWin"></i></div>
           </div>
         </div>
         <div class="dside">
           <div class="grp">Glissez pour tracer une zone, ou ajustez les poignées. La zone conservée est en clair.</div>
-          <button class="tbtn" id="cropAuto" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>Détecter le contenu</button>
+          <button class="tbtn" id="cropAuto" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>Supprimer les marges</button>
           <div class="field"><label for="cropPad">Marge conservée</label><input type="number" id="cropPad" value="2" min="0" max="50" step="0.5"><span>mm</span></div>
           <label class="check"><input type="checkbox" id="cropAll"><span>Appliquer à toutes les pages</span></label>
           <div class="dfoot">
@@ -1936,14 +1941,15 @@ async function loadCropPage(){
   let dw=c.width, dh=c.height; const r=Math.min(maxW/dw, maxH/dh, 1); dw*=r; dh*=r;
   cropCanvas.style.width=dw+'px'; cropCanvas.style.height=dh+'px'; cropStage.style.width=dw+'px'; cropStage.style.height=dh+'px';
   cropDisp={w:dw,h:dh};
-  cropNorm = cropToNorm(pg) || {u0:0.04,v0:0.04,u1:0.96,v1:0.96};
+  /* sans recadrage existant, le cadre part de la page entière : rien n'est retiré d'office, Supprimer les marges s'en charge */
+  cropNorm = cropToNorm(pg) || {u0:0,v0:0,u1:1,v1:1};
   drawCropRect();
 }
 function drawCropRect(){
   cropRect.hidden=false;
   const n=cropNorm; const u0=Math.min(n.u0,n.u1),u1=Math.max(n.u0,n.u1),v0=Math.min(n.v0,n.v1),v1=Math.max(n.v0,n.v1);
-  cropRect.style.left=(u0*cropDisp.w)+'px'; cropRect.style.top=(v0*cropDisp.h)+'px';
-  cropRect.style.width=((u1-u0)*cropDisp.w)+'px'; cropRect.style.height=((v1-v0)*cropDisp.h)+'px';
+  const g={left:(u0*cropDisp.w)+'px', top:(v0*cropDisp.h)+'px', width:((u1-u0)*cropDisp.w)+'px', height:((v1-v0)*cropDisp.h)+'px'};
+  Object.assign(cropRect.style,g); Object.assign($('cropWin').style,g);
 }
 /* pointer interaction */
 let drag=null;
