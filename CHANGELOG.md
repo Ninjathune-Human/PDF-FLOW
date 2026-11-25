@@ -4,7 +4,7 @@
 
 ### Fichier
 
-- « Nouveau fichier » devient « Retour accueil » : le bouton ramène à l'accueil, d'où l'on ouvre un autre document.
+- « Nouveau fichier » devient « Retour accueil » et passe dans la barre du haut, à côté du mode nuit, à la même hauteur que lui. Il n'apparaît qu'avec un document ouvert : à l'accueil, il n'y a nulle part où revenir.
 
 ### Recadrage
 
