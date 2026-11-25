@@ -5,6 +5,7 @@
 ### Pied de page
 
 - Nouvelle mention : « L'outil fonctionne hors ligne, le traitement est effectué entièrement dans le navigateur. Aucun fichier ni mot de passe ne transite par le réseau. » Là où le hors ligne n'est pas disponible (fichier ouvert depuis le disque, aperçu intégré), la phrase commence à « Le traitement est effectué ».
+- La mention est centrée, comme le titre, l'accroche et la zone de dépôt.
 
 ### Accueil
 
