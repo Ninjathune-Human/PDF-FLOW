@@ -2,6 +2,10 @@
 
 ## 25 novembre 2026
 
+### Pied de page
+
+- Nouvelle mention : « L'outil fonctionne hors ligne, le traitement est effectué entièrement dans le navigateur. Aucun fichier ni mot de passe ne transite par le réseau. » Là où le hors ligne n'est pas disponible (fichier ouvert depuis le disque, aperçu intégré), la phrase commence à « Le traitement est effectué ».
+
 ### Accueil
 
 - La bande des six fonctions numérotées sous la zone de dépôt disparaît : le titre et la phrase d'accroche disent déjà tout.

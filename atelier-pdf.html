@@ -759,7 +759,7 @@
     </div>
 
     <footer class="foot">
-      <p class="privacy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 5.8v5.4c0 4.3 3 7.9 7 9.3 4-1.4 7-5 7-9.3V5.8z"/><path d="m9.2 12 2 2 3.8-4"/></svg><span>Traitement entièrement dans le navigateur. Aucun fichier ni mot de passe ne transite par le réseau. <span id="offlineNote">Seules les bibliothèques d'outils sont téléchargées au chargement de l'application.</span></span></p>
+      <p class="privacy"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 5.8v5.4c0 4.3 3 7.9 7 9.3 4-1.4 7-5 7-9.3V5.8z"/><path d="m9.2 12 2 2 3.8-4"/></svg><span><span id="offlineNote">Le traitement est effectué entièrement dans le navigateur.</span> Aucun fichier ni mot de passe ne transite par le réseau.</span></p>
     </footer>
   </div>
 
@@ -3657,7 +3657,7 @@ if('serviceWorker' in navigator && window.isSecureContext && location.protocol!=
   /* certains navigateurs intégrés à une application (aperçus iOS limités à leurs domaines), ou la navigation privée,
      refusent le service worker : c'est attendu, l'outil marche alors en ligne comme avant, sans rien signaler */
   navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready)
-    .then(()=>{ $('offlineNote').textContent="L'outil fonctionne hors ligne, seules les bibliothèques d'outils sont téléchargées au chargement de l'application."; }).catch(()=>{});
+    .then(()=>{ $('offlineNote').textContent="L'outil fonctionne hors ligne, le traitement est effectué entièrement dans le navigateur."; }).catch(()=>{});
 }
 
 /* ============ boot ============ */
