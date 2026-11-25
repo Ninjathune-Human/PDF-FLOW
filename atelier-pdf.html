@@ -489,6 +489,8 @@
   .anrot{position:absolute;top:50%;left:50%;line-height:0}
   .astage svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
   .astage.tool-select svg{cursor:default}
+  /* zone copiée en attente de pose : la croix porte sa miniature (curseur dessiné par clipCursor) */
+  .astage.tool-clip.clipfull svg{cursor:var(--clipcur,crosshair)}
   .astage.panning svg,.astage.panning{cursor:grabbing}
   .astage textarea{position:absolute;margin:0;border:0;background:rgba(255,255,255,.9);color:#111;font-family:var(--sans);line-height:1.2;padding:0;resize:none;overflow:hidden;outline:none;z-index:3;display:none;min-width:0;white-space:pre}
   /* infobulle unique, posée hors de tout conteneur : jamais rognée */
@@ -2088,7 +2090,37 @@ function updateClipIcon(pop){
   if(full){ img.src=anClip.data; img.style.transform=anClip.deg?`rotate(${anClip.deg}deg)`:''; img.hidden=false; } else { img.hidden=true; img.removeAttribute('src'); }
   const lbl=full?'Coller la zone copiée':'Copier une zone';
   btn.dataset.tip=lbl; btn.setAttribute('aria-label',lbl);
+  anStage.classList.toggle('clipfull',full);
+  if(full) clipCursor(anClip); else anStage.style.removeProperty('--clipcur');
   if(pop){ btn.classList.remove('pop'); void btn.offsetWidth; btn.classList.add('pop'); }
+}
+/* Curseur chargé, à la manière des curseurs dynamiques d'ArchiCAD : tant qu'une zone copiée attend d'être posée,
+   la croix porte en bas à droite sa miniature. Dessiné au canevas depuis la data URL de la zone (pas de teinte),
+   en double définition pour les écrans denses quand le navigateur accepte image-set dans cursor. */
+const CUR_SET=['image-set','-webkit-image-set'].find(f=>CSS.supports('cursor',`${f}(url("data:,") 2x) 1 1, auto`));
+function clipCursor(clip){
+  const im=new Image();
+  im.onload=()=>{
+    if(anClip!==clip) return;
+    const turn=((clip.deg||0)%180+180)%180===90;
+    const make=sc=>{
+      const c=document.createElement('canvas'); c.width=c.height=32*sc; const g=c.getContext('2d'); g.scale(sc,sc);
+      const rr=(x,y,w,h,r)=>{ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); };
+      const cross=(w,col)=>{ g.strokeStyle=col; g.lineWidth=w; g.lineCap='round'; g.beginPath(); g.moveTo(9,2); g.lineTo(9,16); g.moveTo(2,9); g.lineTo(16,9); g.stroke(); };
+      cross(3,'#fff'); cross(1,'#09090B');                       // liseré blanc : lisible sur un plan chargé
+      const bx=14, by=15, bw=17, bh=15;
+      g.fillStyle='#fff'; rr(bx-1,by-1,bw+2,bh+2,4); g.fill();
+      g.save(); rr(bx,by,bw,bh,3); g.clip(); g.fillStyle='#fff'; g.fillRect(bx,by,bw,bh);
+      const iw=turn?im.naturalHeight:im.naturalWidth, ih=turn?im.naturalWidth:im.naturalHeight, k=Math.max(bw/iw,bh/ih);
+      g.translate(bx+bw/2,by+bh/2); if(clip.deg) g.rotate(clip.deg*Math.PI/180);
+      g.drawImage(im,-im.naturalWidth*k/2,-im.naturalHeight*k/2,im.naturalWidth*k,im.naturalHeight*k); g.restore();
+      g.strokeStyle='#09090B'; g.lineWidth=1; rr(bx+.5,by+.5,bw-1,bh-1,2.5); g.stroke();
+      return c.toDataURL('image/png');
+    };
+    const u1=make(1);
+    anStage.style.setProperty('--clipcur', CUR_SET ? `${CUR_SET}(url("${u1}") 1x, url("${make(2)}") 2x) 9 9, crosshair` : `url("${u1}") 9 9, crosshair`);
+  };
+  im.src=clip.data;
 }
 /* Envol d'une zone entre la page et l'icône, dans un sens ou dans l'autre, comme sous macOS.
    Les deux rectangles sont en coordonnées d'écran ; côté icône, on vise le cadre de la miniature
@@ -2120,11 +2152,11 @@ function flyToClip(rect, data, deg){
   clipFly(rect, rect && clipRestRect(q?rect.h/rect.w:rect.w/rect.h), data, deg, true, ()=>updateClipIcon(true));
 }
 /* pose : la zone sort de l'icône et vient prendre place dans le cadre tracé */
-function flyFromClip(el, data){
+function flyFromClip(el, data, deg){
   const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return;
   const to={x:r.left,y:r.top,w:r.width,h:r.height};
   el.style.opacity='0';
-  clipFly(to, clipRestRect(to.w/to.h), data, 0, false, ()=>{ el.style.opacity=''; });
+  clipFly(to, clipRestRect(to.w/to.h), data, deg, false, ()=>{ el.style.opacity=''; });
 }
 async function captureClip(a, rect){
   const pg=pg2(), m=pg.mediaBox;
@@ -2136,17 +2168,34 @@ async function captureClip(a, rect){
   const sw=c.width, sh=c.height;
   anClip={pageId:pg.id, srcId:pg.srcId, srcIndex:pg.srcIndex, box, data:c.toDataURL('image/png'), ratio:sw/sh, deg:anDeg};
   flyToClip(rect, anClip.data, anDeg);
-  notify('Zone copiée. Tracez son emplacement, sur cette page ou une autre.');
+  notify(CLIP_HINT);
 }
+const CLIP_HINT='Zone copiée. Cliquez pour la poser à sa taille, son coin haut gauche au point cliqué, ou tracez son emplacement, sur cette page ou une autre.';
 /* cadre de pose : proportions d'origine conservées, centrées sur le tracé */
-function placeFromDrag(a, ratio){
+/* pose à la taille d'origine, en points : le coin haut gauche tel qu'il apparaît à l'écran tombe sur (u,v).
+   Page affichée pivotée : ce coin à l'écran correspond à un autre coin dans le repère de stockage. Trop grande pour
+   la page, la zone est réduite ; elle est ensuite ramenée dans la page. */
+/* la zone se pose telle qu'elle apparaissait à la copie : son contenu garde l'orientation qu'il avait à l'écran */
+function clipRot(clip){ return ((anDeg-(clip.deg||0))%360+360)%360; }
+function placeNatural(u, v, clip){
+  const m=pg2().mediaBox, r=clipRot(clip), sw2=(r===90||r===270);
+  const wpt=clip.box.right-clip.box.left, hpt=clip.box.top-clip.box.bottom;
+  let du=(sw2?hpt:wpt)/m.width, dv=(sw2?wpt:hpt)/m.height;
+  const k=Math.min(1, 1/du, 1/dv); du*=k; dv*=k;
+  let u0 = (anDeg===180||anDeg===270) ? u-du : u;
+  let v0 = (anDeg===90||anDeg===180)  ? v-dv : v;
+  u0=Math.max(0,Math.min(1-du,u0)); v0=Math.max(0,Math.min(1-dv,v0));
+  return {u0, u1:u0+du, v0, v1:v0+dv, rot:r};
+}
+function placeFromDrag(a, ratio, rot=anDeg){
   const sw2=(anDeg===90||anDeg===270);
+  if(((anDeg-rot)%180+180)%180===90) ratio=1/ratio;   // contenu couché à l'écran : ses proportions s'inversent
   const pw=Math.abs(DX(a.u1)-DX(a.u0)), ph=Math.abs(DY(a.v1)-DY(a.v0));
   let w=(sw2?ph:pw), h=(sw2?pw:ph);
   if(w/h>ratio) w=h*ratio; else h=w/ratio;
   const cu=(a.u0+a.u1)/2, cv=(a.v0+a.v1)/2;
   const du=(sw2?h:w)/anDispW*(anWin.u1-anWin.u0), dv=(sw2?w:h)/anDispH*(anWin.v1-anWin.v0);
-  return {u0:cu-du/2, u1:cu+du/2, v0:cv-dv/2, v1:cv+dv/2, rot:anDeg};
+  return {u0:cu-du/2, u1:cu+du/2, v0:cv-dv/2, v1:cv+dv/2, rot};
 }
 const imgCache=new Map();
 function cachedImg(data, onload){
@@ -2400,6 +2449,7 @@ function setTool(t){ if(anObjCrop) applyObjCrop(); anTool=t;
   $('anWWrap').hidden=!STROKED.includes(t);
   document.querySelectorAll('#anTools .atool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===t)));
   anStage.classList.toggle('tool-select', t==='select');
+  anStage.classList.toggle('tool-clip', t==='clip');
   anSizeWrap.hidden=t!=='text';
   if(t==='image') anImgFile.click(); else anPendingImg=null;
   showSwatches(t==='hl'?'fluo':t==='redact'?'mask':'std');
@@ -2407,6 +2457,7 @@ function setTool(t){ if(anObjCrop) applyObjCrop(); anTool=t;
   anSel=-1; renderAnnots();
 }
 document.querySelectorAll('#anTools .atool[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
+document.querySelector('#anTools .clipt').addEventListener('click',()=>{ if(anClip) notify(CLIP_HINT); });   // l'outil rappelé redit ce qu'il attend
 $('anShapes').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.shape)));
 /* options de texte : elles valent pour la saisie en cours, sinon pour le texte sélectionné, et deviennent le réglage suivant */
 function markTextOpts(){ $('anFontSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.font===anFont)));
@@ -2474,7 +2525,7 @@ anSvg.addEventListener('pointerdown',e=>{
     : anTool==='clip'?(anClip?'clipdst':'clipsrc')
     : anTool;
   const col=type==='redact'?anMaskColor:anColor;
-  anObj={type,color:col,w:anWidth,u0:p.u,v0:p.v,u1:p.u,v1:p.v}; anDrag={mode:'shape',hit,cx:e.clientX,cy:e.clientY}; renderAnnots();
+  anObj={type,color:col,w:anWidth,u0:p.u,v0:p.v,u1:p.u,v1:p.v}; anDrag={mode:'shape',hit:type==='clipdst'?-1:hit,cx:e.clientX,cy:e.clientY}; renderAnnots();
 });
 anSvg.addEventListener('pointermove',e=>{ if(anGesture||anPanDrag||!anDrag) return; e.preventDefault(); const p=evtUV(e);
   if(anDrag.mode==='draw'){ anObj.pts.push(p); renderAnnots(); }
@@ -2505,16 +2556,17 @@ anSvg.addEventListener('pointerup',e=>{
         captureClip(a, r.w>4&&r.h>4?r:null); }
       else renderAnnots(); }
     else if(a.type==='clipdst'){
-      if(big && anClip){
-        commit({type:'clip', ...placeFromDrag(a, anClip.ratio),
+      if(anClip){
+        /* tracé : la zone remplit le cadre ; simple clic : elle garde sa taille, son coin haut gauche au point cliqué */
+        commit({type:'clip', ...(big ? placeFromDrag(a, anClip.ratio, clipRot(anClip)) : placeNatural(a.u0, a.v0, anClip)),
                 srcId:anClip.srcId, srcIndex:anClip.srcIndex, box:anClip.box, data:anClip.data, ratio:anClip.ratio});
         /* comme pour une image : on passe à la sélection, poignées visibles. L'icône se vide,
            l'outil est de nouveau prêt pour une copie */
-        const ci=pg2().annots.length-1, flyData=anClip.data;
+        const ci=pg2().annots.length-1, flyData=anClip.data, flyDeg=anClip.deg||0;
         anClip=null; updateClipIcon();
         setTool('select'); anSel=ci; renderAnnots();
         /* après le dernier rendu de la fin de geste, sinon l'élément masqué serait aussitôt redessiné */
-        requestAnimationFrame(()=>{ const placed=anSvg.querySelector(`image[data-i="${ci}"]`); if(placed) flyFromClip(placed, flyData); });
+        requestAnimationFrame(()=>{ const placed=anSvg.querySelector(`image[data-i="${ci}"]`); if(placed) flyFromClip(placed, flyData, flyDeg); });
         notify('Zone insérée : déplacez-la ou ajustez-la par ses poignées.');
       }
     }
@@ -2826,7 +2878,7 @@ const HELP=[
   {t:'Formes', tool:'shape', d:'Choisissez rectangle, ellipse, flèche ou trait dans la barre du haut, puis glissez sur la page.', k:'forme rectangle carre cadre cercle rond ellipse fleche trait ligne entourer'},
   {t:'Texte', tool:'text', d:'Touchez la page et tapez. Police, taille, gras et italique dans la barre du haut. <kbd>Entrée</kbd> valide, <kbd>Maj</kbd> + <kbd>Entrée</kbd> passe à la ligne. Double-clic, ou double appui au doigt, sur un texte pour le modifier, quel que soit l\'outil.', k:'ecrire taper saisie texte police typo gras italique taille commentaire note legende'},
   {t:'Image ou PDF', tool:'image', d:'Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s\'il en compte plusieurs, choisissez laquelle.', k:'image photo logo signature tampon importer inserer insertion ajouter pdf fichier'},
-  {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : tracez l\'emplacement, sur cette page ou une autre. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier'},
+  {t:'Copier une zone', tool:'clip', d:'Icône vide : tracez la zone à copier, elle se loge dans l\'icône. Icône pleine : le pointeur porte la miniature de la zone. Un clic la pose à sa taille, son coin haut gauche au point cliqué ; un tracé la pose dans le cadre. Sur cette page ou une autre, dans l\'orientation qu\'elle avait à l\'écran. Reste vectoriel.', k:'copier copie coller collage dupliquer extrait cartouche reproduire zone presse papier pointeur curseur clic taille'},
   {t:'Masque', tool:'redact', d:'Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l\'enregistrement. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.', k:'masquer masquage cacher caviarder rediger redaction effacer anonymiser blanc noir supprimer contenu confidentiel'},
   {t:'Recadrer', tool:'crop', d:'Sans sélection : recadre la page. Avec une image ou une zone copiée sélectionnée : recadre l\'objet, sans perte, <kbd>Entrée</kbd> pour valider.', k:'recadrer recadrage rogner couper crop cadre marges decouper'}]},
  {s:'Modifier un objet', items:[
