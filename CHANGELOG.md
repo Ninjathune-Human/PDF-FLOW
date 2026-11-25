@@ -12,6 +12,12 @@
 
 - « Document Word… » devient « Word en PDF… » : le menu dit le sens de la conversion.
 
+### Éditeur
+
+- Copier une zone : tant que la zone copiée attend d'être posée, la croix du pointeur porte sa miniature, comme les curseurs dynamiques d'ArchiCAD.
+- Un simple clic pose la zone copiée à sa taille d'origine, son coin haut gauche au point cliqué, même sur un objet déjà posé ; le tracé d'un cadre reste possible. Un message rappelle les deux gestes après la copie et quand on rappelle l'outil.
+- Une zone copiée sur une page tournée se pose dans l'orientation qu'elle avait à l'écran. Elle apparaissait jusqu'ici couchée d'un quart de tour.
+
 ### Grille
 
 - Sélection comme dans un explorateur de fichiers : `Maj` + clic retient toutes les pages depuis la dernière cliquée, pages intermédiaires comprises ; `Ctrl` + clic (`Cmd` sur Mac) ajoute ou retire une page, où qu'elle soit.

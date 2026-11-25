@@ -23,7 +23,7 @@ Version simplifiée, identique au panneau « Mode d'emploi » de l'éditeur (bou
 
 **Image ou PDF** — Choisissez un fichier, puis tracez son emplacement. Une page de PDF reste vectorielle ; s'il en compte plusieurs, choisissez laquelle.
 
-**Copier une zone** — Icône vide : tracez la zone à copier, elle se loge dans l'icône. Icône pleine : tracez l'emplacement, sur cette page ou une autre. Reste vectoriel.
+**Copier une zone** — Icône vide : tracez la zone à copier, elle se loge dans l'icône. Icône pleine : le pointeur porte la miniature de la zone. Un clic la pose à sa taille, son coin haut gauche au point cliqué ; un tracé la pose dans le cadre. Sur cette page ou une autre, dans l'orientation qu'elle avait à l'écran. Reste vectoriel.
 
 **Masque** — Cache définitivement une zone, en blanc par défaut ou en noir. Le contenu masqué est réellement supprimé à l'enregistrement. Le masque reste toujours dessous : un texte ou un tracé posé ensuite passe dessus.
 
