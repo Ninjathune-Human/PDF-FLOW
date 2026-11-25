@@ -660,7 +660,7 @@
       <ul class="legend" aria-label="Fonctions">
         <li><span class="mono">01</span><b>Organiser</b><span>Trier, pivoter, extraire, fusionner.</span></li>
         <li><span class="mono">02</span><b>Éditer</b><span>Stylo, formes, texte, images.</span></li>
-        <li><span class="mono">03</span><b>Recadrer</b><span>Zone libre ou détection du contenu.</span></li>
+        <li><span class="mono">03</span><b>Recadrer</b><span>Zone libre ou suppression des marges.</span></li>
         <li><span class="mono">04</span><b>Masquer</b><span>Rédaction définitive, OCR.</span></li>
         <li><span class="mono">05</span><b>Compresser</b><span>Trois niveaux pour les scans.</span></li>
         <li><span class="mono">06</span><b>Convertir</b><span>Word vers PDF, en bêta.</span></li>
@@ -773,7 +773,7 @@
         </div>
         <div class="dside">
           <div class="grp">Glissez pour tracer une zone, ou ajustez les poignées. La zone conservée est en clair.</div>
-          <button class="tbtn" id="cropAuto" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>Détecter le contenu</button>
+          <button class="tbtn" id="cropAuto" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>Supprimer les marges</button>
           <div class="field"><label for="cropPad">Marge conservée</label><input type="number" id="cropPad" value="2" min="0" max="50" step="0.5"><span>mm</span></div>
           <label class="check"><input type="checkbox" id="cropAll"><span>Appliquer à toutes les pages</span></label>
           <div class="dfoot">
@@ -1936,15 +1936,9 @@ async function loadCropPage(){
   let dw=c.width, dh=c.height; const r=Math.min(maxW/dw, maxH/dh, 1); dw*=r; dh*=r;
   cropCanvas.style.width=dw+'px'; cropCanvas.style.height=dh+'px'; cropStage.style.width=dw+'px'; cropStage.style.height=dh+'px';
   cropDisp={w:dw,h:dh};
-  /* sans recadrage existant, le cadre proposé entoure l'encre : un retrait fixe coupait les documents à marges étroites */
-  cropNorm = cropToNorm(pg) || inkNorm(pg, c) || {u0:0,v0:0,u1:1,v1:1};
+  /* sans recadrage existant, le cadre part de la page entière : rien n'est retiré d'office, Supprimer les marges s'en charge */
+  cropNorm = cropToNorm(pg) || {u0:0,v0:0,u1:1,v1:1};
   drawCropRect();
-}
-/* cadre autour du contenu détecté, marge conservée comprise ; null si la page est vide */
-function inkNorm(pg, canvas){
-  const bb=detectBBox(canvas); if(!bb) return null;
-  const pad=Math.max(0,parseFloat(cropPad.value)||0), m=pg.mediaBox, padU=(pad*MM)/m.width, padV=(pad*MM)/m.height;
-  return {u0:Math.max(0,bb.u0-padU),u1:Math.min(1,bb.u1+padU),v0:Math.max(0,bb.v0-padV),v1:Math.min(1,bb.v1+padV)};
 }
 function drawCropRect(){
   cropRect.hidden=false;
@@ -1988,8 +1982,12 @@ cropAuto.addEventListener('click',async()=>{
   const pg=cropList[cropPtr]; const {jsdoc}=sources.get(pg.srcId);
   cropAuto.disabled=true;
   const c=await renderPage(jsdoc, pg.srcIndex, 1200);
-  const n=inkNorm(pg, c);
-  if(n){ cropNorm=n; drawCropRect(); } else notify('Aucun contenu détecté : la page semble vide. Tracez la zone à la main.',{kind:'warn'});
+  const bb=detectBBox(c);
+  if(bb){ const pad=Math.max(0,parseFloat(cropPad.value)||0); const m=pg.mediaBox;
+    const padU=(pad*MM)/m.width, padV=(pad*MM)/m.height;
+    cropNorm={u0:Math.max(0,bb.u0-padU),u1:Math.min(1,bb.u1+padU),v0:Math.max(0,bb.v0-padV),v1:Math.min(1,bb.v1+padV)};
+    drawCropRect();
+  } else notify('Aucun contenu détecté : la page semble vide. Tracez la zone à la main.',{kind:'warn'});
   cropAuto.disabled=false;
 });
 cropReset.addEventListener('click',()=>{ cropNorm={u0:0,v0:0,u1:1,v1:1}; drawCropRect(); });

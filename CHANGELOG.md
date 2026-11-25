@@ -4,7 +4,8 @@
 
 ### Recadrage
 
-- Sur une page jamais recadrée, la fenêtre propose désormais le cadre du contenu, marge conservée comprise, comme le bouton Détecter. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page). Page vide : la page entière.
+- Sur une page jamais recadrée, le cadre part de la page entière. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page).
+- « Détecter le contenu » devient « Supprimer les marges », comme dans le menu Modifier : le bouton serre le cadre sur le contenu, marge conservée comprise.
 
 ### Éditeur
 
