@@ -2,6 +2,10 @@
 
 ## 25 novembre 2026
 
+### Accueil
+
+- La zone de dépôt a la même marge en haut que sur les côtés et en bas : sa marge du haut s'échappait du panneau, qui la repoussait vers l'extérieur.
+
 ### Fichier
 
 - « Nouveau fichier » devient « Retour accueil » et passe dans la barre du haut, à côté du mode nuit, à la même hauteur que lui. Il n'apparaît qu'avec un document ouvert : à l'accueil, il n'y a nulle part où revenir.

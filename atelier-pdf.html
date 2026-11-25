@@ -120,7 +120,8 @@
   .shell[data-loaded="0"] #newfile{display:none}   /* à l'accueil, rien où revenir */
 
   .panel{background:var(--surface);border-radius:var(--r-2xl);box-shadow:0 0 0 1px var(--line),var(--shadow-sm);overflow:hidden}
-  @supports (overflow:clip){ .panel{overflow:clip} }
+  /* clip ne contient pas les marges des enfants : flow-root les garde dans le panneau (sinon la zone de dépôt colle au bord haut) */
+  @supports (overflow:clip){ .panel{overflow:clip;display:flow-root} }
 
   /* dépôt : la zone entière accueille le fichier */
   .plate{position:relative;margin:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:clamp(44px,6vw,72px) 24px;text-align:center;cursor:pointer;
