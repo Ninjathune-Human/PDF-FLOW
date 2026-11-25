@@ -142,6 +142,7 @@ Variables : `--bg`, `--surface`, `--subtle`, `--line`, `--line-strong`, `--ink`,
 - Action principale : fond encre, texte clair. Secondaire : fond blanc, filet. Discrète : sans fond, survol gris
 - Icônes au trait, grille 24, classe `.i`, trait de 1,5 px à l'écran quelle que soit la taille (`vector-effect:non-scaling-stroke`), `currentColor`
 - Bordure en pointillés : convention « provisoire, éditable » (zone de dépôt, poignées, emplacement de dépose)
+- Accueil : la zone de dépôt seule, sans légende. Sa tuile est animée : feuille `.drop-sheet` rognée par le bac (`clipPath` `#dropClip`, posé sur un groupe fixe, sinon le rognage suivrait la feuille), bac `.drop-tray`. L'état de repos des styles est l'image fixe (feuille posée au-dessus du bac) : la règle globale de mouvement réduit coupe les animations et c'est elle qui reste. `.shell.drag` remplace le cycle par un flottement
 - Remplissage noir plein dans une icône : exclusif à la rédaction
 - Vignettes : la page garde sa forme réelle, ombre portée par `drop-shadow` sur la case ; la sélection cerne la case, pas la page
 - Éditeur d'annotation plein écran : en-tête, bande de propriétés, table de travail pointillée. La taille de la page se mesure sur la table (`clientWidth` moins les marges), jamais sur la fenêtre

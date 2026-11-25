@@ -4,6 +4,8 @@
 
 ### Accueil
 
+- La bande des six fonctions numérotées sous la zone de dépôt disparaît : le titre et la phrase d'accroche disent déjà tout.
+- Zone de dépôt animée, discrètement : dans la tuile, une feuille arrive, marque un temps, puis se glisse dans un bac qui fléchit à peine en la recevant. Un cycle toutes les 4,8 secondes. Quand un fichier est tenu au-dessus de la zone, la feuille flotte, prête à tomber. Avec le mouvement réduit du système, la feuille reste posée au-dessus du bac.
 - La zone de dépôt a la même marge en haut que sur les côtés et en bas : sa marge du haut s'échappait du panneau, qui la repoussait vers l'extérieur.
 
 ### Fichier
