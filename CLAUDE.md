@@ -134,7 +134,7 @@ Ne jamais deviner une API tierce. Les points d'API pdf-lib et tesseract.js sont 
 
 ## Système de design
 
-Neutres zinc, une seule couleur d'action : l'encre. Les pages portent la couleur, l'interface reste en retrait.
+Neutres zinc, une seule couleur d'action : l'encre. Les pages portent la couleur, l'interface reste en retrait. Exception voulue, et unique : le bouton « ou choisir un fichier » de l'accueil (`#pick`), à liseré multicolore tournant façon boutons d'IA (`::after`, dégradé conique sur `--pick-a` déclarée par `@property`, masqué à l'anneau), lavis et lueur colorés au survol.
 
 Variables : `--bg`, `--surface`, `--subtle`, `--line`, `--line-strong`, `--ink`, `--ink-2`, `--muted`, `--faint`, `--primary` (encre, inversée en sombre), `--on-primary`, `--danger`, `--ok`, `--canvas` et `--dot` pour la table de travail, `--paper-accent` (bleu) pour tout ce qui se pose sur le papier. Les anciens noms (`--panel`, `--well`, `--accent`, `--warn`…) restent des alias.
 
