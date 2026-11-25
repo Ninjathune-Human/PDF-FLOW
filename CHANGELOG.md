@@ -2,6 +2,10 @@
 
 ## 25 novembre 2026
 
+### Fichier
+
+- « Nouveau fichier » devient « Retour accueil » : le bouton ramène à l'accueil, d'où l'on ouvre un autre document.
+
 ### Recadrage
 
 - Sur une page jamais recadrée, le cadre part de la page entière. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page).
