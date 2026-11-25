@@ -6,6 +6,7 @@
 
 - Sur une page jamais recadrée, le cadre part de la page entière. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page).
 - « Détecter le contenu » devient « Supprimer les marges », comme dans le menu Modifier : le bouton serre le cadre sur le contenu, marge conservée comprise.
+- Les poignées du cadre restent entières quand il touche le bord de la page : elles débordent sur la table au lieu d'être coupées à moitié. Le voile hors du cadre reste limité à la page.
 
 ### Éditeur
 
