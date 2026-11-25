@@ -2,6 +2,10 @@
 
 ## 25 novembre 2026
 
+### Fichier
+
+- « Nouveau fichier » devient « Retour accueil » et passe dans la barre du haut, à côté du mode nuit, à la même hauteur que lui. Il n'apparaît qu'avec un document ouvert : à l'accueil, il n'y a nulle part où revenir.
+
 ### Recadrage
 
 - Sur une page jamais recadrée, le cadre part de la page entière. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page).
