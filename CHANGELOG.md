@@ -5,7 +5,7 @@
 ### Accueil
 
 - La bande des six fonctions numérotées sous la zone de dépôt disparaît : le titre et la phrase d'accroche disent déjà tout.
-- Zone de dépôt animée, discrètement : dans la tuile, une feuille arrive, marque un temps, puis se glisse dans un bac qui fléchit à peine en la recevant. Un cycle toutes les 4,8 secondes. Quand un fichier est tenu au-dessus de la zone, la feuille flotte, prête à tomber. Avec le mouvement réduit du système, la feuille reste posée au-dessus du bac.
+- Zone de dépôt animée : trois feuilles, un PDF, une image et un document Word, tombent dans la zone et se posent en éventail sur un emplacement pointillé. Un surlignage s'y trace, un trait de stylo entoure une ligne, un cadre de recadrage se resserre sur l'image, puis les feuilles se rassemblent en une pile qui s'allège et s'efface. Boucle de 8 secondes. Quand un fichier est tenu au-dessus de la zone, les feuilles s'effacent et l'emplacement s'ouvre. Avec le mouvement réduit du système, l'éventail reste fixe.
 - La zone de dépôt a la même marge en haut que sur les côtés et en bas : sa marge du haut s'échappait du panneau, qui la repoussait vers l'extérieur.
 
 ### Fichier
