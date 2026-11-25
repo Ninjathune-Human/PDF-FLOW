@@ -911,7 +911,7 @@
           <button class="sw" data-color="#FF2BC2" style="background:#FF2BC2" aria-label="Magenta fluo"></button>
           <button class="sw" data-color="#22C4FF" style="background:#22C4FF" aria-label="Bleu fluo"></button>
         </div>
-        <span class="vsep" aria-hidden="true"></span>
+        <span class="vsep" id="anSwSep" aria-hidden="true"></span>
         <div class="segi" id="anShapes" role="radiogroup" aria-label="Forme" hidden>
           <button type="button" data-shape="rect" data-tip="Rectangle" aria-label="Rectangle"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="13" rx="2"/></svg></button>
           <button type="button" data-shape="ellipse" data-tip="Ellipse" aria-label="Ellipse"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8.5" ry="6.5"/></svg></button>
@@ -2007,7 +2007,7 @@ const SHAPES=['rect','ellipse','arrow','line'], STROKED=['pen','hl',...SHAPES];
 const FONT_CSS={sans:'-apple-system,Helvetica,Arial,sans-serif', serif:'"Times New Roman",Times,serif', mono:'"Courier New",Courier,monospace'};
 const FONT_STD={sans:['Helvetica','HelveticaBold','HelveticaOblique','HelveticaBoldOblique'], serif:['TimesRoman','TimesRomanBold','TimesRomanItalic','TimesRomanBoldItalic'], mono:['Courier','CourierBold','CourierOblique','CourierBoldOblique']};
 let anFont='sans', anBold=false, anItalic=false;
-let anListP=[], anPtr=0, anTool='pen', anColor='#E4322B', anHlColor='#FFEA00', anMaskColor='#FFFFFF', anWidth=2.5, anTextSize=14;
+let anListP=[], anPtr=0, anTool='select', anColor='#E4322B', anHlColor='#FFEA00', anMaskColor='#FFFFFF', anWidth=2.5, anTextSize=14;
 /* Fenêtre affichée dans l'éditeur, en coordonnées normalisées de la page entière : la zone
    conservée par le recadrage, ou la page entière à défaut. Les annotations restent stockées
    dans le repère de la page ; seule la conversion vers l'écran passe par cette fenêtre. */
@@ -2041,7 +2041,7 @@ function openAnnot(single){
     list=(selected.size?pages.filter(p=>selected.has(p.id)):pages).filter(p=>!p.blank);
   }
   if(!list.length){ notify('Les pages blanches ne peuvent pas être annotées. Sélectionnez une page de contenu.',{kind:'warn'}); return; }
-  anListP=list; anPtr=start; anSel=-1; annotModal.classList.add('show'); setTool(anTool||'pen'); loadAnnotPage();
+  anListP=list; anPtr=start; anSel=-1; annotModal.classList.add('show'); setTool('select'); loadAnnotPage();   // on entre toujours en sélection : rien ne se trace, aucun fichier ne se demande par mégarde
 }
 async function loadAnnotPage(){
   findPulse=findHits.has((anListP[anPtr]||{}).id);
@@ -2315,6 +2315,7 @@ function bboxOf(a){
 function renderAnnots(){
   while(anSvg.firstChild) anSvg.removeChild(anSvg.firstChild);
   const pg=pg2(); if(!pg) return;
+  syncBar();
   const hl=findHits.get(pg.id), pulse=findPulse; findPulse=false;   // le rebond ne joue qu'une fois, pas à chaque retouche
   const curPulse=findCurPulse; findCurPulse=false;
   if(hl) for(const h of hl){
@@ -2446,13 +2447,10 @@ function setTool(t){ if(anObjCrop) applyObjCrop(); anTool=t;
   const shape=SHAPES.includes(t);
   if(shape){ $('anShapeTool').dataset.tool=t; $('anShapes').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.shape===t))); }
   $('anShapes').hidden=!shape;
-  $('anWWrap').hidden=!STROKED.includes(t);
   document.querySelectorAll('#anTools .atool').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tool===t)));
   anStage.classList.toggle('tool-select', t==='select');
   anStage.classList.toggle('tool-clip', t==='clip');
-  anSizeWrap.hidden=t!=='text';
   if(t==='image') anImgFile.click(); else anPendingImg=null;
-  showSwatches(t==='hl'?'fluo':t==='redact'?'mask':'std');
   if(AN_DEFAULT_W[t]){ anWidth=AN_DEFAULT_W[t]; anW.value=anWidth; }
   anSel=-1; renderAnnots();
 }
@@ -2479,7 +2477,16 @@ $('anItalic').addEventListener('click',()=>{ anItalic=!anItalic; applyTextOpts()
 markTextOpts();
 /* deux nuanciers : couleurs d'encre pour les tracés, teintes fluo pour le surligneur ; chacun garde son choix */
 const anFluo=$('anFluo'), anMask=$('anMask'), anRedo=$('anRedo');
-function showSwatches(k){ anSwatches.hidden=k!=='std'; anFluo.hidden=k!=='fluo'; anMask.hidden=k!=='mask'; }
+function showSwatches(k){ anSwatches.hidden=k!=='std'; anFluo.hidden=k!=='fluo'; anMask.hidden=k!=='mask'; $('anSwSep').hidden=k!=='std'&&k!=='fluo'; }
+/* la barre ne montre que ce dont l'outil, l'objet sélectionné ou le texte en saisie a besoin :
+   sélection à vide, image, zone copiée, recadrage d'objet n'ont ni couleur ni épaisseur */
+function syncBar(){
+  const a=anTool==='select' ? pg2().annots[anSel] : null;
+  const t=anPending ? 'text' : anTool==='select' ? (a ? a.type : null) : anTool;
+  showSwatches(t==='hl' ? 'fluo' : t==='redact' ? 'mask' : (t==='pen'||t==='text'||SHAPES.includes(t)) ? 'std' : null);
+  $('anWWrap').hidden=!STROKED.includes(t);
+  anSizeWrap.hidden=t!=='text';
+}
 function markSwatch(group,color){ group.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',String((s.dataset.color||'').toLowerCase()===(color||'').toLowerCase()))); }
 document.querySelectorAll('#anSwatches .sw, #anFluo .sw, #anMask .sw').forEach(b=>b.addEventListener('click',()=>{
   const c=b.dataset.color; if(b.closest('#anFluo')) anHlColor=c; else if(b.closest('#anMask')) anMaskColor=c; else anColor=c;
@@ -2613,12 +2620,11 @@ function hitSelect(p){ anSel=hitIndex(p); if(anSel>=0) syncControls(); renderAnn
 /* quel que soit l'outil, un appui simple sur un objet le sélectionne : l'outil passe en sélection */
 function selectHit(i){ setTool('select'); anSel=i; syncControls(); renderAnnots(); }
 function syncControls(){ const a=pg2().annots[anSel]; if(!a)return;
-  if(a.color){ if(a.type==='hl'){ anHlColor=a.color; markSwatch(anFluo,a.color); showSwatches('fluo'); }
-    else if(a.type==='redact'){ anMaskColor=a.color; markSwatch(anMask,a.color); showSwatches('mask'); }
-    else { anColor=a.color; markSwatch(anSwatches,a.color); showSwatches('std'); } }
+  if(a.color){ if(a.type==='hl'){ anHlColor=a.color; markSwatch(anFluo,a.color); }
+    else if(a.type==='redact'){ anMaskColor=a.color; markSwatch(anMask,a.color); }
+    else { anColor=a.color; markSwatch(anSwatches,a.color); } }
   if('w'in a) anW.value=a.w;
-  $('anWWrap').hidden=!STROKED.includes(a.type);
-  if(a.type==='text'){ anSize.value=a.size; anSizeWrap.hidden=false; anFont=a.font||'sans'; anBold=!!a.bold; anItalic=!!a.italic; markTextOpts(); } }
+  if(a.type==='text'){ anSize.value=a.size; anFont=a.font||'sans'; anBold=!!a.bold; anItalic=!!a.italic; markTextOpts(); } }
 /* modifie la forme de l'objet sélectionné par l'une de ses poignées, le bord ou le coin opposé restant fixe.
    Trait et flèche : chaque extrémité suit le pointeur. Texte : les coins changent la taille du corps.
    Image et zone copiée : coins à proportions gardées, côtés libres. Formes et tracés : tout est libre. */
@@ -2763,7 +2769,7 @@ function startText(pos,initial){
   showTextInput(pos.u,pos.v,size,anColor,initial||'',anDeg); styleTextInput();
 }
 function editTextAnnot(i){ const a=pg2().annots[i]; anFont=a.font||'sans'; anBold=!!a.bold; anItalic=!!a.italic; markTextOpts();
-  anPending={u:a.u,v:a.v,size:a.size,color:a.color,rot:a.rot||0,replace:i,font:anFont,bold:anBold,italic:anItalic}; anSizeWrap.hidden=false; anSize.value=a.size; showTextInput(a.u,a.v,a.size,a.color,a.text,a.rot||0); styleTextInput(); }
+  anPending={u:a.u,v:a.v,size:a.size,color:a.color,rot:a.rot||0,replace:i,font:anFont,bold:anBold,italic:anItalic}; anSize.value=a.size; syncBar(); showTextInput(a.u,a.v,a.size,a.color,a.text,a.rot||0); styleTextInput(); }
 function showTextInput(u,v,size,color,val,rot){ const t=anText; const sz=size*anPxPerPt;
   /* le rendu pose le haut du cadratin sur v ; dans un textarea, l'interligne de 1,2 ajoute
      une demi-conduite de 0,1 em au-dessus du glyphe, qu'il faut retrancher */
