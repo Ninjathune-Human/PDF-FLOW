@@ -10,8 +10,7 @@
 ### Accueil
 
 - Le dépôt passe au premier plan : « Déposez un fichier » devient le titre de la zone, sous la scène animée, avec « PDF, image ou document Word » en dessous. Le choix d'un fichier devient l'issue secondaire, en petit bouton à filet « ou choisir un fichier ».
-- Seul ce bouton réagit au survol et au clic : la zone de dépôt n'est plus cliquable, elle n'est pas un bouton. Au survol, le bouton s'éclaire de l'intérieur, par un halo qui suit le pointeur ; au clavier, le halo se centre.
-- Le bouton prend la couleur, à la manière des boutons d'IA : un liseré multicolore (bleu, violet, rose, orange) tourne lentement autour de la capsule. Au survol, il s'avive, un lavis coloré et une lueur sortent du bouton, qui se soulève d'un pixel. Avec le mouvement réduit du système, le liseré reste fixe.
+- Seul ce bouton réagit au survol et au clic : la zone de dépôt n'est plus cliquable, elle n'est pas un bouton. Plat comme le reste de l'interface, son relief tient à ses ombres : posé au repos, il se soulève au survol et s'enfonce à l'appui.
 - La bande des six fonctions numérotées sous la zone de dépôt disparaît : le titre et la phrase d'accroche disent déjà tout.
 - Zone de dépôt animée : trois feuilles, un PDF, une image et un document Word, tombent dans la zone et se posent en éventail sur un emplacement pointillé. Un surlignage s'y trace, un trait de stylo entoure une ligne, un cadre de recadrage se resserre sur l'image, puis les feuilles se rassemblent en une pile qui s'allège et s'efface. Boucle de 8 secondes. Quand un fichier est tenu au-dessus de la zone, les feuilles s'effacent et l'emplacement s'ouvre. Avec le mouvement réduit du système, l'éventail reste fixe.
 - La zone de dépôt a la même marge en haut que sur les côtés et en bas : sa marge du haut s'échappait du panneau, qui la repoussait vers l'extérieur.
