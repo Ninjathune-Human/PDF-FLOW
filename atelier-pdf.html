@@ -2007,7 +2007,7 @@ const SHAPES=['rect','ellipse','arrow','line'], STROKED=['pen','hl',...SHAPES];
 const FONT_CSS={sans:'-apple-system,Helvetica,Arial,sans-serif', serif:'"Times New Roman",Times,serif', mono:'"Courier New",Courier,monospace'};
 const FONT_STD={sans:['Helvetica','HelveticaBold','HelveticaOblique','HelveticaBoldOblique'], serif:['TimesRoman','TimesRomanBold','TimesRomanItalic','TimesRomanBoldItalic'], mono:['Courier','CourierBold','CourierOblique','CourierBoldOblique']};
 let anFont='sans', anBold=false, anItalic=false;
-let anListP=[], anPtr=0, anTool='pen', anColor='#E4322B', anHlColor='#FFEA00', anMaskColor='#FFFFFF', anWidth=2.5, anTextSize=14;
+let anListP=[], anPtr=0, anTool='select', anColor='#E4322B', anHlColor='#FFEA00', anMaskColor='#FFFFFF', anWidth=2.5, anTextSize=14;
 /* Fenêtre affichée dans l'éditeur, en coordonnées normalisées de la page entière : la zone
    conservée par le recadrage, ou la page entière à défaut. Les annotations restent stockées
    dans le repère de la page ; seule la conversion vers l'écran passe par cette fenêtre. */
@@ -2041,7 +2041,7 @@ function openAnnot(single){
     list=(selected.size?pages.filter(p=>selected.has(p.id)):pages).filter(p=>!p.blank);
   }
   if(!list.length){ notify('Les pages blanches ne peuvent pas être annotées. Sélectionnez une page de contenu.',{kind:'warn'}); return; }
-  anListP=list; anPtr=start; anSel=-1; annotModal.classList.add('show'); setTool(anTool||'pen'); loadAnnotPage();
+  anListP=list; anPtr=start; anSel=-1; annotModal.classList.add('show'); setTool('select'); loadAnnotPage();   // on entre toujours en sélection : rien ne se trace, aucun fichier ne se demande par mégarde
 }
 async function loadAnnotPage(){
   findPulse=findHits.has((anListP[anPtr]||{}).id);

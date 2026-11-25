@@ -5,6 +5,7 @@
 ### Éditeur
 
 - La barre de propriétés ne montre plus que ce dont l'outil a besoin. Sélection sans objet choisi, recadrage, image et copie de zone : ni couleurs ni épaisseur. Un objet sélectionné fait paraître ses propres réglages (couleur, épaisseur, options de texte), qui disparaissent quand on le relâche ; une image ou une zone copiée n'en a pas.
+- L'éditeur s'ouvre toujours sur la flèche de sélection, au lieu du dernier outil utilisé : rien ne se trace au premier appui, et sortir avec l'outil Image ne redemande plus un fichier à l'entrée suivante.
 
 ## 24 novembre 2026
 
