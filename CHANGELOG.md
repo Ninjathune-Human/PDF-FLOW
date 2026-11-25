@@ -2,6 +2,10 @@
 
 ## 25 novembre 2026
 
+### Recadrage
+
+- Sur une page jamais recadrée, la fenêtre propose désormais le cadre du contenu, marge conservée comprise, comme le bouton Détecter. Le cadre fixe en retrait de 4 % qu'elle proposait coupait les documents à marges étroites (logo, bandeaux de tableau, montants en bord de page). Page vide : la page entière.
+
 ### Éditeur
 
 - La barre de propriétés ne montre plus que ce dont l'outil a besoin. Sélection sans objet choisi, recadrage, image et copie de zone : ni couleurs ni épaisseur. Un objet sélectionné fait paraître ses propres réglages (couleur, épaisseur, options de texte), qui disparaissent quand on le relâche ; une image ou une zone copiée n'en a pas.
