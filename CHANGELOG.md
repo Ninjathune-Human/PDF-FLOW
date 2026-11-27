@@ -2,6 +2,14 @@
 
 ## 27 novembre 2026
 
+### PDF en Word (bêta)
+
+- Nouveau : Convertir › PDF en Word. Les pages sélectionnées, ou tout le document, deviennent un document Word modifiable, une section par page au même format.
+- PDF natif : texte, polices et tailles d'origine (les clones métriques Liberation, Arimo, Tinos, Carlito sont rendus à leurs équivalents Arial, Times New Roman, Calibri), gras et italique tirés du nom de police.
+- Page numérisée : reconnaissance du texte en deux passages (mise en page, puis texte épars pour les mots isolés), corps déduit de la hauteur des mots, gras décidé par ligne d'après l'épaisseur des traits, couleur lue sur les pixels ; une page couchée est redressée. Le texte reconnu est en Arial.
+- Mise en page recomposée : paragraphes, alignements (gauche, centré, droite, justifié), retraits et alinéas, interlignes et espacements mesurés ; les colonnes d'une même ligne deviennent des tabulations, alignées à droite quand les montants le sont ; un bloc posé à côté d'un autre (logo et cartouche) devient une zone de texte à sa place.
+- Logos, filets, aplats et photos sont découpés du rendu, texte effacé, et posés à leur position ; le papier d'un dessin au trait devient transparent.
+
 ### Reconnaissance de texte
 
 - Corrigé : la reconnaissance échouait aussitôt avec « createWorker is not a function ». Le module de tesseract.js 5 ne livre qu'un export par défaut, et c'est lui qui porte `createWorker`.

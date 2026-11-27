@@ -728,6 +728,7 @@
             <div class="menu" id="menuConvert" hidden>
               <button class="tbtn" id="btnOcr" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8V5.5a2 2 0 0 1 2-2H8M16 3.5h2.5a2 2 0 0 1 2 2V8M20.5 16v2.5a2 2 0 0 1-2 2H16M8 20.5H5.5a2 2 0 0 1-2-2V16"/><path d="M8 9.5h8M8 12.5h8M8 15.5h5"/></svg>Reconnaissance de texte…</button>
               <button class="tbtn" id="btnWord" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/><path d="m8.5 11.5 1.3 5.5 2.2-4 2.2 4 1.3-5.5"/></svg>Word en PDF…<span class="beta">Bêta</span></button>
+              <button class="tbtn" id="btnPdfWord" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/><path d="M14 3v4h4"/><path d="M9 11.5h6M12 11.5V17"/></svg>PDF en Word…<span class="beta">Bêta</span></button>
             </div>
           </div>
           </div>
@@ -868,7 +869,7 @@
   <div class="modal" id="ocrModal" role="dialog" aria-modal="true" aria-label="Reconnaissance de texte">
     <div class="dialog" style="max-width:460px">
       <div class="dhead">
-        <h2>Reconnaissance de texte (OCR)</h2>
+        <h2 id="ocrTitle">Reconnaissance de texte (OCR)</h2>
         <button class="iconbtn" id="ocrClose" aria-label="Fermer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg></button>
       </div>
       <div style="padding:20px 22px 22px;display:flex;flex-direction:column;gap:16px">
@@ -877,7 +878,7 @@
           <button data-k="eng" aria-selected="false" style="flex:1">Anglais</button>
           <button data-k="fra+eng" aria-selected="false" style="flex:1">Les deux</button>
         </div>
-        <p style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0">Ajoute une couche de texte invisible calée sur le texte détecté, pour rendre le PDF sélectionnable et interrogeable — l'image visible n'est pas modifiée. La qualité dépend de la netteté du scan ; relancer l'OCR sur une page remplace le résultat précédent.</p>
+        <p id="ocrDesc" style="font-size:var(--fs-sm);color:var(--muted);line-height:1.55;margin:0">Ajoute une couche de texte invisible calée sur le texte détecté, pour rendre le PDF sélectionnable et interrogeable — l'image visible n'est pas modifiée. La qualité dépend de la netteté du scan ; relancer l'OCR sur une page remplace le résultat précédent.</p>
         <div id="ocrProgress" hidden>
           <div style="height:4px;background:var(--subtle);border-radius:99px;overflow:hidden;margin-bottom:8px"><div id="ocrBar" style="height:100%;width:0%;background:var(--primary);transition:width .15s"></div></div>
           <span id="ocrStatus" role="status" aria-live="polite" style="font-size:var(--fs-sm);color:var(--muted)">—</span>
@@ -1100,7 +1101,7 @@ noticeClose.addEventListener('click',hideNotice);
 
 /* ============ helpers ============ */
 const fmtSize=b=>b<1024?b+' o':b<1048576?(b/1024).toFixed(0)+' Ko':(b/1048576).toFixed(1)+' Mo';
-function download(bytes,name){ const blob=new Blob([bytes],{type:'application/pdf'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+function download(bytes,name,type='application/pdf'){ const blob=new Blob([bytes],{type}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 function toast(el,kind,html){ el.dataset.kind=kind; el.querySelector('.txt').innerHTML=html; }
 
 /* render a page (rotation forced to 0) at target long-side px */
@@ -3017,6 +3018,381 @@ $('anHelpIn').addEventListener('keydown',e=>{
   else if(e.key==='Enter'){ e.preventDefault(); const r=helpSearch($('anHelpIn').value); if(r&&r.list.length){ helpPinned=r.list[0]; renderHelp(); $('anHelpIn').blur(); } }
 });
 
+/* ============ PDF en Word : copie modifiable ============
+   Chaque page devient une section Word de même format. Le texte coule en paragraphes (police, taille, gras, italique, couleur,
+   alignement, retraits, espacements, interligne exact) ; les colonnes d'une même ligne deviennent des tabulations ; les zones
+   non textuelles (logos, filets, aplats, photos) sont découpées du rendu, texte effacé, et ancrées à leur place.
+   PDF natif : texte, polices et tailles lus par pdf.js. Page sans texte : reconnaissance (tesseract.js), taille déduite de la
+   hauteur des mots, gras de l'épaisseur des fûts, couleur des pixels ; une page couchée est redressée.
+   Tout se mesure en pixels du rendu (s pixels par point), puis s'écrit en points. */
+const PdfToWord=(()=>{
+  const JSZIP="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+  const loadZip=()=>window.JSZip?Promise.resolve():new Promise((res,rej)=>{ const el=document.createElement('script'); el.src=JSZIP;
+    el.onload=res; el.onerror=()=>rej(new Error('composant Word introuvable, vérifiez la connexion')); document.head.appendChild(el); });
+  const med=a=>{ if(!a.length) return 0; const b=[...a].sort((x,y)=>x-y), m=b.length>>1; return b.length%2?b[m]:(b[m-1]+b[m])/2; };
+  const DPI=220, MAXPX=3000, SLACK=4;   // marge de sécurité (pt) : Word compose parfois un peu plus large
+
+  /* ---------- rendu dans l'orientation voulue, limité au recadrage ---------- */
+  async function render(pg, deg){
+    const {jsdoc}=sources.get(pg.srcId); const page=await jsdoc.getPage(pg.srcIndex+1);
+    const v1=page.getViewport({scale:1, rotation:deg});
+    let r=[0,0,v1.width,v1.height];
+    if(pg.crop){ const a=v1.convertToViewportPoint(pg.crop.x,pg.crop.y), b=v1.convertToViewportPoint(pg.crop.x+pg.crop.w,pg.crop.y+pg.crop.h);
+      r=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[0],b[0]),Math.max(a[1],b[1])]; }
+    const s=Math.min(DPI/72, MAXPX/Math.max(r[2]-r[0],r[3]-r[1]));
+    const vp=page.getViewport({scale:s, rotation:deg, offsetX:-r[0]*s, offsetY:-r[1]*s});
+    const c=document.createElement('canvas'); c.width=Math.max(1,Math.round((r[2]-r[0])*s)); c.height=Math.max(1,Math.round((r[3]-r[1])*s));
+    const ctx=c.getContext('2d',{willReadFrequently:true}); ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+    await page.render({canvasContext:ctx, viewport:vp}).promise;
+    return {page, vp, canvas:c, s, W:c.width, H:c.height, img:ctx.getImageData(0,0,c.width,c.height).data};
+  }
+
+  /* ---------- polices : nom PDF -> famille Word, gras, italique ---------- */
+  const CLONES={liberationsans:'Arial',arimo:'Arial',helvetica:'Arial',arial:'Arial',liberationserif:'Times New Roman',tinos:'Times New Roman',
+    times:'Times New Roman',timesroman:'Times New Roman',timesnewroman:'Times New Roman',liberationmono:'Courier New',cousine:'Courier New',
+    courier:'Courier New',couriernew:'Courier New',carlito:'Calibri',caladea:'Cambria'};
+  function fontInfo(name, generic){
+    const n=String(name||'').replace(/^[A-Z]{6}\+/,'');
+    const bold=/bold|black|heavy|semibold|demi/i.test(n), italic=/italic|oblique/i.test(n);
+    let fam=n.split(/[-,]/)[0].replace(/(PSMT|PS|MT)$/,'');
+    const key=fam.toLowerCase().replace(/[^a-z]/g,'');
+    if(CLONES[key]) fam=CLONES[key];
+    else if(!fam || /^(f\d+|t\d+|font|cidfont|dummy)/i.test(fam)) fam=generic==='serif'?'Times New Roman':generic==='monospace'?'Courier New':'Arial';
+    else fam=fam.replace(/([a-z])([A-Z])/g,'$1 $2');
+    return {family:fam, bold, italic};
+  }
+
+  /* ---------- couleurs ---------- */
+  function paperColor(R){ const h=new Map(), {img,W,H}=R, step=Math.max(1,Math.floor(Math.sqrt(W*H/60000)));
+    for(let y=0;y<H;y+=step) for(let x=0;x<W;x+=step){ const i=(y*W+x)*4, k=(img[i]>>4)<<8|(img[i+1]>>4)<<4|(img[i+2]>>4);
+      const e=h.get(k)||[0,0,0,0]; e[0]++; e[1]+=img[i]; e[2]+=img[i+1]; e[3]+=img[i+2]; h.set(k,e); }
+    let b=[0,255,255,255]; for(const e of h.values()) if(e[0]>b[0]) b=e;
+    return [b[1]/b[0], b[2]/b[0], b[3]/b[0]]; }
+  const dist=(img,i,c)=>Math.max(Math.abs(img[i]-c[0]),Math.abs(img[i+1]-c[1]),Math.abs(img[i+2]-c[2]));
+  const pad=(w,R)=>R&&R.scanned?3+(w.y1-w.y0)*.08:2+(w.y1-w.y0)*.02;   // marge autour d'un mot : l'anticrénelage, sans mordre sur un dessin voisin
+  /* fond local d'une boîte : médiane des pixels de son pourtour */
+  function ringColor(R,x0,y0,x1,y1){ const {img,W,H}=R, rs=[],gs=[],bs=[];
+    x0=Math.max(0,Math.floor(x0)-2); y0=Math.max(0,Math.floor(y0)-2); x1=Math.min(W-1,Math.ceil(x1)+2); y1=Math.min(H-1,Math.ceil(y1)+2);
+    const add=(x,y)=>{ const i=(y*W+x)*4; rs.push(img[i]); gs.push(img[i+1]); bs.push(img[i+2]); };
+    const sx=Math.max(1,Math.floor((x1-x0)/40)), sy=Math.max(1,Math.floor((y1-y0)/20));
+    for(let x=x0;x<=x1;x+=sx){ add(x,y0); add(x,y1); } for(let y=y0;y<=y1;y+=sy){ add(x0,y); add(x1,y); }
+    return [med(rs),med(gs),med(bs)]; }
+  /* encre d'un mot : sa couleur, et l'épaisseur de ses fûts (longueur médiane des traversées horizontales, à mi-hauteur) */
+  function inkOf(R,w){ const {img,W,H}=R, bg=ringColor(R,w.x0,w.y0,w.x1,w.y1), px=[], runs=[];
+    const x0=Math.max(0,Math.floor(w.x0)), x1=Math.min(W-1,Math.ceil(w.x1)), y0=Math.max(0,Math.floor(w.y0)), y1=Math.min(H-1,Math.ceil(w.y1));
+    const ya=Math.round(y0+(y1-y0)*.35), yb=Math.round(y0+(y1-y0)*.65);
+    for(let y=y0;y<=y1;y++){ let run=0;
+      for(let x=x0;x<=x1;x++){ const i=(y*W+x)*4, d=dist(img,i,bg), on=d>90;
+        if(on) px.push([d,img[i],img[i+1],img[i+2]]);
+        if(y>=ya&&y<=yb){ if(on) run++; else if(run){ runs.push(run); run=0; } } }
+      if(run) runs.push(run); }
+    px.sort((a,b)=>b[0]-a[0]); const top=px.slice(0,Math.max(1,Math.ceil(px.length*.3)));
+    let color=null;
+    if(px.length){ const c=[0,1,2].map(k=>Math.round(top.reduce((s,p)=>s+p[k+1],0)/top.length));
+      const lum=.299*c[0]+.587*c[1]+.114*c[2], chroma=Math.max(...c)-Math.min(...c);
+      color=(lum<50&&chroma<24)?'000000':c.map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase(); }
+    return {color, stem:med(runs)}; }
+
+  /* ---------- PDF natif : texte de pdf.js, dans le repère du rendu ---------- */
+  async function nativeWords(R){
+    const tc=await R.page.getTextContent(); await R.page.getOperatorList();   // charge les polices, pour en lire le vrai nom
+    const out=[];
+    for(const it of tc.items){
+      if(!it.str||!it.str.trim()) continue;
+      const t=it.transform, size=Math.hypot(t[2],t[3]); if(size<1) continue;
+      const st=tc.styles[it.fontName]||{}; let f=null; try{ f=R.page.commonObjs.get(it.fontName); }catch(e){}
+      const fi=fontInfo(f&&f.name, st.fontFamily);
+      const run=Math.hypot(t[0],t[1])||1, ux=t[0]/run, uy=t[1]/run, upx=t[2]/size, upy=t[3]/size;
+      const asc=st.ascent||.8, desc=st.descent||-.2, bx=t[4], by=t[5], ex=bx+ux*it.width, ey=by+uy*it.width;
+      const a=R.vp.convertToViewportPoint(bx,by), b=R.vp.convertToViewportPoint(ex,ey);
+      if(Math.abs(b[1]-a[1])>Math.abs(b[0]-a[0])*.2 || b[0]<=a[0]) continue;     // texte vertical ou à l'envers : hors flux
+      const pts=[[bx,by,asc],[bx,by,desc],[ex,ey,asc],[ex,ey,desc]].map(([x,y,k])=>R.vp.convertToViewportPoint(x+upx*k*size, y+upy*k*size));
+      const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]);
+      out.push({text:it.str.replace(/\s+/g,' ').trim(), x0:Math.min(...xs), x1:Math.max(...xs), y0:Math.min(...ys), y1:Math.max(...ys),
+        base:a[1], size, em:size*R.s, family:fi.family, bold:fi.bold, italic:fi.italic});
+    }
+    return out;
+  }
+
+  /* ---------- scan : mots reconnus ; corps déduit de la hauteur du mot selon ses lettres (ascendantes, descendantes) ---------- */
+  const ASC=/[A-ZÀ-Ý0-9bdfhikltßàâäéèêëìíîïôöùûüÿj'’!?]/, DESC=/[gjpqyçQ,;]/;
+  function ocrToWords(data){
+    return (data.words||[]).filter(w=>w.text&&w.text.trim()&&w.confidence>=40).map(w=>{
+      const t=w.text.trim(), h=w.bbox.y1-w.bbox.y0, top=ASC.test(t)?.73:.53, bot=DESC.test(t)?.21:0;
+      const base=w.baseline&&w.baseline.has_baseline!==false?(w.baseline.y0+w.baseline.y1)/2:w.bbox.y1-(bot?h*bot/(top+bot):0);
+      return {text:t, x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1, base, em:h/(top+bot), family:'Arial', bold:false, italic:false, conf:w.confidence}; });
+  }
+  const ocrScore=ws=>ws.filter(w=>w.conf>=60&&w.text.length>=3).reduce((s,w)=>s+w.text.length,0);
+
+  /* ---------- zones graphiques : encre hors des mots, regroupée en rectangles ---------- */
+  function regions(R, words, paper){
+    const {img,W,H,s}=R, cell=Math.max(2,Math.round(s*1.5)), gw=Math.ceil(W/cell), gh=Math.ceil(H/cell), cnt=new Uint16Array(gw*gh);
+    for(let y=0;y<H;y++){ const row=((y/cell)|0)*gw; for(let x=0;x<W;x++){ if(dist(img,(y*W+x)*4,paper)>40) cnt[row+((x/cell)|0)]++; } }
+    const ink=new Uint8Array(gw*gh), need=Math.max(1,cell*cell*.04); for(let i=0;i<ink.length;i++) ink[i]=cnt[i]>=need?1:0;
+    // les mots posés sur le papier sortent de l'encre ; ceux posés sur un aplat (bandeau, cartouche) le laissent entier
+    for(const w of words){ const p=pad(w,R); if(dist(ringColor(R,w.x0-p,w.y0-p,w.x1+p,w.y1+p),0,paper)>40) continue;
+      for(let gy=Math.max(0,((w.y0-p)/cell)|0); gy<=Math.min(gh-1,((w.y1+p)/cell)|0); gy++)
+        for(let gx=Math.max(0,((w.x0-p)/cell)|0); gx<=Math.min(gw-1,((w.x1+p)/cell)|0); gx++) ink[gy*gw+gx]=0; }
+    // composantes connexes, à deux cellules près, pour souder les morceaux d'un même dessin
+    const seen=new Uint8Array(gw*gh), comps=[], D=2;
+    for(let i=0;i<ink.length;i++){ if(!ink[i]||seen[i]) continue; const st=[i]; seen[i]=1; let n=0,x0=1e9,y0=1e9,x1=-1,y1=-1;
+      while(st.length){ const j=st.pop(), x=j%gw, y=(j/gw)|0; n++; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+        for(let dy=-D;dy<=D;dy++) for(let dx=-D;dx<=D;dx++){ const xx=x+dx, yy=y+dy; if(xx<0||yy<0||xx>=gw||yy>=gh) continue; const k=yy*gw+xx; if(ink[k]&&!seen[k]){ seen[k]=1; st.push(k); } } }
+      comps.push({x0:x0*cell, y0:y0*cell, x1:Math.min(W,(x1+1)*cell), y1:Math.min(H,(y1+1)*cell), n}); }
+    const pt=v=>v/s, big=Math.max(pt(W),pt(H));
+    let out=comps.filter(c=>{ const w=pt(c.x1-c.x0), h=pt(c.y1-c.y0);
+      if(Math.max(w,h)<5) return false;                                                   // poussières, taches de numérisation
+      if(words.some(t=>{ const e=(t.y1-t.y0)*.3; return c.x0>=t.x0-e&&c.x1<=t.x1+e&&c.y0>=t.y0-e&&c.y1<=t.y1+e; })) return false;  // halo d'un mot
+      const edge=c.x0<=cell||c.y0<=cell||c.x1>=W-cell||c.y1>=H-cell;
+      return !(edge && Math.min(w,h)<Math.max(6,big*.02)); });                           // ombres de bord de numérisation
+    for(let again=true;again;){ again=false;                                             // fusion des rectangles qui se touchent
+      for(let a=0;a<out.length&&!again;a++) for(let b=a+1;b<out.length;b++){ const A=out[a],B=out[b], g=cell*2;
+        if(A.x0<=B.x1+g&&B.x0<=A.x1+g&&A.y0<=B.y1+g&&B.y0<=A.y1+g){
+          out[a]={x0:Math.min(A.x0,B.x0),y0:Math.min(A.y0,B.y0),x1:Math.max(A.x1,B.x1),y1:Math.max(A.y1,B.y1),n:A.n+B.n}; out.splice(b,1); again=true; break; } } }
+    return out;
+  }
+  /* découpe d'une zone, mots effacés par leur fond local ; PNG pour le trait, JPEG pour la photo */
+  async function cropRegion(R, g, words, paper){
+    const w=g.x1-g.x0, h=g.y1-g.y0, c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w)); c.height=Math.max(1,Math.round(h));
+    const x=c.getContext('2d'); x.drawImage(R.canvas, g.x0,g.y0,w,h, 0,0,c.width,c.height);
+    let inside=0;
+    for(const t of words){ if(t.x1<g.x0||t.x0>g.x1||t.y1<g.y0||t.y0>g.y1) continue; inside++;
+      const p=pad(t,R), col=ringColor(R,t.x0-p,t.y0-p,t.x1+p,t.y1+p);
+      x.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`; x.fillRect(t.x0-p-g.x0, t.y0-p-g.y0, t.x1-t.x0+2*p, t.y1-t.y0+2*p); }
+    const d=x.getImageData(0,0,c.width,c.height).data, cols=new Set();
+    for(let i=0;i<d.length&&cols.size<=96;i+=28) cols.add((d[i]>>3)<<10|(d[i+1]>>3)<<5|(d[i+2]>>3));
+    const photo=cols.size>96 && w*h>R.W*R.H*.01;
+    if(!photo){ const id=x.getImageData(0,0,c.width,c.height), q=id.data; for(let i=0;i<q.length;i+=4) if(dist(q,i,paper)<28) q[i+3]=0; x.putImageData(id,0,0); }
+    const blob=await new Promise(r=>c.toBlob(r, photo?'image/jpeg':'image/png', .88));
+    return {bytes:new Uint8Array(await blob.arrayBuffer()), ext:photo?'jpeg':'png', x:g.x0/R.s, y:g.y0/R.s, w:w/R.s, h:h/R.s, behind:inside>0};
+  }
+
+  /* ---------- lignes visuelles et segments (colonnes d'une même ligne) ---------- */
+  function rowsOf(words, s){
+    // un signe sans lettre ni chiffre (tiret, puce, deux-points) n'a pas de hauteur propre : les lignes se forment sans lui,
+    // puis il rejoint celle dont il touche un mot et dont il occupe le corps, à la ligne de base la plus proche
+    const sign=w=>!/[\p{L}\p{N}]/u.test(w.text), ws=words.filter(w=>!sign(w)).sort((a,b)=>a.base-b.base), rows=[];
+    for(const w of ws){ let best=null,bo=0;
+      for(const r of rows.slice(-8)){ const o=Math.min(r.y1,w.y1)-Math.max(r.y0,w.y0), m=Math.min(r.y1-r.y0,w.y1-w.y0);
+        if(o>=m*.5 && o>bo && w.em<r.em*1.8 && r.em<w.em*1.8){ best=r; bo=o; } }
+      if(best){ best.words.push(w); best.y0=Math.min(best.y0,w.y0); best.y1=Math.max(best.y1,w.y1); best.em=med(best.words.map(v=>v.em)); }
+      else rows.push({words:[w], y0:w.y0, y1:w.y1, em:w.em}); }
+    for(const w of words.filter(sign)){ let best=null,bd=1e9; const c=(w.y0+w.y1)/2;
+      for(const r of rows){ if(r.words.every(sign)) continue; const rb=med(r.words.map(v=>v.base)), d=Math.abs(w.base-rb);
+        if(c<rb-r.em*.9 || c>rb+r.em*.25 || !r.words.some(v=>Math.max(v.x0-w.x1, w.x0-v.x1)<r.em*2)) continue;
+        if(d<bd){ best=r; bd=d; } }
+      if(best){ best.words.push(w); best.y0=Math.min(best.y0,w.y0); best.y1=Math.max(best.y1,w.y1); }
+      else rows.push({words:[w], y0:w.y0, y1:w.y1, em:w.em}); }
+    for(const r of rows){ r.words.sort((a,b)=>a.x0-b.x0); r.segs=[];
+      for(const w of r.words){ const sg=r.segs[r.segs.length-1];
+        if(sg && w.x0-sg.x1 < r.em*(r.words.length<=4?.8:1.4)){ sg.words.push(w); sg.x1=Math.max(sg.x1,w.x1); } else r.segs.push({words:[w], x0:w.x0, x1:w.x1}); }
+      r.x0=r.segs[0].x0; r.x1=r.segs[r.segs.length-1].x1; r.base=med(r.words.map(w=>w.base)); r.size=Math.max(4,Math.round(r.em/s*2)/2); }
+    return rows.sort((a,b)=>a.base-b.base);
+  }
+  /* paragraphes : une ligne continue la précédente si elle a même corps, même bord gauche, un interligne ordinaire,
+     et si son premier mot n'aurait pas tenu au bout de la ligne précédente (la coupure venait donc de la largeur) */
+  function paragraphsOf(rows, L, Rt){
+    const out=[], bullet=/^[•▪◦‣●○■□–—-]$|^[•▪◦‣●○■□]/;
+    let cur=null;
+    for(const r of rows){
+      let join=false;
+      if(cur){ const p=cur.rows[cur.rows.length-1], em=Math.max(r.em,p.em), pitch=r.base-p.base;
+        const body=cur.rows.length>1?cur.rows[1].x0:null, fw=r.words[0].x1-r.words[0].x0;
+        const left = body!=null ? Math.abs(r.x0-body)<em*.6 : (Math.abs(r.x0-p.x0)<em*.6 || (p.x0>r.x0 && p.x0-r.x0<em*4));
+        join = Math.abs(r.size-p.size)<=Math.max(1,p.size*.18) && r.segs.length===1 && p.segs.length===1
+          && pitch>em*.9 && pitch<em*1.9 && left && !bullet.test(r.words[0].text) && p.x1+em*.3+fw > Rt-em*.5 && p.x1-p.x0 > (Rt-L)*.5; }
+      if(join) cur.rows.push(r); else { cur={rows:[r]}; out.push(cur); }
+    }
+    return out;
+  }
+
+  /* ---------- écriture Word ---------- */
+  const esc=t=>String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const tw=pt=>Math.round(pt*20), emu=pt=>Math.round(pt*12700);
+  const styleOf=(w,r)=>{ const size=w.size?Math.round(w.size*2)/2:r.size, color=w.color||'000000';
+    return {family:w.family, bold:!!w.bold, italic:!!w.italic, size, color, k:[w.family,!!w.bold,!!w.italic,size,color].join('|')}; };
+  function runXml(t, st){
+    const f=esc(st.family), rp=`<w:rPr><w:rFonts w:ascii="${f}" w:hAnsi="${f}" w:cs="${f}"/>${st.bold?'<w:b/><w:bCs/>':''}${st.italic?'<w:i/><w:iCs/>':''}`+
+      `${st.color!=='000000'?`<w:color w:val="${st.color}"/>`:''}<w:sz w:val="${Math.round(st.size*2)}"/><w:szCs w:val="${Math.round(st.size*2)}"/></w:rPr>`;
+    return t==='\t'?`<w:r>${rp}<w:tab/></w:r>`:`<w:r>${rp}<w:t xml:space="preserve">${esc(t)}</w:t></w:r>`; }
+  function anchorXml(g, id, rid, file){
+    return `<w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${id}" behindDoc="${g.behind?1:0}" locked="0" layoutInCell="1" allowOverlap="1">`+
+      `<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>${emu(g.x)}</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>${emu(g.y)}</wp:posOffset></wp:positionV>`+
+      `<wp:extent cx="${emu(g.w)}" cy="${emu(g.h)}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${id}" name="Image ${id}"/>`+
+      `<wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">`+
+      `<pic:pic><pic:nvPicPr><pic:cNvPr id="${id}" name="${file}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>`+
+      `<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${emu(g.w)}" cy="${emu(g.h)}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>`; }
+
+  /* bloc sorti du flux (posé à côté d'un autre) : zone de texte ancrée à la page, sans habillage ni bordure */
+  function textBoxXml(b, id){
+    const cx=emu(b.w), cy=emu(b.h);
+    return `<w:r><mc:AlternateContent><mc:Choice Requires="wps"><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="${id}" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">`+
+      `<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>${emu(b.x)}</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>${emu(b.y)}</wp:posOffset></wp:positionV>`+
+      `<wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${id}" name="Texte ${id}"/><wp:cNvGraphicFramePr/>`+
+      `<a:graphic><a:graphicData uri="http://schemas.microsoft.com/office/word/2010/wordprocessingShape"><wps:wsp><wps:cNvSpPr txBox="1"/>`+
+      `<wps:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></wps:spPr>`+
+      `<wps:txbx><w:txbxContent>${b.xml}</w:txbxContent></wps:txbx><wps:bodyPr rot="0" vert="horz" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="t" anchorCtr="0"><a:spAutoFit/></wps:bodyPr>`+
+      `</wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice></mc:AlternateContent></w:r>`; }
+
+  /* une page -> paragraphes Word et réglages de section */
+  function pageParts(info, media, ids){
+    const {rows, R, imgs}=info, s=R.s, Wpt=R.W/s, Hpt=R.H/s;
+    let L=Infinity, Rt=-Infinity;
+    for(const r of rows){ L=Math.min(L,r.x0); Rt=Math.max(Rt,r.x1); }
+    if(!isFinite(L)){ L=Wpt*s*.1; Rt=Wpt*s*.9; }
+    const paras=paragraphsOf(rows, L, Rt);
+    // interligne de chaque paragraphe, puis haut de sa première ligne (ligne Word de hauteur exacte : ligne de base à 0,78 du pas)
+    for(const p of paras){ const r0=p.rows[0];
+      p.pitch=p.rows.length>1?med(p.rows.slice(1).map((r,i)=>r.base-p.rows[i].base)):Math.max(r0.em*1.18,(r0.y1-r0.y0)*1.08);
+      p.top=r0.base-p.pitch*.78; p.bottom=p.top+p.pitch*p.rows.length; }
+    let T=Infinity, B=-Infinity; for(const p of paras){ T=Math.min(T,p.top); B=Math.max(B,p.bottom); }
+    if(!isFinite(T)){ T=0; B=0; }
+    const mL=Math.max(0,L/s), mR=Math.max(0,Wpt-Rt/s), mT=Math.max(0,T/s), mB=Math.max(0,Math.min(Hpt-B/s,20));
+    const segsAll=rows.flatMap(r=>r.segs.map(sg=>({sg,r})));
+    let flowBottom=-Infinity; for(const p of paras){ p.float=p.top<flowBottom-p.pitch*.3; if(!p.float) flowBottom=Math.max(flowBottom,p.bottom); }
+    const out=[]; let prev=mT;
+    paras.forEach((p,pi)=>{
+      const r0=p.rows[0], em=med(p.rows.map(r=>r.em)), one=p.rows.length===1;
+      const before=p.float?0:Math.max(0,p.top/s-prev); if(!p.float) prev=Math.max(prev,p.bottom/s);
+      const fx0=Math.min(...p.rows.map(r=>r.x0)), fx1=Math.max(...p.rows.map(r=>r.x1));
+      const xs0=p.rows.map(r=>r.x0), xs1=p.rows.map(r=>r.x1), cx=p.rows.map(r=>(r.x0+r.x1)/2);
+      let jc='left', left=0, right=0, first=0; const tabs=[];
+      if(r0.segs.length>1){
+        left=(r0.x0-L)/s;
+        for(const sg of r0.segs.slice(1)){
+          const alignedRight=segsAll.some(o=>o.r!==r0 && Math.abs(o.sg.x1-sg.x1)<em*.4 && Math.abs(o.sg.x0-sg.x0)>em*.4);
+          tabs.push(alignedRight?{val:'right',pos:(sg.x1-L)/s}:{val:'left',pos:(sg.x0-L)/s}); }
+      } else if(one ? Math.abs(cx[0]-(L+Rt)/2)<em*1.5 && r0.x0-L>em*3 && Rt-r0.x1>em*3
+                    : cx.every(c=>Math.abs(c-cx[0])<em*.6) && xs0.some(x=>Math.abs(x-xs0[0])>em*.6)){ jc='center'; }
+      else if(one ? Rt-r0.x1<em*.8 && r0.x0-L>em*6
+                  : xs1.every(x=>Math.abs(x-xs1[0])<em*.5) && xs0.some(x=>Math.abs(x-xs0[0])>em*.6)){ jc='right'; right=(Rt-Math.max(...xs1))/s; }
+      else { const body=one?xs0[0]:xs0[1]; left=(body-L)/s; first=(xs0[0]-body)/s;
+        const just=!one && xs1.slice(0,-1).every(x=>Math.abs(x-xs1[0])<em*.5 && Rt-x<em*1.5);
+        if(just) jc='both';
+        if(!one) right=(Rt-Math.max(...xs1))/s-SLACK; }
+      // texte, en séquences de même style ; un mot coupé en fin de ligne est recollé
+      const runs=[]; const push=(t,st)=>{ const l=runs[runs.length-1]; if(l&&l.t!=='\t'&&t!=='\t'&&l.st.k===st.k) l.t+=t; else runs.push({t,st}); };
+      p.rows.forEach((r,ri)=>r.segs.forEach((sg,si)=>{ if(si) push('\t',styleOf(sg.words[0],r));
+        sg.words.forEach((w,wi)=>{ let t=w.text;
+          if(wi){ if(w.x0-sg.words[wi-1].x1 > r.em*.12) t=' '+t; }
+          else if(si===0&&ri){ const l=runs[runs.length-1]; if(l&&/[A-Za-zÀ-ÿ]-$/.test(l.t)&&/^[a-zà-ÿ]/.test(t)) l.t=l.t.slice(0,-1); else t=' '+t; }
+          push(t,styleOf(w,r)); }); }));
+      let ppr='';
+      if(p.float){ // zone de texte : retraits et taquets ramenés à son bord gauche
+        const dx=(fx0-L)/s; left=Math.max(0,left-dx); right=0; tabs.forEach(t=>t.pos-=dx); if(jc!=='left'&&jc!=='both') jc='left'; }
+      ppr+=(tabs.length?`<w:tabs>${tabs.map(t=>`<w:tab w:val="${t.val}" w:pos="${tw(t.pos)}"/>`).join('')}</w:tabs>`:'')+
+        `<w:spacing w:before="${tw(before)}" w:after="0" w:line="${tw(p.pitch/s)}" w:lineRule="exact"/>`;
+      if(left||right||first) ppr+=`<w:ind w:left="${tw(left)}" w:right="${tw(right)}"${first>0?` w:firstLine="${tw(first)}"`:first<0?` w:hanging="${tw(-first)}"`:''}/>`;
+      ppr+=`<w:jc w:val="${jc}"/>`;
+      const body=runs.map(r=>runXml(r.t,r.st)).join('');
+      out.push(p.float?{float:{x:fx0/s, y:p.top/s, w:(fx1-fx0)/s+SLACK, h:(p.bottom-p.top)/s, xml:`<w:p><w:pPr>${ppr}</w:pPr>${body}</w:p>`}}:{ppr, body});
+    });
+    const boxes=out.filter(q=>q.float).map(q=>q.float), flow=out.filter(q=>!q.float);
+    if(!flow.length) flow.push({ppr:'',body:''});
+    // images et zones de texte s'ancrent au premier paragraphe du flux de la page, positionnées sur la page
+    const host=flow[0];
+    host.body=boxes.map(b=>{ const id=ids.n++; return textBoxXml(b,id); }).join('')+host.body;
+    host.body=imgs.map(g=>{ const id=ids.n++, rid='rIdImg'+id, file=`image${id}.${g.ext}`; media.push({file,bytes:g.bytes,rid}); return anchorXml(g,id,rid,file); }).join('')+host.body;
+    const sect=`<w:sectPr><w:pgSz w:w="${tw(Wpt)}" w:h="${tw(Hpt)}"${Wpt>Hpt?' w:orient="landscape"':''}/>`+
+      `<w:pgMar w:top="${tw(mT)}" w:right="${tw(mR)}" w:bottom="${tw(mB)}" w:left="${tw(mL)}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr>`;
+    return {paras:flow, sect};
+  }
+
+  async function docx(parts, media){
+    await loadZip(); const zip=new JSZip();
+    // une section par page : ses réglages ferment son dernier paragraphe, ceux de la dernière page ferment le corps
+    const body=parts.map((p,i)=>p.paras.map((q,j)=>{ const sect=(i<parts.length-1&&j===p.paras.length-1)?p.sect:'';
+      return `<w:p>${q.ppr||sect?`<w:pPr>${q.ppr}${sect}</w:pPr>`:''}${q.body}</w:p>`; }).join('')).join('');
+    const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
+      'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
+      'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" '+
+      'xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"';
+    const X='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>', REL='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    zip.file('word/document.xml',`${X}<w:document ${NS}><w:body>${body}${parts[parts.length-1].sect}</w:body></w:document>`);
+    zip.file('word/styles.xml',`${X}<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr>`+
+      `<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial" w:eastAsia="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="fr-FR"/></w:rPr></w:rPrDefault>`+
+      `<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`+
+      `<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`);
+    zip.file('word/_rels/document.xml.rels',`${X}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`+
+      `<Relationship Id="rIdStyles" Type="${REL}/styles" Target="styles.xml"/>${media.map(m=>`<Relationship Id="${m.rid}" Type="${REL}/image" Target="media/${m.file}"/>`).join('')}</Relationships>`);
+    for(const m of media) zip.file('word/media/'+m.file, m.bytes);
+    zip.file('_rels/.rels',`${X}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="word/document.xml"/></Relationships>`);
+    zip.file('[Content_Types].xml',`${X}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>`+
+      `<Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpeg" ContentType="image/jpeg"/>`+
+      `<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>`+
+      `<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>`);
+    return zip.generateAsync({type:'uint8array', compression:'DEFLATE'});
+  }
+
+  /* ---------- une page : texte (natif ou reconnu), style, zones graphiques ---------- */
+  async function readPage(pg, getWorker, step){
+    const deg=pageDeg(pg);
+    let R=await render(pg,deg), words=await nativeWords(R);
+    const scanned=words.reduce((n,w)=>n+w.text.length,0)<10;
+    if(scanned){
+      step('reconnaissance du texte…');
+      const worker=await getWorker(); let best=null;
+      for(const d of [deg,(deg+90)%360,(deg+270)%360]){                     // page couchée : on essaie les deux autres quarts de tour
+        const RR=d===deg?R:await render(pg,d), {data}=await worker.recognize(RR.canvas), ws=ocrToWords(data), sc=ocrScore(ws);
+        if(!best||sc>best.sc) best={R:RR, ws, sc};
+        const conf=ws.length?ws.reduce((a,w)=>a+w.conf,0)/ws.length:0;
+        if(d===deg && sc>=40 && conf>=70) break; }
+      R=best.R; words=best.ws;
+      // second passage en texte épars : il retrouve les mots isolés (titre en couleur, chiffre seul) que le premier ignore
+      await worker.setParameters({tessedit_pageseg_mode:'11'});
+      try{ const {data}=await worker.recognize(R.canvas);
+        for(const w of ocrToWords(data)) if(w.conf>=60 && /[0-9A-Za-zÀ-ÿ]/.test(w.text) && !words.some(o=>Math.min(o.x1,w.x1)>Math.max(o.x0,w.x0) && Math.min(o.y1,w.y1)>Math.max(o.y0,w.y0))) words.push(w); }
+      finally{ await worker.setParameters({tessedit_pageseg_mode:'3'}); }
+      R.scanned=true;
+    }
+    step('mise en page…');
+    for(const w of words){ const k=inkOf(R,w); w.color=k.color; w.stem=k.stem/w.em; }
+    // une couleur proche de la couleur dominante du texte la rejoint : un scan donne sinon des mots plus ou moins gris
+    const hex=c=>[0,2,4].map(i=>parseInt(c.slice(i,i+2),16)), cs=words.filter(w=>w.color).map(w=>hex(w.color));
+    if(cs.length){ const d=[0,1,2].map(k=>med(cs.map(c=>c[k]))), lum=.299*d[0]+.587*d[1]+.114*d[2];
+      const main=(lum<110&&Math.max(...d)-Math.min(...d)<30)?'000000':d.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('').toUpperCase();
+      for(const w of words) if(w.color){ const c=hex(w.color); if(Math.max(...c)-Math.min(...c)<25 && Math.max(...[0,1,2].map(k=>Math.abs(c[k]-d[k])))<70) w.color=main; } }
+    const rows=rowsOf(words,R.s);
+    if(scanned) for(const r of rows){
+      // gras décidé par ligne : les fûts d'un mot isolé varient trop d'un scan à l'autre
+      const base=med(words.filter(w=>w.text.length>=3).map(w=>w.stem)), ws=r.words.filter(w=>w.text.length>=2);
+      const bold=base>0 && ws.length && ws.filter(w=>w.stem>base*1.3).length>=ws.length*.6;
+      for(const w of r.words){ w.size=r.size; w.bold=bold; }
+      const f=r.words[0], fw=f.x1-f.x0, fh=f.y1-f.y0;   // puce lue comme « ou e : petit signe à peu près carré en tête de ligne (un tiret, allongé, reste un tiret)
+      if(r.words.length>1 && f.text.length===1 && /[«»•·*°oeé-]/.test(f.text) && fh<r.em*.6 && fw<r.em*.7 && fw<fh*1.6) f.text='•';
+    }
+    // lettrage d'un logo : une ligne faite de lettres isolées, lues sans assurance, reste dans l'image
+    if(scanned) for(const r of rows.filter(r=>{ const t=r.words.filter(w=>/[\p{L}\p{N}]/u.test(w.text)); return t.length>=2 && t.every(w=>w.text.length<=2) && med(t.map(w=>w.conf))<90; })){
+      rows.splice(rows.indexOf(r),1); for(const w of r.words) words.splice(words.indexOf(w),1); }
+    const paper=paperColor(R);
+    // puce manquée par la reconnaissance : une ligne voisine en porte une, le texte part du même bord, et l'encre est là
+    if(scanned) for(let i=0;i<rows.length;i++){ const r=rows[i]; if(r.words[0].text==='•') continue;
+      const o=[rows[i-1],rows[i+1]].find(o=>o&&o.words.length>1&&o.words[0].text==='•'&&Math.abs(r.words[0].x0-o.words[1].x0)<r.em*.3&&Math.abs(r.em-o.em)<o.em*.15);
+      if(!o) continue; const b=o.words[0], dy=r.base-o.base, y0=Math.round(b.y0+dy), y1=Math.round(b.y1+dy); let n=0,t=0;
+      for(let y=Math.max(0,y0);y<Math.min(R.H,y1);y++) for(let x=Math.max(0,Math.round(b.x0));x<Math.min(R.W,Math.round(b.x1));x++){ t++; if(dist(R.img,(y*R.W+x)*4,paper)>80) n++; }
+      if(!t || n<t*.2) continue;
+      const w={...b, y0, y1, base:b.base+dy, size:r.size}; r.words.unshift(w); words.push(w); r.x0=w.x0;
+      if(o.segs[0].words.length>1) { r.segs[0].words.unshift(w); r.segs[0].x0=w.x0; } else r.segs.unshift({words:[w], x0:w.x0, x1:w.x1}); }
+    const imgs=[]; for(const g of regions(R,words,paper)) imgs.push(await cropRegion(R,g,words,paper));
+    return {rows, R, imgs};
+  }
+
+  async function convert(list, lang, onProgress){
+    let worker=null;
+    const getWorker=async()=>{ if(!worker){ const {createWorker}=await loadTesseract(); worker=await createWorker(lang,1); } return worker; };
+    try{
+      const media=[], ids={n:1}, parts=[];
+      for(let i=0;i<list.length;i++){
+        const step=t=>onProgress(i,list.length,t); step('lecture…');
+        parts.push(pageParts(await readPage(list[i],getWorker,step), media, ids));
+      }
+      onProgress(list.length,list.length,'écriture du document…');
+      return await docx(parts, media);
+    } finally { if(worker) await worker.terminate(); }
+  }
+  return {convert};
+})();
+
 /* ============ conversion Word (bêta) ============
    Reprise telle quelle du laboratoire docx-labo.html. Principe : le navigateur compose les pages
    avec des polices à métrique identique à celles de Word, en coupant là où Word a coupé quand le
@@ -3331,13 +3707,22 @@ function loadTesseract(){
   return tessMod; }
 const ocrModal=$('ocrModal'), ocrSeg=$('ocrSeg'), ocrGo=$('ocrGo'), ocrClose=$('ocrClose'), ocrProgress=$('ocrProgress'), ocrBar=$('ocrBar'), ocrStatus=$('ocrStatus');
 let ocrLang='fra';
-btnOcr.addEventListener('click',()=>{ if(pages.length===0)return; ocrModal.classList.add('show'); });
+/* une seule fenêtre pour la reconnaissance et pour PDF en Word : même choix de langue, même progression */
+let ocrMode='ocr';
+const OCR_TEXT={ocr:{t:'Reconnaissance de texte (OCR)', go:'Lancer la reconnaissance', d:$('ocrDesc').textContent},
+  word:{t:'PDF en Word', go:'Convertir en Word', d:"Recompose les pages sélectionnées, ou tout le document, en document Word modifiable : paragraphes, polices, tailles, gras, alignements et retraits, colonnes en tabulations, logos et images à leur place. Les pages numérisées passent d'abord par la reconnaissance, dans la langue choisie ; leur texte est en Arial."}};
+function openOcr(mode){ if(pages.length===0) return; ocrMode=mode; const T=OCR_TEXT[mode];
+  $('ocrTitle').textContent=T.t; ocrModal.setAttribute('aria-label',T.t); $('ocrDesc').textContent=T.d; ocrGo.textContent=T.go;
+  ocrProgress.hidden=true; ocrModal.classList.add('show'); }
+btnOcr.addEventListener('click',()=>openOcr('ocr'));
+$('btnPdfWord').addEventListener('click',()=>openOcr('word'));
 ocrClose.addEventListener('click',()=>{ if(!ocrGo.disabled) ocrModal.classList.remove('show'); });
 ocrModal.addEventListener('click',e=>{ if(e.target===ocrModal && !ocrGo.disabled) ocrModal.classList.remove('show'); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&ocrModal.classList.contains('show')&&!ocrGo.disabled) ocrModal.classList.remove('show'); });
 ocrSeg.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ ocrLang=b.dataset.k;
   ocrSeg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',String(x===b))); }));
 ocrGo.addEventListener('click', async()=>{
+  if(ocrMode==='word') return pdfToWord();
   const targets=targetPages().filter(p=>!p.blank);
   if(targets.length===0){ notify('Les pages blanches ne peuvent pas être reconnues. Sélectionnez une page de contenu.',{kind:'warn'}); return; }
   ocrGo.disabled=true; ocrSeg.querySelectorAll('button').forEach(b=>b.disabled=true);
@@ -3366,6 +3751,20 @@ ocrGo.addEventListener('click', async()=>{
   ocrGo.disabled=false; ocrSeg.querySelectorAll('button').forEach(b=>b.disabled=false);
   setTimeout(()=>{ ocrModal.classList.remove('show'); ocrProgress.hidden=true; }, 600);
 });
+async function pdfToWord(){
+  const list=targetPages().filter(p=>!p.blank);
+  if(!list.length){ notify('Les pages blanches ne se convertissent pas. Sélectionnez une page de contenu.',{kind:'warn'}); return; }
+  ocrGo.disabled=true; ocrSeg.querySelectorAll('button').forEach(b=>b.disabled=true); hideNotice();
+  ocrProgress.hidden=false; ocrBar.style.width='0%'; ocrStatus.textContent='Préparation…';
+  let ok=false;
+  try{
+    const bytes=await PdfToWord.convert(list, ocrLang, (i,n,t)=>{ ocrBar.style.width=Math.round(i/n*100)+'%'; ocrStatus.textContent=i<n?`Page ${i+1}/${n} : ${t}`:t.charAt(0).toUpperCase()+t.slice(1); });
+    ocrBar.style.width='100%'; ocrStatus.textContent='Terminé.';
+    download(bytes, baseName+'.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'); ok=true;
+  }catch(e){ notify("La conversion en Word a échoué : "+(e&&e.message||e)+". Les composants se téléchargent au premier usage : vérifiez la connexion, ou convertissez une sélection plus réduite.",{kind:'warn'}); }
+  ocrGo.disabled=false; ocrSeg.querySelectorAll('button').forEach(b=>b.disabled=false);
+  if(ok) setTimeout(()=>{ ocrModal.classList.remove('show'); ocrProgress.hidden=true; }, 600);
+}
 
 /* ============ compress (rasterise chaque page à une résolution réduite) ============ */
 const compressModal=$('compressModal'), cpSeg=$('cpSeg'), cpGo=$('cpGo'), cpClose=$('cpClose');
