@@ -6,7 +6,7 @@ Contrat architectural persistant. À lire avant toute modification.
 
 Un seul fichier, `atelier-pdf.html` : HTML, CSS et JS en ligne, aucune étape de build, aucun npm. `index.html` n'est qu'un redirecteur pour GitHub Pages. `sw.js`, facultatif, ne sert que l'adresse publiée (pas `file://`) : il garde l'application, réseau d'abord, et les bibliothèques du CDN, cache d'abord, celles chargées à la demande à leur premier usage. Changer `CACHE` dans `sw.js` à chaque changement de version d'une bibliothèque ou de la liste `CORE`. Un refus d'enregistrement (aperçu iOS limité à ses domaines, « Job rejected for non app-bound domain », navigation privée) est attendu et reste silencieux.
 
-Bibliothèques chargées par CDN à l'exécution : pdf-lib 1.17.1 et pdf.js 3.11.174 en balise `<script>` UMD, qpdf-wasm et tesseract.js 5 par `import()` dynamique à la demande.
+Bibliothèques chargées par CDN à l'exécution : pdf-lib 1.17.1 et pdf.js 3.11.174 en balise `<script>` UMD, qpdf-wasm et tesseract.js 5.1.1 par `import()` dynamique à la demande. Le module ESM de tesseract.js n'a qu'un export par défaut : `createWorker` se prend sur `default`. Un `import()` échoué est mémorisé par le navigateur pour son adresse : `loadTesseract` oublie la promesse rejetée et ajoute `?r=n` au nouvel essai.
 
 ## Modèle de données
 

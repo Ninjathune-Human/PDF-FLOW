@@ -4,7 +4,7 @@
    - Bibliothèques (CDN, versions figées) : cache d'abord ; à défaut, réseau, puis mise en cache.
      Les modules chargés à la demande (OCR, déverrouillage, Word) rejoignent le cache à leur premier usage.
    Changer CACHE à chaque changement de liste ou de versions de bibliothèques. */
-const CACHE = 'atelier-pdf-v1';
+const CACHE = 'atelier-pdf-v2';
 const CORE = [
   './', './index.html', './atelier-pdf.html',
   'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js',
