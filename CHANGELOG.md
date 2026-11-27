@@ -1,5 +1,13 @@
 # Journal des évolutions
 
+## 27 novembre 2026
+
+### Reconnaissance de texte
+
+- Corrigé : la reconnaissance échouait aussitôt avec « createWorker is not a function ». Le module de tesseract.js 5 ne livre qu'un export par défaut, et c'est lui qui porte `createWorker`.
+- Version du moteur figée (5.1.1) au lieu de « la dernière 5.x » ; cache hors ligne renouvelé en conséquence.
+- Après un échec de téléchargement (connexion coupée), un nouvel essai retente vraiment le chargement au lieu de répéter l'échec mémorisé par le navigateur, et l'ancien message d'erreur s'efface au lancement.
+
 ## 25 novembre 2026
 
 ### Pied de page

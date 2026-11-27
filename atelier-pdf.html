@@ -3321,9 +3321,14 @@ btnExport.addEventListener('click',async()=>{
 });
 
 /* ============ OCR (reconnaissance de texte, tesseract.js chargé à la demande) ============ */
-const TESS_ESM="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js";
-let tessMod=null;
-function loadTesseract(){ if(!tessMod) tessMod=import(TESS_ESM); return tessMod; }
+const TESS_ESM="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.esm.min.js";
+let tessMod=null, tessTry=0;
+/* le module ESM de tesseract.js 5 n'a qu'un export par défaut, qui porte createWorker.
+   Un échec de chargement n'est pas gardé : le navigateur mémorise l'échec d'un import pour son adresse, d'où une adresse
+   nouvelle (?r=n) à chaque nouvel essai, qui retente vraiment le téléchargement */
+function loadTesseract(){
+  if(!tessMod) tessMod=import(TESS_ESM+(tessTry?'?r='+tessTry:'')).then(m=>m.default||m, e=>{ tessMod=null; tessTry++; throw e; });
+  return tessMod; }
 const ocrModal=$('ocrModal'), ocrSeg=$('ocrSeg'), ocrGo=$('ocrGo'), ocrClose=$('ocrClose'), ocrProgress=$('ocrProgress'), ocrBar=$('ocrBar'), ocrStatus=$('ocrStatus');
 let ocrLang='fra';
 btnOcr.addEventListener('click',()=>{ if(pages.length===0)return; ocrModal.classList.add('show'); });
@@ -3336,6 +3341,7 @@ ocrGo.addEventListener('click', async()=>{
   const targets=targetPages().filter(p=>!p.blank);
   if(targets.length===0){ notify('Les pages blanches ne peuvent pas être reconnues. Sélectionnez une page de contenu.',{kind:'warn'}); return; }
   ocrGo.disabled=true; ocrSeg.querySelectorAll('button').forEach(b=>b.disabled=true);
+  hideNotice();   // un échec précédent ne reste pas affiché pendant le nouvel essai
   ocrProgress.hidden=false; ocrBar.style.width='0%'; ocrStatus.textContent='Préparation du moteur…';
   let worker=null;
   try{
