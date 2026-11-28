@@ -3078,11 +3078,11 @@ const PdfToWord=(()=>{
     for(let x=x0;x<=x1;x+=sx){ add(x,y0); add(x,y1); } for(let y=y0;y<=y1;y+=sy){ add(x0,y); add(x1,y); }
     return [med(rs),med(gs),med(bs)]; }
   /* encre d'un mot : sa couleur, et l'épaisseur de ses fûts (longueur médiane des traversées horizontales, à mi-hauteur) */
-  function inkOf(R,w){ const {img,W,H}=R, bg=ringColor(R,w.x0,w.y0,w.x1,w.y1), px=[], runs=[];
+  function inkOf(R,w){ const {img,W,H}=R, bg=ringColor(R,w.x0,w.y0,w.x1,w.y1), px=[], runs=[], rmax=[];
     const x0=Math.max(0,Math.floor(w.x0)), x1=Math.min(W-1,Math.ceil(w.x1)), y0=Math.max(0,Math.floor(w.y0)), y1=Math.min(H-1,Math.ceil(w.y1));
     const ya=Math.round(y0+(y1-y0)*.35), yb=Math.round(y0+(y1-y0)*.65);
-    for(let y=y0;y<=y1;y++){ let run=0;
-      for(let x=x0;x<=x1;x++){ const i=(y*W+x)*4, d=dist(img,i,bg), on=d>90;
+    for(let y=y0;y<=y1;y++){ let run=0; rmax.push(0);
+      for(let x=x0;x<=x1;x++){ const i=(y*W+x)*4, d=dist(img,i,bg), on=d>90; if(d>rmax[rmax.length-1]) rmax[rmax.length-1]=d;
         if(on) px.push([d,img[i],img[i+1],img[i+2]]);
         if(y>=ya&&y<=yb){ if(on) run++; else if(run){ runs.push(run); run=0; } } }
       if(run) runs.push(run); }
@@ -3091,7 +3091,9 @@ const PdfToWord=(()=>{
     if(px.length){ const c=[0,1,2].map(k=>Math.round(top.reduce((s,p)=>s+p[k+1],0)/top.length));
       const lum=.299*c[0]+.587*c[1]+.114*c[2], chroma=Math.max(...c)-Math.min(...c);
       color=(lum<50&&chroma<24)?'000000':c.map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase(); }
-    return {color, stem:med(runs)}; }
+    // hauteur de l'encre au demi-contraste : le bord vrai d'une lettre adoucie par le flou
+    const mx=Math.max(0,...rmax), a=rmax.findIndex(v=>v>=mx*.5); let z=rmax.length-1; while(z>a&&rmax[z]<mx*.5) z--;
+    return {color, stem:med(runs), h:a>=0?z-a+1:0, bottom:y0+z}; }
 
   /* ---------- PDF natif : texte de pdf.js, dans le repère du rendu ---------- */
   async function nativeWords(R){
@@ -3115,17 +3117,17 @@ const PdfToWord=(()=>{
   }
 
   /* ---------- scan : mots reconnus ; corps déduit de la hauteur du mot selon ses lettres (ascendantes, descendantes) ---------- */
-  const ASC=/[A-ZÀ-Ý0-9bdfhikltßàâäéèêëìíîïôöùûüÿj'’!?]/, DESC=/[gjpqyçQ,;]/;
+  const ASC=/[A-ZÀ-Ý0-9bdfhikltßàâäéèêëìíîïôöùûüÿj'’!?€$£%&#()\[\]{}\/|]/, DESC=/[gjpqyçQ,;()\[\]{}|]/;
   function ocrToWords(data){
     return (data.words||[]).filter(w=>w.text&&w.text.trim()&&w.confidence>=40).map(w=>{
-      const t=w.text.trim(), h=w.bbox.y1-w.bbox.y0, top=ASC.test(t)?.73:.53, bot=DESC.test(t)?.21:0;
+      const t=w.text.trim(), h=w.bbox.y1-w.bbox.y0, top=ASC.test(t)?.73:.53, bot=DESC.test(t)?.21:0;   // k : hauteur des lettres du mot, en corps
       const base=w.baseline&&w.baseline.has_baseline!==false?(w.baseline.y0+w.baseline.y1)/2:w.bbox.y1-(bot?h*bot/(top+bot):0);
-      return {text:t, x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1, base, em:h/(top+bot), family:'Arial', bold:false, italic:false, conf:w.confidence}; });
+      return {text:t, x0:w.bbox.x0, x1:w.bbox.x1, y0:w.bbox.y0, y1:w.bbox.y1, base, em:h/(top+bot), k:top+bot, family:'Arial', bold:false, italic:false, conf:w.confidence}; });
   }
   const ocrScore=ws=>ws.filter(w=>w.conf>=60&&w.text.length>=3).reduce((s,w)=>s+w.text.length,0);
 
   /* ---------- zones graphiques : encre hors des mots, regroupée en rectangles ---------- */
-  function regions(R, words, paper){
+  function regions(R, words, paper, mask=[], keep=[]){
     const {img,W,H,s}=R, cell=Math.max(2,Math.round(s*1.5)), gw=Math.ceil(W/cell), gh=Math.ceil(H/cell), cnt=new Uint16Array(gw*gh);
     for(let y=0;y<H;y++){ const row=((y/cell)|0)*gw; for(let x=0;x<W;x++){ if(dist(img,(y*W+x)*4,paper)>40) cnt[row+((x/cell)|0)]++; } }
     const ink=new Uint8Array(gw*gh), need=Math.max(1,cell*cell*.04); for(let i=0;i<ink.length;i++) ink[i]=cnt[i]>=need?1:0;
@@ -3133,6 +3135,12 @@ const PdfToWord=(()=>{
     for(const w of words){ const p=pad(w,R); if(dist(ringColor(R,w.x0-p,w.y0-p,w.x1+p,w.y1+p),0,paper)>40) continue;
       for(let gy=Math.max(0,((w.y0-p)/cell)|0); gy<=Math.min(gh-1,((w.y1+p)/cell)|0); gy++)
         for(let gx=Math.max(0,((w.x0-p)/cell)|0); gx<=Math.min(gw-1,((w.x1+p)/cell)|0); gx++) ink[gy*gw+gx]=0; }
+    // un filet frôlé par la marge d'un mot reste d'un seul tenant ; ceux repris par un tableau Word sortent de l'encre
+    for(const e of keep) for(let gy=Math.max(0,(e.y0/cell)|0); gy<=Math.min(gh-1,(e.y1/cell)|0); gy++)
+      for(let gx=Math.max(0,(e.x0/cell)|0); gx<=Math.min(gw-1,(e.x1/cell)|0); gx++) ink[gy*gw+gx]=1;
+    for(const m of mask){ const p=s*1.5;
+      for(let gy=Math.max(0,((m.y0-p)/cell)|0); gy<=Math.min(gh-1,((m.y1+p)/cell)|0); gy++)
+        for(let gx=Math.max(0,((m.x0-p)/cell)|0); gx<=Math.min(gw-1,((m.x1+p)/cell)|0); gx++) ink[gy*gw+gx]=0; }
     // composantes connexes, à deux cellules près, pour souder les morceaux d'un même dessin
     const seen=new Uint8Array(gw*gh), comps=[], D=2;
     for(let i=0;i<ink.length;i++){ if(!ink[i]||seen[i]) continue; const st=[i]; seen[i]=1; let n=0,x0=1e9,y0=1e9,x1=-1,y1=-1;
@@ -3152,19 +3160,231 @@ const PdfToWord=(()=>{
     return out;
   }
   /* découpe d'une zone, mots effacés par leur fond local ; PNG pour le trait, JPEG pour la photo */
-  async function cropRegion(R, g, words, paper){
+  async function cropRegion(R, g, words, paper, keep=[]){
     const w=g.x1-g.x0, h=g.y1-g.y0, c=document.createElement('canvas'); c.width=Math.max(1,Math.round(w)); c.height=Math.max(1,Math.round(h));
     const x=c.getContext('2d'); x.drawImage(R.canvas, g.x0,g.y0,w,h, 0,0,c.width,c.height);
     let inside=0;
     for(const t of words){ if(t.x1<g.x0||t.x0>g.x1||t.y1<g.y0||t.y0>g.y1) continue; inside++;
       const p=pad(t,R), col=ringColor(R,t.x0-p,t.y0-p,t.x1+p,t.y1+p);
       x.fillStyle=`rgb(${col[0]},${col[1]},${col[2]})`; x.fillRect(t.x0-p-g.x0, t.y0-p-g.y0, t.x1-t.x0+2*p, t.y1-t.y0+2*p); }
+    // un filet frôlé par la marge d'un mot reste entier
+    for(const e of keep){ const a=Math.max(e.x0,g.x0), b=Math.max(e.y0,g.y0), z=Math.min(e.x1+1,g.x1), q=Math.min(e.y1+1,g.y1);
+      if(z>a&&q>b) x.drawImage(R.canvas, a,b,z-a,q-b, a-g.x0,b-g.y0,z-a,q-b); }
     const d=x.getImageData(0,0,c.width,c.height).data, cols=new Set();
     for(let i=0;i<d.length&&cols.size<=96;i+=28) cols.add((d[i]>>3)<<10|(d[i+1]>>3)<<5|(d[i+2]>>3));
     const photo=cols.size>96 && w*h>R.W*R.H*.01;
     if(!photo){ const id=x.getImageData(0,0,c.width,c.height), q=id.data; for(let i=0;i<q.length;i+=4) if(dist(q,i,paper)<28) q[i+3]=0; x.putImageData(id,0,0); }
     const blob=await new Promise(r=>c.toBlob(r, photo?'image/jpeg':'image/png', .88));
     return {bytes:new Uint8Array(await blob.arrayBuffer()), ext:photo?'jpeg':'png', x:g.x0/R.s, y:g.y0/R.s, w:w/R.s, h:h/R.s, behind:inside>0};
+  }
+
+  /* ---------- filets et aplats : traits longs et continus (un pixel manquant toléré), en ligne puis en colonne ---------- */
+  const cd=(a,b)=>Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]));
+  function linesOf(R, paper, T=20){   // T : écart au papier ; 20 sur un scan (grain), moins sur un PDF natif (trames très claires)
+    const {img,W,H,s}=R, ON=new Uint8Array(W*H), on=ON, tol=s*1.5, thin=s*3.5;
+    for(let i=0,j=0;i<on.length;i++,j+=4) on[i]=dist(img,j,paper)>T?1:0;
+    const px=i=>[img[i*4],img[i*4+1],img[i*4+2]], dom=cs=>[0,1,2].map(k=>med(cs.map(c=>c[k])));
+    // n lignes de m pixels, at(a,k) : indice du pixel ; un trait suit d'une ligne à l'autre si ses extrémités restent en place
+    function strokes(n, m, at, minLen, on=ON){
+      const out=[], open=[];
+      for(let a=0;a<n;a++){
+        for(let k=0;k<m;){ if(!on[at(a,k)]){ k++; continue; }
+          let e=k, j=k+1; while(j<m&&j-e<=2){ if(on[at(a,j)]) e=j; j++; }
+          if(e-k+1>=minLen){ const cs=[]; for(let q=0;q<15;q++) cs.push(px(at(a,k+Math.round((e-k)*(q+.5)/15))));
+            // u : part du trait de la couleur du trait ; une ligne de texte soudée par le flou alterne lettres et blancs
+            const c=dom(cs), u=cs.filter(v=>cd(v,c)<40).length/15, st=open.find(o=>o.last===a-1&&Math.abs(o.k0-k)<=tol&&Math.abs(o.k1-e)<=tol);
+            if(st){ st.last=a; st.k0=Math.min(st.k0,k); st.k1=Math.max(st.k1,e); st.cs.push(c); st.ks.push(e-k); st.us.push(u); } else { const o={id:out.length,a0:a,last:a,k0:k,k1:e,cs:[c],ks:[e-k],us:[u]}; open.push(o); out.push(o); } }
+          k=j; }
+        for(let i=open.length-1;i>=0;i--) if(open[i].last<a) open.splice(i,1);
+      }
+      return out; }
+    // un trait épais se découpe là où sa couleur change : aplat gris, filet noir, aplat bleuté se suivent sans blanc
+    const lum=c=>.299*c[0]+.587*c[1]+.114*c[2], pic=new Set();   // pic : traits issus d'une image (dégradé, couleurs mêlées)
+    // c n'est qu'un fondu de a et b : proche du segment qui les joint (un filet gris sur un aplat bleu ne l'est pas)
+    const blend=(c,a,b)=>{ const u=[0,1,2].map(k=>b[k]-a[k]), n=u.reduce((t,v)=>t+v*v,0)||1, t=Math.max(0,Math.min(1,[0,1,2].reduce((q,k)=>q+(c[k]-a[k])*u[k],0)/n));
+      return cd(c,[0,1,2].map(k=>a[k]+t*u[k]))<15; };
+    const split=st=>{ const n=st.cs.length; if(n<=thin) return [st];
+      const gs=[]; for(let i=0;i<n;i++){ const g=gs[gs.length-1]; if(g&&cd(st.cs[i],g.c)<=18) g.j=i; else gs.push({i,j:i,c:st.cs[i]}); }
+      // rangs minces consécutifs : un filet et son anticrénelage ; trop nombreux, un dégradé, donc un aplat
+      const ps=[]; for(const g of gs){ const big=g.j-g.i+1>thin, l=ps[ps.length-1]; if(!big&&l&&!l.big&&g.j-l.i+1<=thin) l.j=g.j; else ps.push({i:g.i,j:g.j,big}); }
+      const P=[]; for(let k=0;k<ps.length;){ if(ps[k].big){ P.push(ps[k++]); continue; } let m=k; while(m+1<ps.length&&!ps[m+1].big) m++;
+        if(ps[m].j-ps[k].i+1>thin*2){ P.push({i:ps[k].i,j:ps[m].j,big:true}); pic.add(st.id); } else for(let q=k;q<=m;q++) P.push(ps[q]); k=m+1; }
+      const part=(i,j)=>({...st, a0:st.a0+i, last:st.a0+j, cs:st.cs.slice(i,j+1), ks:st.ks.slice(i,j+1), us:st.us.slice(i,j+1)});
+      // un ou deux rangs entre un aplat et le papier, d'une teinte intermédiaire : le bord adouci de l'aplat, pas un filet
+      return P.filter((p,k)=>{ if(p.big||p.j-p.i>1) return true; const nb=[P[k-1],P[k+1]].filter(q=>q&&q.big); if(nb.length!==1) return true;
+        return !blend(dom(st.cs.slice(p.i,p.j+1)), dom(st.cs.slice(nb[0].i,nb[0].j+1)), paper); }).map(p=>part(p.i,p.j)); };
+    // couleur : celle du rang central (sur trois rangs ou plus, les bords sont des fondus avec ce qui l'entoure), sinon du plus contrasté ;
+    // épaisseur : contraste cumulé, rapporté au plus contrasté (l'anticrénelage ne l'épaissit pas) ; u : son rang le plus uni
+    const el=(st,horiz)=>{ const ct=st.cs.map(c=>cd(c,paper)), k=st.cs.length>=3?(st.cs.length-1)>>1:ct.indexOf(Math.max(...ct)), t=ct.reduce((a,v)=>a+v,0)/Math.max(1,...ct)/s;
+      const e=horiz?{x0:st.k0,x1:st.k1,y0:st.a0,y1:st.last}:{x0:st.a0,x1:st.last,y0:st.k0,y1:st.k1};
+      // droit : ses rangs couvrent presque tous toute sa longueur (l'arc d'un cercle, non)
+      const straight=st.ks.filter(l=>l>=(st.k1-st.k0)*.85).length>=st.ks.length*.75;
+      return {...e, id:st.id, c:st.cs[k], d:dom(st.cs), t, thick:st.cs.length, straight, u:Math.max(...st.us)}; };
+    const hex=c=>{ const w=c.map((v,k)=>Math.max(0,Math.min(255,Math.round(v*255/Math.max(1,paper[k])))));   // papier ramené au blanc
+      if(.299*w[0]+.587*w[1]+.114*w[2]<90&&Math.max(...w)-Math.min(...w)<30) return '000000';
+      return w.map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase(); };
+    const edge=e=>e.x0<=1||e.y0<=1||e.x1>=W-2||e.y1>=H-2;                                   // bord de page ou de numérisation
+    // un filet : droit, d'une seule couleur, long de 30 pt au moins (le jambage d'une grande lettre est plus court) ; un aplat : 12 pt
+    // de part et d'autre d'un filet ou d'un aplat : papier, texte ou autre aplat ; jamais le dégradé d'une photo
+    const calm=(n,at)=>{ let off=0; const cs=[]; for(let q=0;q<n;q+=3){ const i=at(q); if(i<0) return true; if(!on[i]) off++; else cs.push(px(i)); }
+      if(off>=Math.ceil(n/3)*.5) return true; const d=dom(cs); return cs.filter(c=>cd(c,d)<40).length>=cs.length*.75; };
+    const sidesH=e=>[e.y0-3,e.y1+3].every(y=>calm(e.x1-e.x0+1,q=>y<0||y>=H?-1:y*W+e.x0+q));
+    const sidesV=e=>[e.x0-3,e.x1+3].every(x=>calm(e.y1-e.y0+1,q=>x<0||x>=W?-1:(e.y0+q)*W+x));
+    const raw=strokes(H,W,(y,x)=>y*W+x,s*12), all=raw.flatMap(split).map(st=>el(st,true))
+      .filter(e=>e.straight&&!edge(e)&&sidesH(e)&&(e.thick>thin?e.u>=.6:e.u>=.8&&e.x1-e.x0>=s*30&&cd(e.c,paper)>=35)).sort((a,b)=>a.y0-b.y0);
+    // halo d'un filet (bord adouci par la numérisation) : plus pâle, collé à lui, compris dans sa longueur
+    for(let i=all.length-1;i>=0;i--){ const A=all[i]; if(A.thick>thin) continue;
+      if(all.some(B=>B!==A&&B.thick<=thin&&A.y0>=B.y0-3&&A.y1<=B.y1+3&&A.x0>=B.x0-tol&&A.x1<=B.x1+tol&&cd(B.c,paper)>cd(A.c,paper))) all.splice(i,1); }
+    // aplat traversé de texte clair : ses rangs sont coupés par les lettres ; deux traits de même couleur et de même étendue,
+    // séparés de rangs restés en majorité de cette couleur, sont les bords d'un même aplat
+    const share=(y,x0,x1,c)=>{ let n=0,t=0; for(let x=x0;x<=x1;x+=2){ t++; const q=px(y*W+x), k=cd(q,c); if(on[y*W+x]&&k<45&&k<cd(q,paper)) n++; } return n/Math.max(1,t); };
+    const fills=[], gone=new Set();
+    for(let i=0;i<all.length;i++){ const A=all[i]; if(gone.has(A)) continue; let F=null;
+      for(let j=i+1;j<all.length;j++){ const B=all[j], T=F||A; if(B.y0-T.y1>s*30) break;
+        if(gone.has(B)||B.y0<=T.y1||Math.abs(B.x0-T.x0)>tol||Math.abs(B.x1-T.x1)>tol||cd(B.d,A.d)>45) continue;
+        let ok=true; for(let y=T.y1+1;y<B.y0&&ok;y++) ok=share(y,T.x0,T.x1,A.d)>=.5;
+        if(ok){ F={x0:Math.min(T.x0,B.x0),x1:Math.max(T.x1,B.x1),y0:A.y0,y1:B.y1,d:A.d,id:A.id}; gone.add(B); } }
+      if(F){ gone.add(A); fills.push(F); } else if(A.thick>thin){ gone.add(A); fills.push(A); } }
+    const inFill=e=>fills.some(f=>e.y0>=f.y0-1&&e.y1<=f.y1+1&&e.x0>=f.x0-tol&&e.x1<=f.x1+tol);   // un filet au bord d'un aplat reste un filet
+    // un aplat a une couleur uniforme ; une photo n'en est pas un
+    const uniform=f=>{ let n=0; for(let i=0;i<20;i++) for(let j=0;j<20;j++){ const x=Math.round(f.x0+(f.x1-f.x0)*(i+.5)/20), y=Math.round(f.y0+(f.y1-f.y0)*(j+.5)/20); if(cd(px(y*W+x),f.d)<40) n++; } return n>=220; };
+    for(const f of fills) if(!uniform(f)) pic.add(f.id);
+    // un aplat a une certaine largeur ; sombre et étroit, c'est la barre d'une grande lettre (le A d'un titre gras)
+    const wide=f=>f.x1-f.x0>=s*(lum(f.d)<80?60:24);
+    // tout ce qui vient d'une image en reste une : ni aplat, ni filet, ni filet vertical dans son emprise
+    const pics=raw.filter(o=>pic.has(o.id)).map(o=>({x0:o.k0,x1:o.k1,y0:o.a0,y1:o.last})), inPic=e=>pics.some(q=>e.x0>=q.x0-tol&&e.x1<=q.x1+tol&&e.y0>=q.y0-tol&&e.y1<=q.y1+tol);
+    const F2=fills.filter(f=>wide(f)&&!pic.has(f.id)&&!fills.some(g=>g!==f&&f.y0>=g.y0&&f.y1<=g.y1&&f.x0>=g.x0-tol&&f.x1<=g.x1+tol)).map(f=>({x0:f.x0,x1:f.x1,y0:f.y0,y1:f.y1,fill:true,c:f.d,hex:hex(f.d)}));
+    const hr=all.filter(e=>!gone.has(e)&&e.thick<=thin&&!inFill(e)&&!pic.has(e.id)).map(e=>({x0:e.x0,x1:e.x1,y0:e.y0,y1:e.y1,c:e.c,t:e.t,hex:hex(e.c)}));
+    // filets verticaux : fins, hors aplat, et accrochés aux filets horizontaux (une lettre ne l'est pas) ;
+    // dans un aplat, ses pixels comptent comme papier, sinon chaque colonne y serait un trait
+    // dans un aplat, ses pixels comptent comme papier : un filet qui le traverse en partie (sous « Quantités ») ressort,
+    // et chaque colonne n'y forme plus un trait vertical
+    const on2=on.slice();
+    for(const f of F2) for(let y=f.y0;y<=f.y1;y++) for(let x=f.x0;x<=f.x1;x++){ const i=y*W+x; if(on2[i]&&cd(px(i),f.c)<30) on2[i]=0; }
+    // liseré entre deux cellules d'un même aplat (le fond blanc transparaît) : fondu de l'aplat et du papier, pas un filet
+    const seam=e=>F2.some(f=>e.y0>=f.y0-s*2&&e.y1<=f.y1+s*2&&e.x0>=f.x0-tol&&e.x1<=f.x1+tol&&blend(e.c,f.c,paper));
+    const inside=e=>F2.some(f=>e.y0>f.y0&&e.y1<f.y1&&e.x0>=f.x0-tol&&e.x1<=f.x1+tol);
+    for(const e of strokes(H,W,(y,x)=>y*W+x,s*30,on2).filter(st=>st.cs.length<=thin).map(st=>el(st,true)))
+      if(e.straight&&e.u>=.8&&cd(e.c,paper)>=35&&inside(e)&&!seam(e)) hr.push({x0:e.x0,x1:e.x1,y0:e.y0,y1:e.y1,c:e.c,t:e.t,hex:hex(e.c)});
+    // accroché : son bout touche un filet, ou le bord haut ou bas d'un aplat (une lettre posée dans un aplat n'en touche pas le bord) ;
+    // uni aux trois cinquièmes seulement : un filet qui traverse un aplat change d'aspect, le flou d'un scan le fondant avec lui
+    const near=(v,y)=>hr.some(h=>v.x0<=h.x1+tol&&v.x1>=h.x0-tol&&y>=h.y0-s*2&&y<=h.y1+s*2)||F2.some(f=>v.x0<=f.x1+tol&&v.x1>=f.x0-tol&&(Math.abs(y-f.y0)<=s*2||Math.abs(y-f.y1)<=s*2));
+    const vr=strokes(W,H,(x,y)=>y*W+x,s*4,on2).filter(st=>st.cs.length<=thin).map(st=>el(st,false))
+      .filter(v=>v.straight&&v.u>=.6&&cd(v.c,paper)>=35&&!edge(v)&&!inPic(v)&&sidesV(v)&&!seam(v)).filter(v=>{ const a=near(v,v.y0), b=near(v,v.y1); return (a&&b)||((a||b)&&v.y1-v.y0>=s*15); })
+      .map(v=>({x0:v.x0,x1:v.x1,y0:v.y0,y1:v.y1,c:v.c,t:v.t,hex:hex(v.c)}));
+    return {h:hr, fills:F2, v:vr};
+  }
+  /* image remise à la reconnaissance : filets effacés, aplats ramenés à un texte sombre sur papier */
+  function cleanForOcr(R, ln, paper){
+    const c=document.createElement('canvas'); c.width=R.W; c.height=R.H; const x=c.getContext('2d'); x.drawImage(R.canvas,0,0);
+    const id=x.getImageData(0,0,R.W,R.H), d=id.data, o=R.img, P=paper.map(Math.round), W=R.W, b=2;
+    const set=(i,v)=>{ d[i]=v[0]; d[i+1]=v[1]; d[i+2]=v[2]; };
+    // texte posé sur l'aplat : ce qui s'en écarte de plus de la moitié de l'écart du texte (le plus contrasté) devient noir
+    for(const f of ln.fills){ const ks=[]; for(let y=f.y0;y<=f.y1;y+=2) for(let xx=f.x0;xx<=f.x1;xx+=2) ks.push(dist(o,(y*W+xx)*4,f.c)); ks.sort((a,z)=>a-z);
+      const lim=Math.max(30,ks[Math.floor(ks.length*.97)]*.5);
+      // son bord, adouci par le flou, part avec lui (un trait gris sous un texte en abaisse la lecture)
+      for(let y=Math.max(0,f.y0-3);y<=Math.min(R.H-1,f.y1+3);y++) for(let xx=Math.max(0,f.x0-3);xx<=Math.min(W-1,f.x1+3);xx++){ const i=(y*W+xx)*4;
+        set(i, y<f.y0+b||y>f.y1-b||xx<f.x0+b||xx>f.x1-b||dist(o,i,f.c)<lim ? P : [0,0,0]); } }
+    for(const e of [...ln.h,...ln.v]) for(let y=Math.max(0,e.y0-2);y<=Math.min(R.H-1,e.y1+2);y++) for(let xx=Math.max(0,e.x0-2);xx<=Math.min(W-1,e.x1+2);xx++) set((y*W+xx)*4,P);
+    x.putImageData(id,0,0); return c; }
+
+  /* ---------- tableaux : filets et aplats reliés ; colonnes, rangées, cellules ---------- */
+  // colonnes d'un tableau sans filet vertical : les blancs que presque aucune ligne ne traverse
+  function gapsOf(trs, x0, x1, em, s){
+    const n=Math.max(1,Math.ceil((x1-x0)/s)), cov=new Uint16Array(n+1), lim=Math.floor(trs.length*.15), out=[];
+    for(const r of trs) for(const sg of r.segs) for(let i=Math.max(0,Math.floor((sg.x0-x0)/s));i<=Math.min(n,Math.ceil((sg.x1-x0)/s));i++) cov[i]++;
+    let a=0; while(a<=n&&cov[a]<=lim) a++; let z=n; while(z>=0&&cov[z]<=lim) z--;
+    for(let i=a;i<=z;){ if(cov[i]>lim){ i++; continue; } let j=i; while(j<=z&&cov[j]<=lim) j++; if((j-i)*s>=em*.6) out.push(x0+(i+j)/2*s); i=j; }
+    return out; }
+  function tablesOf(R, ln, rows){
+    const {s}=R, tol=s*2, Hs=[...ln.h,...ln.fills], V=ln.v, nH=Hs.length;
+    const par=[...Array(nH+V.length).keys()], find=i=>par[i]===i?i:(par[i]=find(par[i])), join=(a,b)=>{ par[find(a)]=find(b); };
+    const touch=(v,h)=>v.x0<=h.x1+tol&&v.x1>=h.x0-tol&&v.y0<=h.y1+tol&&v.y1>=h.y0-tol, hasV=Hs.map(h=>V.some(v=>touch(v,h)));
+    V.forEach((v,j)=>Hs.forEach((h,i)=>{ if(touch(v,h)) join(nH+j,i); }));
+    // sans filet vertical, deux traits de même étendue appartiennent au même tableau s'ils sont proches, ou si les lignes
+    // qui les séparent sont rangées en colonnes dans leur largeur ; deux grilles distinctes restent séparées
+    const tabular=(A,B)=>{ const ya=Math.min(A.y1,B.y1), yb=Math.max(A.y0,B.y0), rs=rows.filter(r=>(r.y0+r.y1)/2>ya&&(r.y0+r.y1)/2<yb);
+      return rs.length>0&&rs.every(r=>r.x0>=Math.min(A.x0,B.x0)-tol&&r.x1<=Math.max(A.x1,B.x1)+tol)&&rs.filter(r=>r.segs.length>1).length>=rs.length/2; };
+    for(let a=0;a<nH;a++) for(let b=a+1;b<nH;b++){ const A=Hs[a], B=Hs[b];
+      if(Math.abs(A.x0-B.x0)<=s*3&&Math.abs(A.x1-B.x1)<=s*3&&!(hasV[a]&&hasV[b]&&find(a)!==find(b))&&(Math.max(A.y0,B.y0)-Math.min(A.y1,B.y1)<=s*40||tabular(A,B))) join(a,b); }
+    const groups=new Map();
+    for(let i=0;i<nH+V.length;i++){ const k=find(i); if(!groups.has(k)) groups.set(k,{h:[],v:[]}); const g=groups.get(k); if(i<nH) g.h.push(Hs[i]); else g.v.push(V[i-nH]); }
+    const out=[], taken=new Set(), midY=r=>(r.y0+r.y1)/2;
+    for(const g of groups.values()){
+      if(!g.h.length||(g.h.length<2&&!g.h[0].fill)) continue;   // un filet seul : soulignement, séparateur
+      const vx=[]; for(const v of [...g.v].sort((a,b)=>a.x0-b.x0)){ const c=(v.x0+v.x1)/2, l=vx[vx.length-1]; if(l&&c-l.x<=s*2) l.v.push(v); else vx.push({x:c,v:[v]}); }
+      let x0=Math.min(...g.h.map(e=>e.x0)), x1=Math.max(...g.h.map(e=>e.x1));
+      if(vx.length&&Math.abs(vx[0].x-x0)<=s*3) x0=vx[0].x;
+      if(vx.length&&Math.abs(vx[vx.length-1].x-x1)<=s*3) x1=vx[vx.length-1].x;
+      // limites de rangées : axe des filets, bords des aplats
+      const ys=g.h.flatMap(e=>e.fill?[{y:e.y0},{y:e.y1+1}]:[{y:(e.y0+e.y1+1)/2,r:1}]).sort((a,b)=>a.y-b.y), bnd=[];
+      for(const q of ys){ const l=bnd[bnd.length-1]; if(l&&q.y-l.y0<=s*2){ if(q.r&&!l.r){ l.y=q.y; l.r=1; } } else bnd.push({y:q.y,y0:q.y,r:q.r}); }
+      if(bnd.length<2) continue;
+      const top=bnd[0].y, bot=bnd[bnd.length-1].y;
+      if(x1-x0>R.W*.9&&bot-top>R.H*.8) continue;                 // cadre de page
+      const inX=w=>{ const c=(w.x0+w.x1)/2; return c>=x0-tol&&c<=x1+tol; };
+      const mine=rows.filter(r=>!taken.has(r)&&midY(r)>top&&midY(r)<bot&&r.words.some(inX));
+      const tws=mine.flatMap(r=>r.words.filter(inX)), em=med(tws.map(w=>w.em))||s*10;
+      let trs=rowsOf(tws,s);
+      let inner=vx.map(c=>c.x).filter(x=>x>x0+s*3&&x<x1-s*3); const grid=inner.length>0;
+      if(!grid) inner=gapsOf(trs,x0,x1,em,s);
+      const cols=[x0,...inner,x1], nc=cols.length-1, colOf=x=>{ let i=0; while(i<nc-1&&x>=cols[i+1]) i++; return i; };
+      let bands=[]; for(let i=0;i+1<bnd.length;i++) bands.push({y0:bnd[i].y,y1:bnd[i+1].y});
+      if(!grid){
+        // sans filet vertical, une rangée par ligne de texte, sauf la suite d'une cellule qui passe à la ligne
+        const nb=[];
+        for(const b of bands){ const rs=trs.filter(r=>midY(r)>b.y0&&midY(r)<b.y1); let y=b.y0, head=rs[0];
+          for(let i=1;i<rs.length;i++){ const r=rs[i], p=rs[i-1];
+            const cont=r.segs.length===1&&head.segs.length>1&&head.segs.some(sg=>colOf(sg.x0)===colOf(r.segs[0].x0));
+            if(!cont){ const m=(p.y1+r.y0)/2; nb.push({y0:y,y1:m}); y=m; head=r; } }
+          nb.push({y0:y,y1:b.y1}); }
+        bands=nb;
+        // lignes voisines rangées dans les mêmes colonnes (totaux au-dessus d'un bandeau) : elles en font partie
+        const pitch=med(bands.map(b=>b.y1-b.y0)), used=new Set(mine);
+        const fits=r=>r.x0>=x0-tol&&r.x1<=x1+tol&&r.segs.length>=2&&r.segs.every(sg=>colOf(sg.x0)===colOf(sg.x1))&&new Set(r.segs.map(sg=>colOf(sg.x0))).size===r.segs.length;
+        for(const dir of [-1,1]) for(;;){
+          const e=dir<0?bands[0].y0:bands[bands.length-1].y1;
+          const r=rows.filter(r=>!taken.has(r)&&!used.has(r)&&(dir<0?r.y1<=e+s&&e-r.y1<pitch*.9:r.y0>=e-s&&r.y0-e<pitch*.9)).sort((a,b)=>dir<0?b.y1-a.y1:a.y0-b.y0)[0];
+          if(!r||!fits(r)) break;
+          used.add(r); mine.push(r); tws.push(...r.words);
+          if(dir<0){ const d=Math.max(s,e-r.y1); bands.unshift({y0:r.y0-d,y1:e}); } else { const d=Math.max(s,r.y0-e); bands.push({y0:e,y1:r.y1+d}); } }
+        trs=rowsOf(tws,s);
+      }
+      if(bands.length*nc<2) continue;                              // simple cadre
+      const bandOf=w=>{ const m=w.base-w.em*.3; let k=bands.findIndex(b=>m>=b.y0&&m<b.y1); if(k<0) k=m<bands[0].y0?0:bands.length-1; return k; };
+      const per=bands.map(()=>[]); for(const w of tws) per[bandOf(w)].push(w);
+      if(per.filter(a=>a.length).length<Math.ceil(bands.length/2)) continue;   // grille vide : formulaire, quadrillage
+      // bordure d'un côté de cellule : filet qui la couvre aux trois cinquièmes
+      const hcov=(y,a,z)=>{ let len=0, best=null; for(const e of g.h){ if(e.fill||Math.abs((e.y0+e.y1+1)/2-y)>s*2) continue; const o=Math.min(z,e.x1)-Math.max(a,e.x0); if(o>0){ len+=o; if(!best||e.t>best.t) best=e; } } return len>=(z-a)*.6?best:null; };
+      const vcov=(x,a,z)=>{ const c=vx.find(c=>Math.abs(c.x-x)<=s*2); if(!c) return null; let len=0, best=null; for(const v of c.v){ const o=Math.min(z,v.y1+1)-Math.max(a,v.y0); if(o>0){ len+=o; if(!best||v.t>best.t) best=v; } } return len>=(z-a)*.6?best:null; };
+      const shade=(a,z,ya,yb)=>{ for(const f of g.h) if(f.fill){ const o=Math.max(0,Math.min(z,f.x1)-Math.max(a,f.x0))*Math.max(0,Math.min(yb,f.y1)-Math.max(ya,f.y0)); if(o>=(z-a)*(yb-ya)*.6) return f.hex; } return null; };
+      bands.forEach((b,bi)=>{ const brs=rowsOf(per[bi],s), present=[];
+        for(let k=1;k<nc;k++){ const bx=cols[k]; present[k]=grid?!!vcov(bx,b.y0,b.y1):!brs.some(r=>r.segs.some(sg=>sg.x0<bx-em*.3&&sg.x1>bx+em*.3)); }
+        b.cells=[]; let c0=0; for(let k=1;k<=nc;k++) if(k===nc||present[k]){ b.cells.push({c0,c1:k-1,words:[]}); c0=k; }
+        for(const w of per[bi]){ const c=(w.x0+w.x1)/2; (b.cells.find(cl=>c<cols[cl.c1+1])||b.cells[b.cells.length-1]).words.push(w); }
+        for(const cl of b.cells){ const a=cols[cl.c0], z=cols[cl.c1+1]; Object.assign(cl,{x0:a,x1:z,y0:b.y0,y1:b.y1,
+          bt:hcov(b.y0,a,z), bb:hcov(b.y1,a,z), bl:vcov(a,b.y0,b.y1), br:vcov(z,b.y0,b.y1), shade:shade(a,z,b.y0,b.y1)}); } });
+      // grille : une cellule sans filet entre elle et celle du dessus, de même largeur et même trame, la prolonge
+      if(grid) for(let bi=1;bi<bands.length;bi++) for(const c of bands[bi].cells){
+        const p=bands[bi-1].cells.find(q=>q.c0===c.c0&&q.c1===c.c1); if(!p||c.bt||p.bb||c.shade!==p.shade) continue;
+        const root=p.root||p; root.vm='restart'; root.words.push(...c.words); root.y1=c.y1; c.words=[]; c.vm='continue'; c.root=root; }
+      // retrait du texte au filet, puis alignement dominant de chaque colonne
+      const ds=[]; for(const b of bands) for(const cl of b.cells) if(cl.words.length){ ds.push(Math.min(Math.min(...cl.words.map(w=>w.x0))-cl.x0, cl.x1-Math.max(...cl.words.map(w=>w.x1)))); }
+      const pad=grid?Math.max(s,Math.min(s*10,med(ds))):0, align=[], colR=[];
+      for(let c=0;c<nc;c++){ const xs=[];
+        for(const b of bands) for(const cl of b.cells) if(cl.c0===c&&cl.c1===c&&cl.words.length){ const rs=rowsOf(cl.words,s); colR[c]=Math.max(colR[c]||0,...rs.map(r=>r.x1)); if(rs.length===1) xs.push(rs[0]); }
+        if(xs.length<2){ align[c]=null; continue; }
+        const e=em*.5, mx0=med(xs.map(r=>r.x0)), mx1=med(xs.map(r=>r.x1)), mc=med(xs.map(r=>(r.x0+r.x1)/2));
+        const ks=[['left',xs.filter(r=>Math.abs(r.x0-mx0)<=e).length],['right',xs.filter(r=>Math.abs(r.x1-mx1)<=e).length],['center',xs.filter(r=>Math.abs((r.x0+r.x1)/2-mc)<=e).length]].filter(k=>k[1]>=xs.length*.7);
+        align[c]=ks.length===1?{jc:ks[0][0],x0:mx0,x1:mx1,c:mc}:null; }
+      for(const r of mine) taken.add(r);
+      out.push({x0, x1, y0:bands[0].y0, y1:bands[bands.length-1].y1, cols, bands, grid, pad, align, colR, words:new Set(tws), els:[...g.h,...g.v]});
+    }
+    // lignes en partie dans un tableau : leurs autres mots redeviennent des lignes
+    const keep=[]; for(const r of rows){ if(!taken.has(r)){ keep.push(r); continue; }
+      const rest=r.words.filter(w=>!out.some(t=>t.words.has(w))); if(rest.length) keep.push(...rowsOf(rest,s)); }
+    rows.splice(0,rows.length,...keep.sort((a,b)=>a.base-b.base));
+    return out;
   }
 
   /* ---------- lignes visuelles et segments (colonnes d'une même ligne) ---------- */
@@ -3234,24 +3454,84 @@ const PdfToWord=(()=>{
       `<wps:txbx><w:txbxContent>${b.xml}</w:txbxContent></wps:txbx><wps:bodyPr rot="0" vert="horz" wrap="square" lIns="0" tIns="0" rIns="0" bIns="0" anchor="t" anchorCtr="0"><a:spAutoFit/></wps:bodyPr>`+
       `</wps:wsp></a:graphicData></a:graphic></wp:anchor></w:drawing></mc:Choice></mc:AlternateContent></w:r>`; }
 
+  /* texte d'un paragraphe, en séquences de même style ; un mot coupé en fin de ligne est recollé */
+  function bodyOf(p){
+    const runs=[]; const push=(t,st)=>{ const l=runs[runs.length-1]; if(l&&l.t!=='\t'&&t!=='\t'&&l.st.k===st.k) l.t+=t; else runs.push({t,st}); };
+    p.rows.forEach((r,ri)=>r.segs.forEach((sg,si)=>{ if(si) push('\t',styleOf(sg.words[0],r));
+      sg.words.forEach((w,wi)=>{ let t=w.text;
+        if(wi){ if(w.x0-sg.words[wi-1].x1 > r.em*.12) t=' '+t; }
+        else if(si===0&&ri){ const l=runs[runs.length-1]; if(l&&/[A-Za-zÀ-ÿ]-$/.test(l.t)&&/^[a-zà-ÿ]/.test(t)) l.t=l.t.slice(0,-1); else t=' '+t; }
+        push(t,styleOf(w,r)); }); }));
+    return runs.map(r=>runXml(r.t,r.st)).join(''); }
+
+  /* paragraphe vide d'un point : bas de page après un tableau, cellule vide ou prolongée */
+  const tinyPpr=pt=>`<w:spacing w:before="0" w:after="0" w:line="${Math.max(20,tw(pt))}" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/><w:szCs w:val="2"/></w:rPr>`;
+  const TINY=`<w:p><w:pPr>${tinyPpr(0)}</w:pPr></w:p>`;
+  /* contenu d'une cellule : paragraphes placés par retraits, l'espace des cellules étant nul */
+  function cellXml(cl, t, s){
+    if(cl.vm==='continue'||!cl.words.length) return TINY;
+    const rows=rowsOf(cl.words,s), cx0=cl.x0, cx1=cl.x1, one=cl.c0===cl.c1;
+    const Lc=t.grid?cx0+t.pad:Math.min(...rows.map(r=>r.x0)), Rc=Math.max(Lc+s, t.grid?cx1-t.pad:(one&&t.colR[cl.c0])||Math.max(...rows.map(r=>r.x1)));
+    let prev=cl.y0, xml='';
+    for(const p of paragraphsOf(rows,Lc,Rc)){
+      const r0=p.rows[0], em=med(p.rows.map(r=>r.em)), single=p.rows.length===1;
+      const pitch=single?Math.max(r0.em*1.18,(r0.y1-r0.y0)*1.08):med(p.rows.slice(1).map((r,i)=>r.base-p.rows[i].base));
+      const top=r0.base-pitch*.78, before=Math.max(0,(top-prev)/s); prev=top+pitch*p.rows.length;
+      const x0=Math.min(...p.rows.map(r=>r.x0)), x1=Math.max(...p.rows.map(r=>r.x1));
+      let jc='left', left=0, right=0, first=0;
+      if(single){ const k=one&&t.align[cl.c0];
+        const fit=k&&(k.jc==='right'?Math.abs(x1-k.x1)<em*.6:k.jc==='left'?Math.abs(x0-k.x0)<em*.6:Math.abs((x0+x1)/2-k.c)<em*.6);
+        if(fit) jc=k.jc;
+        else { const dl=x0-cx0, dr=cx1-x1; jc=Math.abs(dl-dr)<Math.max(em*.6,(dl+dr)*.12)&&Math.min(dl,dr)>t.pad+em*.5?'center':dr<dl-em?'right':'left'; }
+        if(jc==='left') left=(x0-cx0)/s; else if(jc==='right') right=(cx1-x1)/s; else { const d=(x0+x1-cx0-cx1)/s; if(d>0) left=d; else right=-d; }
+      } else { const xs1=p.rows.map(r=>r.x1), body=p.rows[1].x0;
+        left=(body-cx0)/s; first=(r0.x0-body)/s; right=(cx1-x1)/s-SLACK;
+        if(xs1.slice(0,-1).every(x=>Math.abs(x-xs1[0])<em*.5&&Rc-x<em*1.5)) jc='both'; }
+      left=Math.max(0,left); right=Math.max(0,right);
+      const tabs=r0.segs.slice(1).map(sg=>`<w:tab w:val="left" w:pos="${tw((sg.x0-cx0)/s)}"/>`).join('');
+      xml+=`<w:p><w:pPr>${tabs?`<w:tabs>${tabs}</w:tabs>`:''}<w:spacing w:before="${tw(before)}" w:after="0" w:line="${tw(pitch/s)}" w:lineRule="exact"/>`+
+        `${left||right||first?`<w:ind w:left="${tw(left)}" w:right="${tw(right)}"${first>0?` w:firstLine="${tw(first)}"`:first<0?` w:hanging="${tw(-first)}"`:''}/>`:''}<w:jc w:val="${jc}"/></w:pPr>${bodyOf(p)}</w:p>`;
+    }
+    return xml; }
+  /* tableau Word : grille de largeur fixe, positions cumulées en vingtièmes de point (aucune dérive d'arrondi) */
+  function tableXml(t, s, L){
+    const X=t.cols.map(x=>tw((x-t.x0)/s)), Y=[...t.bands.map(b=>tw(b.y0/s)), tw(t.bands[t.bands.length-1].y1/s)];
+    const B=(side,r)=>r?`<w:${side} w:val="single" w:sz="${Math.max(2,Math.min(96,Math.round(r.t*8)))}" w:space="0" w:color="${r.hex}"/>`:`<w:${side} w:val="nil"/>`;
+    let x=`<w:tbl><w:tblPr><w:tblW w:w="${X[X.length-1]}" w:type="dxa"/><w:tblInd w:w="${tw((t.x0-L)/s)}" w:type="dxa"/><w:tblLayout w:type="fixed"/>`+
+      `<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr>`+
+      `<w:tblGrid>${X.slice(1).map((v,i)=>`<w:gridCol w:w="${v-X[i]}"/>`).join('')}</w:tblGrid>`;
+    t.bands.forEach((b,i)=>{ x+=`<w:tr><w:trPr><w:trHeight w:val="${Math.max(20,Y[i+1]-Y[i])}" w:hRule="atLeast"/></w:trPr>`;
+      for(const c of b.cells) x+=`<w:tc><w:tcPr><w:tcW w:w="${X[c.c1+1]-X[c.c0]}" w:type="dxa"/>${c.c1>c.c0?`<w:gridSpan w:val="${c.c1-c.c0+1}"/>`:''}`+
+        `${c.vm==='restart'?'<w:vMerge w:val="restart"/>':c.vm?'<w:vMerge/>':''}<w:tcBorders>${B('top',c.bt)}${B('left',c.bl)}${B('bottom',c.bb)}${B('right',c.br)}</w:tcBorders>`+
+        `${c.shade?`<w:shd w:val="clear" w:color="auto" w:fill="${c.shade}"/>`:''}</w:tcPr>${cellXml(c,t,s)}</w:tc>`;
+      x+='</w:tr>'; });
+    return x+'</w:tbl>'; }
+
   /* une page -> paragraphes Word et réglages de section */
   function pageParts(info, media, ids){
-    const {rows, R, imgs}=info, s=R.s, Wpt=R.W/s, Hpt=R.H/s;
+    const {rows, R, imgs, tables=[]}=info, s=R.s, Wpt=R.W/s, Hpt=R.H/s;
     let L=Infinity, Rt=-Infinity;
     for(const r of rows){ L=Math.min(L,r.x0); Rt=Math.max(Rt,r.x1); }
+    for(const t of tables){ L=Math.min(L,t.x0); Rt=Math.max(Rt,t.x1); }
     if(!isFinite(L)){ L=Wpt*s*.1; Rt=Wpt*s*.9; }
     const paras=paragraphsOf(rows, L, Rt);
     // interligne de chaque paragraphe, puis haut de sa première ligne (ligne Word de hauteur exacte : ligne de base à 0,78 du pas)
     for(const p of paras){ const r0=p.rows[0];
       p.pitch=p.rows.length>1?med(p.rows.slice(1).map((r,i)=>r.base-p.rows[i].base)):Math.max(r0.em*1.18,(r0.y1-r0.y0)*1.08);
       p.top=r0.base-p.pitch*.78; p.bottom=p.top+p.pitch*p.rows.length; }
-    let T=Infinity, B=-Infinity; for(const p of paras){ T=Math.min(T,p.top); B=Math.max(B,p.bottom); }
+    let T=Infinity, B=-Infinity; for(const p of [...paras,...tables.map(t=>({top:t.y0,bottom:t.y1}))]){ T=Math.min(T,p.top); B=Math.max(B,p.bottom); }
     if(!isFinite(T)){ T=0; B=0; }
     const mL=Math.max(0,L/s), mR=Math.max(0,Wpt-Rt/s), mT=Math.max(0,T/s), mB=Math.max(0,Math.min(Hpt-B/s,20));
     const segsAll=rows.flatMap(r=>r.segs.map(sg=>({sg,r})));
-    let flowBottom=-Infinity; for(const p of paras){ p.float=p.top<flowBottom-p.pitch*.3; if(!p.float) flowBottom=Math.max(flowBottom,p.bottom); }
+    // tableaux et paragraphes dans l'ordre de la page ; un bloc posé à côté d'un autre sort du flux
+    const blocks=[...paras,...tables.map(t=>({t, top:t.y0, bottom:t.y1, pitch:s*10}))].sort((a,b)=>a.top-b.top);
+    let flowBottom=-Infinity; for(const p of blocks){ p.float=p.top<flowBottom-p.pitch*.3; if(!p.float) flowBottom=Math.max(flowBottom,p.bottom); }
     const out=[]; let prev=mT;
-    paras.forEach((p,pi)=>{
+    for(const p of blocks){
+      if(p.t){ const t=p.t;   // tableau : un paragraphe d'un point au moins le sépare du bloc précédent et porte l'écart
+        if(p.float) out.push({float:{x:t.x0/s, y:t.y0/s, w:(t.x1-t.x0)/s+SLACK, h:(t.y1-t.y0)/s, xml:tableXml(t,s,t.x0)+TINY}});
+        else { out.push({ppr:tinyPpr(t.y0/s-prev), body:''}, {tbl:tableXml(t,s,L)}); prev=Math.max(prev,t.y1/s); }
+        continue; }
       const r0=p.rows[0], em=med(p.rows.map(r=>r.em)), one=p.rows.length===1;
       const before=p.float?0:Math.max(0,p.top/s-prev); if(!p.float) prev=Math.max(prev,p.bottom/s);
       const fx0=Math.min(...p.rows.map(r=>r.x0)), fx1=Math.max(...p.rows.map(r=>r.x1));
@@ -3270,13 +3550,6 @@ const PdfToWord=(()=>{
         const just=!one && xs1.slice(0,-1).every(x=>Math.abs(x-xs1[0])<em*.5 && Rt-x<em*1.5);
         if(just) jc='both';
         if(!one) right=(Rt-Math.max(...xs1))/s-SLACK; }
-      // texte, en séquences de même style ; un mot coupé en fin de ligne est recollé
-      const runs=[]; const push=(t,st)=>{ const l=runs[runs.length-1]; if(l&&l.t!=='\t'&&t!=='\t'&&l.st.k===st.k) l.t+=t; else runs.push({t,st}); };
-      p.rows.forEach((r,ri)=>r.segs.forEach((sg,si)=>{ if(si) push('\t',styleOf(sg.words[0],r));
-        sg.words.forEach((w,wi)=>{ let t=w.text;
-          if(wi){ if(w.x0-sg.words[wi-1].x1 > r.em*.12) t=' '+t; }
-          else if(si===0&&ri){ const l=runs[runs.length-1]; if(l&&/[A-Za-zÀ-ÿ]-$/.test(l.t)&&/^[a-zà-ÿ]/.test(t)) l.t=l.t.slice(0,-1); else t=' '+t; }
-          push(t,styleOf(w,r)); }); }));
       let ppr='';
       if(p.float){ // zone de texte : retraits et taquets ramenés à son bord gauche
         const dx=(fx0-L)/s; left=Math.max(0,left-dx); right=0; tabs.forEach(t=>t.pos-=dx); if(jc!=='left'&&jc!=='both') jc='left'; }
@@ -3284,11 +3557,12 @@ const PdfToWord=(()=>{
         `<w:spacing w:before="${tw(before)}" w:after="0" w:line="${tw(p.pitch/s)}" w:lineRule="exact"/>`;
       if(left||right||first) ppr+=`<w:ind w:left="${tw(left)}" w:right="${tw(right)}"${first>0?` w:firstLine="${tw(first)}"`:first<0?` w:hanging="${tw(-first)}"`:''}/>`;
       ppr+=`<w:jc w:val="${jc}"/>`;
-      const body=runs.map(r=>runXml(r.t,r.st)).join('');
+      const body=bodyOf(p);
       out.push(p.float?{float:{x:fx0/s, y:p.top/s, w:(fx1-fx0)/s+SLACK, h:(p.bottom-p.top)/s, xml:`<w:p><w:pPr>${ppr}</w:pPr>${body}</w:p>`}}:{ppr, body});
-    });
+    }
     const boxes=out.filter(q=>q.float).map(q=>q.float), flow=out.filter(q=>!q.float);
     if(!flow.length) flow.push({ppr:'',body:''});
+    if(flow[flow.length-1].tbl) flow.push({ppr:tinyPpr(0),body:''});   // la section se ferme sur un paragraphe
     // images et zones de texte s'ancrent au premier paragraphe du flux de la page, positionnées sur la page
     const host=flow[0];
     host.body=boxes.map(b=>{ const id=ids.n++; return textBoxXml(b,id); }).join('')+host.body;
@@ -3301,7 +3575,7 @@ const PdfToWord=(()=>{
   async function docx(parts, media){
     await loadZip(); const zip=new JSZip();
     // une section par page : ses réglages ferment son dernier paragraphe, ceux de la dernière page ferment le corps
-    const body=parts.map((p,i)=>p.paras.map((q,j)=>{ const sect=(i<parts.length-1&&j===p.paras.length-1)?p.sect:'';
+    const body=parts.map((p,i)=>p.paras.map((q,j)=>{ if(q.tbl) return q.tbl; const sect=(i<parts.length-1&&j===p.paras.length-1)?p.sect:'';
       return `<w:p>${q.ppr||sect?`<w:pPr>${q.ppr}${sect}</w:pPr>`:''}${q.body}</w:p>`; }).join('')).join('');
     const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '+
       'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '+
@@ -3327,26 +3601,46 @@ const PdfToWord=(()=>{
   /* ---------- une page : texte (natif ou reconnu), style, zones graphiques ---------- */
   async function readPage(pg, getWorker, step){
     const deg=pageDeg(pg);
-    let R=await render(pg,deg), words=await nativeWords(R);
+    let R=await render(pg,deg), words=await nativeWords(R), ln=null, clean=null;
     const scanned=words.reduce((n,w)=>n+w.text.length,0)<10;
     if(scanned){
       step('reconnaissance du texte…');
       const worker=await getWorker(); let best=null;
       for(const d of [deg,(deg+90)%360,(deg+270)%360]){                     // page couchée : on essaie les deux autres quarts de tour
-        const RR=d===deg?R:await render(pg,d), {data}=await worker.recognize(RR.canvas), ws=ocrToWords(data), sc=ocrScore(ws);
-        if(!best||sc>best.sc) best={R:RR, ws, sc};
+        // filets effacés et aplats éclaircis avant lecture : un filet de tableau se lit sinon comme un I ou un crochet
+        const RR=d===deg?R:await render(pg,d), pp=paperColor(RR), L2=linesOf(RR,pp), C=cleanForOcr(RR,L2,pp);
+        const {data}=await worker.recognize(C), ws=ocrToWords(data), sc=ocrScore(ws);
+        if(!best||sc>best.sc) best={R:RR, ws, sc, ln:L2, clean:C};
         const conf=ws.length?ws.reduce((a,w)=>a+w.conf,0)/ws.length:0;
         if(d===deg && sc>=40 && conf>=70) break; }
-      R=best.R; words=best.ws;
-      // second passage en texte épars : il retrouve les mots isolés (titre en couleur, chiffre seul) que le premier ignore
-      await worker.setParameters({tessedit_pageseg_mode:'11'});
-      try{ const {data}=await worker.recognize(R.canvas);
-        for(const w of ocrToWords(data)) if(w.conf>=60 && /[0-9A-Za-zÀ-ÿ]/.test(w.text) && !words.some(o=>Math.min(o.x1,w.x1)>Math.max(o.x0,w.x0) && Math.min(o.y1,w.y1)>Math.max(o.y0,w.y0))) words.push(w); }
+      R=best.R; words=best.ws; ln=best.ln; clean=best.clean;
+      // second passage en texte épars : il retrouve les mots isolés (titre en couleur, chiffre seul) que le premier ignore ;
+      // puis chaque aplat relu seul, en bloc : le texte clair d'un bandeau échappe parfois à la lecture de la page entière
+      const add=(data,re,num)=>{ for(const w of (num?(data.words||[]).filter(w=>w.text&&/^\d[\d.,]*$/.test(w.text.trim())&&w.confidence>=15).map(w=>ocrToWords({words:[{...w,confidence:60}]})[0]):[]).concat(ocrToWords(data)))
+        if(w.conf>=60 && re.test(w.text) && !words.some(o=>Math.min(o.x1,w.x1)>Math.max(o.x0,w.x0) && Math.min(o.y1,w.y1)>Math.max(o.y0,w.y0))) words.push(w); };
+      try{ await worker.setParameters({tessedit_pageseg_mode:'11'}); add((await worker.recognize(clean)).data, /[0-9A-Za-zÀ-ÿ]/);
+        await worker.setParameters({tessedit_pageseg_mode:'6'});
+        // dans un aplat nettoyé, un nombre lu sans assurance (le modèle doute d'un « 070,00 ») reste juste
+        for(const f of ln.fills) add((await worker.recognize(clean,{rectangle:{left:f.x0,top:f.y0,width:f.x1-f.x0+1,height:f.y1-f.y0+1}})).data, /[0-9A-Za-zÀ-ÿ€$£%]/, true); }
       finally{ await worker.setParameters({tessedit_pageseg_mode:'3'}); }
       R.scanned=true;
     }
     step('mise en page…');
-    for(const w of words){ const k=inkOf(R,w); w.color=k.color; w.stem=k.stem/w.em; }
+    const paper=paperColor(R); if(!ln) ln=linesOf(R,paper,8);
+    if(scanned){   // encre de la taille d'un mot restée hors de tout mot (chiffre seul dans une cellule) : relue seule, sur une ligne
+      const em=med(words.map(w=>w.em)), worker=await getWorker(); await worker.setParameters({tessedit_pageseg_mode:'7'});
+      try{ for(const g of regions(R,words,paper,[...ln.h,...ln.v,...ln.fills])){ const h=g.y1-g.y0, p=em*.3;
+          if(!em||h<em*.4||h>em*1.6||g.x1-g.x0>em*12) continue;
+          const x0=Math.max(0,Math.floor(g.x0-p)), y0=Math.max(0,Math.floor(g.y0-p)), {data}=await worker.recognize(clean,{rectangle:{left:x0, top:y0,
+            width:Math.min(R.W,Math.ceil(g.x1+p))-x0, height:Math.min(R.H,Math.ceil(g.y1+p))-y0}});
+          const got=ocrToWords(data).filter(w=>w.conf>=70&&/[0-9A-Za-zÀ-ÿ]/.test(w.text)&&!words.some(o=>Math.min(o.x1,w.x1)>Math.max(o.x0,w.x0)&&Math.min(o.y1,w.y1)>Math.max(o.y0,w.y0)));
+          // un seul mot : sa boîte couvre toute la tache d'encre (la lecture d'un mot isolé la donne souvent trop courte)
+          if(got.length===1) Object.assign(got[0],{x0:Math.min(got[0].x0,g.x0),x1:Math.max(got[0].x1,g.x1),y0:Math.min(got[0].y0,g.y0),y1:Math.max(got[0].y1,g.y1),rec:true});
+          words.push(...got); } }
+      finally{ await worker.setParameters({tessedit_pageseg_mode:'3'}); } }
+    for(const w of words){ const k=inkOf(R,w); w.color=k.color; if(scanned&&k.h>2&&w.k) w.em=w.rec?k.h/w.k:Math.min(w.em,k.h/w.k);
+      if(w.rec&&!DESC.test(w.text)) w.base=k.bottom+.5;   // mot relu seul : ligne de base au pied de son encre
+      w.stem=k.stem/w.em; }
     // une couleur proche de la couleur dominante du texte la rejoint : un scan donne sinon des mots plus ou moins gris
     const hex=c=>[0,2,4].map(i=>parseInt(c.slice(i,i+2),16)), cs=words.filter(w=>w.color).map(w=>hex(w.color));
     if(cs.length){ const d=[0,1,2].map(k=>med(cs.map(c=>c[k]))), lum=.299*d[0]+.587*d[1]+.114*d[2];
@@ -3361,10 +3655,13 @@ const PdfToWord=(()=>{
       const f=r.words[0], fw=f.x1-f.x0, fh=f.y1-f.y0;   // puce lue comme « ou e : petit signe à peu près carré en tête de ligne (un tiret, allongé, reste un tiret)
       if(r.words.length>1 && f.text.length===1 && /[«»•·*°oeé-]/.test(f.text) && fh<r.em*.6 && fw<r.em*.7 && fw<fh*1.6) f.text='•';
     }
+    // corps d'un scan : les tailles voisines (8 %) se rejoignent, l'estimation variant d'une ligne à l'autre
+    if(scanned){ const cl=[];
+      for(const r of [...rows].sort((a,b)=>b.words.length-a.words.length)){ const c=cl.find(c=>Math.abs(c.s0-r.size)<=c.s0*.08); if(c) c.rows.push(r); else cl.push({s0:r.size,rows:[r]}); }
+      for(const c of cl){ const v=Math.round(med(c.rows.flatMap(r=>r.words.map(()=>r.size)))*2)/2; for(const r of c.rows){ r.size=v; for(const w of r.words) w.size=v; } } }
     // lettrage d'un logo : une ligne faite de lettres isolées, lues sans assurance, reste dans l'image
     if(scanned) for(const r of rows.filter(r=>{ const t=r.words.filter(w=>/[\p{L}\p{N}]/u.test(w.text)); return t.length>=2 && t.every(w=>w.text.length<=2) && med(t.map(w=>w.conf))<90; })){
       rows.splice(rows.indexOf(r),1); for(const w of r.words) words.splice(words.indexOf(w),1); }
-    const paper=paperColor(R);
     // puce manquée par la reconnaissance : une ligne voisine en porte une, le texte part du même bord, et l'encre est là
     if(scanned) for(let i=0;i<rows.length;i++){ const r=rows[i]; if(r.words[0].text==='•') continue;
       const o=[rows[i-1],rows[i+1]].find(o=>o&&o.words.length>1&&o.words[0].text==='•'&&Math.abs(r.words[0].x0-o.words[1].x0)<r.em*.3&&Math.abs(r.em-o.em)<o.em*.15);
@@ -3373,8 +3670,11 @@ const PdfToWord=(()=>{
       if(!t || n<t*.2) continue;
       const w={...b, y0, y1, base:b.base+dy, size:r.size}; r.words.unshift(w); words.push(w); r.x0=w.x0;
       if(o.segs[0].words.length>1) { r.segs[0].words.unshift(w); r.segs[0].x0=w.x0; } else r.segs.unshift({words:[w], x0:w.x0, x1:w.x1}); }
-    const imgs=[]; for(const g of regions(R,words,paper)) imgs.push(await cropRegion(R,g,words,paper));
-    return {rows, R, imgs};
+    const tables=tablesOf(R,ln,rows), mask=tables.flatMap(t=>t.els);
+    // scan : dans un tableau, un corps à 15 % du corps dominant le rejoint (une ligne lue un peu plus petite reste alignée sur les autres)
+    if(scanned) for(const t of tables){ const ws=[...t.words], m=med(ws.map(w=>w.size)); for(const w of ws) if(Math.abs(w.size-m)<=m*.15) w.size=m; }
+    const imgs=[]; for(const g of regions(R,words,paper,mask,[...ln.h,...ln.v])) imgs.push(await cropRegion(R,g,words,paper,[...ln.h,...ln.v]));
+    return {rows, R, imgs, tables};
   }
 
   async function convert(list, lang, onProgress){
@@ -3710,7 +4010,7 @@ let ocrLang='fra';
 /* une seule fenêtre pour la reconnaissance et pour PDF en Word : même choix de langue, même progression */
 let ocrMode='ocr';
 const OCR_TEXT={ocr:{t:'Reconnaissance de texte (OCR)', go:'Lancer la reconnaissance', d:$('ocrDesc').textContent},
-  word:{t:'PDF en Word', go:'Convertir en Word', d:"Recompose les pages sélectionnées, ou tout le document, en document Word modifiable : paragraphes, polices, tailles, gras, alignements et retraits, colonnes en tabulations, logos et images à leur place. Les pages numérisées passent d'abord par la reconnaissance, dans la langue choisie ; leur texte est en Arial."}};
+  word:{t:'PDF en Word', go:'Convertir en Word', d:"Recompose les pages sélectionnées, ou tout le document, en document Word modifiable : paragraphes, polices, tailles, gras, alignements et retraits, tableaux avec leurs filets, trames et cellules fusionnées, logos et images à leur place. Les pages numérisées passent d'abord par la reconnaissance, dans la langue choisie ; leur texte est en Arial."}};
 function openOcr(mode){ if(pages.length===0) return; ocrMode=mode; const T=OCR_TEXT[mode];
   $('ocrTitle').textContent=T.t; ocrModal.setAttribute('aria-label',T.t); $('ocrDesc').textContent=T.d; ocrGo.textContent=T.go;
   ocrProgress.hidden=true; ocrModal.classList.add('show'); }
